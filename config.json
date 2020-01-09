@@ -1,0 +1,4 @@
+{
+    "compendium_directory": "/full/path/to/compendium/directory"
+    "redis_port": 6379
+}   
