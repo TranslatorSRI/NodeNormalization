@@ -39,13 +39,12 @@ def load_compendium(compendium_filename, config):
         print(f'Processing {compendium_filename}...')
         for line in compendium:
             instance = json.loads(line)
-            identifier = instance['id']
+            identifier = instance['id']['identifier']
             for equivalent_id in instance['equivalent_identifiers']:
                 #equivalent_id might be an array, where the first element is 
                 # the identifier, or it might just be a string. 
                 #Not implemented worrying about that yet.
-                if isinstance(equivalent_id, list):
-                    equivalent_id = equivalent_id[0]
+                equivalent_id = equivalent_id['identifier']
                 term2id_pipeline.set(equivalent_id, identifier)
                 term2id_pipeline.set(equivalent_id.upper(), identifier)
             id2instance_pipeline.set(identifier, line)
