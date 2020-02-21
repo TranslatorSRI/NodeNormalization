@@ -17,6 +17,7 @@ def load_redis():
     redis instance so that it can be read by R3"""
     config = get_config()
     compendia = get_compendia(config)
+
     for comp in compendia:
         load_compendium(comp,config)
 
@@ -30,8 +31,7 @@ def load_redis():
 
     # for each semantic type insert the list of source prefixes
     for item in source_prefixes:
-        for prefix in source_prefixes[item]:
-            types_prefixes_pipeline.lpush(item, prefix)
+        types_prefixes_pipeline.set(item, json.dumps(source_prefixes[item]))
 
     # add the data to redis
     types_prefixes_pipeline.execute()
@@ -67,7 +67,7 @@ def load_compendium(compendium_filename, config):
             identifier = instance['id']['identifier']
 
             # save the semantic types in a set
-            semantic_types.update(instance['type'])
+            semantic_types.update([instance['type'][0]])
 
             # split the identifier to just get the data source
             source_prefix = identifier.split(':')[0]
@@ -76,10 +76,14 @@ def load_compendium(compendium_filename, config):
             for item in semantic_types:
                 # have we saved this one already
                 if item not in source_prefixes:
-                    source_prefixes[item] = set([source_prefix])
+                    # add this one in
+                    source_prefixes[item] = {source_prefix: 1}
+                # else the type is there. is the source prefix there?
+                elif source_prefixes[item].get(source_prefix) == None:
+                    source_prefixes[item][source_prefix] = 1
                 # else just append the source prefix to the semantic type set
                 else:
-                    source_prefixes[item].add(source_prefix)
+                    source_prefixes[item][source_prefix] = source_prefixes[item][source_prefix] + 1
 
             for equivalent_id in instance['equivalent_identifiers']:
                 #equivalent_id might be an array, where the first element is 
