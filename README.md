@@ -1,4 +1,7 @@
+[![Build Status](https://travis-ci.com/TranslatorIIPrototypes/NodeNormalization.svg?branch=master)](https://travis-ci.com/TranslatorIIPrototypes/NodeNormalization)
+
 # NodeNormalization
+
 Service that produces Translator compliant nodes given a curie.
 
 ## Installation
