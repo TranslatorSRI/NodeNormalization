@@ -66,38 +66,41 @@ def load_compendium(compendium_filename, config):
             # save the identifier
             identifier = instance['id']['identifier']
 
-            # save the semantic types in a set
-            semantic_types.update([instance['type'][0]])
+            # save the semantic type
+            semantic_type = instance['type'][0]
 
-            # split the identifier to just get the data source
-            source_prefix = identifier.split(':')[0]
+            # save the semantic types in a set to avoid duplicates
+            semantic_types.update([semantic_type])
 
-            # for each semantic type as a key add the source prefix to a dict as a set
-            for item in semantic_types:
-                # have we saved this one already
-                if item not in source_prefixes:
-                    # add this one in
-                    source_prefixes[item] = {source_prefix: 1}
-                # else the type is there. is the source prefix there?
-                elif source_prefixes[item].get(source_prefix) == None:
-                    source_prefixes[item][source_prefix] = 1
-                # else just append the source prefix to the semantic type set
-                else:
-                    source_prefixes[item][source_prefix] = source_prefixes[item][source_prefix] + 1
+            # have we saved this one already
+            if source_prefixes.get(semantic_type) is None:
+                # add this one in
+                source_prefixes[semantic_type] = {}
 
+            # go through each equivalent identifier in the data row
             for equivalent_id in instance['equivalent_identifiers']:
-                #equivalent_id might be an array, where the first element is 
+                # split the identifier to just get the data source out of the curie
+                source_prefix = equivalent_id['identifier'].split(':')[0]
+
+                # is the source prefix already there? if not save it
+                if source_prefixes[semantic_type].get(source_prefix) is None:
+                    source_prefixes[semantic_type][source_prefix] = 1
+                # else just increment the count for the semantic type/source
+                else:
+                    source_prefixes[semantic_type][source_prefix] = source_prefixes[instance['type'][0]][source_prefix] + 1
+
+                # equivalent_id might be an array, where the first element is
                 # the identifier, or it might just be a string. 
-                #Not implemented worrying about that yet.
+                # Not implemented worrying about that yet.
                 equivalent_id = equivalent_id['identifier']
                 term2id_pipeline.set(equivalent_id, identifier)
                 term2id_pipeline.set(equivalent_id.upper(), identifier)
 
             id2instance_pipeline.set(identifier, line)
         print(f'Dumping to term2id db ...')
-        term2id_pipeline.execute()
+        #term2id_pipeline.execute()
         print(f'Dumping to id2instance db ...')
-        id2instance_pipeline.execute()
+        #id2instance_pipeline.execute()
 
         print(f'Done loading {compendium_filename}...')
 
