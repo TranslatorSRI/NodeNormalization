@@ -1,4 +1,4 @@
 import pytest
 
-def test_label_pubchem():
+def test_place_holder():
     pass
