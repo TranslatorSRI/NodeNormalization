@@ -98,9 +98,10 @@ def load_compendium(compendium_filename, config):
 
             id2instance_pipeline.set(identifier, line)
         print(f'Dumping to term2id db ...')
-        #term2id_pipeline.execute()
+        term2id_pipeline.execute()
+
         print(f'Dumping to id2instance db ...')
-        #id2instance_pipeline.execute()
+        id2instance_pipeline.execute()
 
         print(f'Done loading {compendium_filename}...')
 
