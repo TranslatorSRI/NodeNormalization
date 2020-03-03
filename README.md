@@ -48,7 +48,7 @@ where each line is a json parsable entry.
 
 ### Loading
 
-After the proper configration run
+After the proper configuration run
  
     > cd  src
     > python load.py
