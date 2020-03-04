@@ -1,9 +1,9 @@
 {
     "compendium_directory": "",
-    "redis_port": 6379,
-    "redis_host": "localhost",
+    "redis_port": 0,
+    "redis_host": "",
     "redis_password": "",
 
-    "test_mode": 1,
+    "test_mode": 0,
     "debug_messages": 0
 }   
