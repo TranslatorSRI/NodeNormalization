@@ -1,6 +1,9 @@
 {
-    "compendium_directory": "../../compendia/compendia",
-    "redis_port": 30305,
-    "redis_host": "arrival.edc.renci.org",
-    "redis_password": ""
+    "compendium_directory": "",
+    "redis_port": 6379,
+    "redis_host": "localhost",
+    "redis_password": "",
+
+    "test_mode": 1,
+    "debug_messages": 0
 }   
