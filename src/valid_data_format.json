@@ -1,0 +1,98 @@
+{
+	"definitions": {},
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "https://example.com/object1583341175.json",
+	"title": "Root",
+	"type": "object",
+	"required": [
+		"id",
+		"equivalent_identifiers",
+		"type"
+	],
+	"properties": {
+		"id": {
+			"$id": "#root/id",
+			"title": "Id",
+			"type": "object",
+			"required": [
+				"identifier"
+			],
+			"properties": {
+				"identifier": {
+					"$id": "#root/id/identifier",
+					"title": "Identifier",
+					"type": "string",
+					"default": "",
+					"examples": [
+						"UBERON:0012326"
+					],
+					"pattern": "^.*$"
+				},
+				"label": {
+					"$id": "#root/id/label",
+					"title": "Label",
+					"type": "string",
+					"default": "",
+					"examples": [
+						"gubernacular bulb"
+					],
+					"pattern": "^.*$"
+				}
+			}
+		}
+,
+		"equivalent_identifiers": {
+			"$id": "#root/equivalent_identifiers",
+			"title": "Equivalent_identifiers",
+			"type": "array",
+			"default": [],
+			"items":{
+				"$id": "#root/equivalent_identifiers/items",
+				"title": "Items",
+				"type": "object",
+				"required": [
+					"identifier"
+				],
+				"properties": {
+					"identifier": {
+						"$id": "#root/equivalent_identifiers/items/identifier",
+						"title": "Identifier",
+						"type": "string",
+						"default": "",
+						"examples": [
+							"UBERON:0012326"
+						],
+						"pattern": "^.*$"
+					},
+					"label": {
+						"$id": "#root/equivalent_identifiers/items/label",
+						"title": "Label",
+						"type": "string",
+						"default": "",
+						"examples": [
+							"gubernacular bulb"
+						],
+						"pattern": "^.*$"
+					}
+				}
+			}
+
+		},
+		"type": {
+			"$id": "#root/type",
+			"title": "Type",
+			"type": "array",
+			"default": [],
+			"items":{
+				"$id": "#root/type/items",
+				"title": "Items",
+				"type": "string",
+				"default": "",
+				"examples": [
+					"anatomical_entity"
+				],
+				"pattern": "^.*$"
+			}
+		}
+	}
+}
