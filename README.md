@@ -2,7 +2,21 @@
 
 # NodeNormalization
 
-Service that produces Translator compliant nodes given a curie.
+## Introduction
+
+Node normalization takes a CURIE, and returns:
+
+* The preferred CURIE for this entity
+* All other known equivalent identifiers for the entity
+* Semantic types for the entity as defined by the [Biolink Model](https://biolink.github.io/biolink-model/)
+
+The data currently served by Node Normalization is created by the prototype project [Babel](https://github.com/TranslatorIIPrototypes/Babel), which attempts to find identifier equivalences, and makes sure that CURIE prefixes are BioLink Model compliant.  The NodeNormalization service, however, is independent of Babel and as improved identifier equivalence tools are developed, their results can be easily incorporated.
+
+To determine whether Node Normalization is likely to be useful, check /get_semantic_types, which lists the BioLink semantic types for which normalization has been attempted, and /get_curie_prefixes, which lists the number of times each prefix is used for a semantic type.
+
+For examples of service usage, see the example [notebook](documentation/NodeNormalization.ipynb).
+
+Most users of NodeNormalization can access it via the public [service](https://nodenormalization-sri.renci.org) but instructions follow for standing up a new instance of the service.
 
 ## Installation
 
