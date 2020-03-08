@@ -16,7 +16,7 @@ To determine whether Node Normalization is likely to be useful, check /get_seman
 
 For examples of service usage, see the example [notebook](documentation/NodeNormalization.ipynb).
 
-Most users of NodeNormalization can access it via the public [service](https://nodenormalization-sri.renci.org) but instructions follow for standing up a new instance of the service.
+Most users of NodeNormalization can access it via the public [service](https://nodenormalization-sri.renci.org/apidocs) but instructions follow for standing up a new instance of the service.
 
 ## Installation
 
