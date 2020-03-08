@@ -13,6 +13,6 @@ def test_nn_record_validation():
 
     assert(nn.validate_compendia("./tests/datafile.json"))
 
-    ret_val = nn.validate_compendia("./tests/test_placeholder.py")
+    ret_val = nn.validate_compendia("./tests/datafile_with_errors.json")
 
     assert(ret_val == False)
