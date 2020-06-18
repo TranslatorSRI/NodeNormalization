@@ -134,7 +134,7 @@ class NodeNormalization:
             term2id_pipeline = term2id_redis.pipeline()
             id2instance_pipeline = id2instance_redis.pipeline()
 
-            with open(compendium_filename, 'r') as compendium:
+            with open(compendium_filename, 'r', encoding="utf-8") as compendium:
                 self.print_debug_msg(f'Processing {compendium_filename}...', True)
 
                 line_counter: int = 0
