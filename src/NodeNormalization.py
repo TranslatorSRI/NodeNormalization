@@ -16,7 +16,7 @@ from datetime import datetime
 ##############
 class NodeNormalization:
     # storage for the semantic types and source prefixes
-    semantic_types: set = set({})
+    semantic_types: set = set()
     source_prefixes: dict = {}
 
     # Storage for the configuration params
@@ -76,9 +76,21 @@ class NodeNormalization:
             types_prefixes_redis: redis.Redis = self.get_redis(2)
             types_prefixes_pipeline = types_prefixes_redis.pipeline()
 
-            # at all the semantic types
-            for item in self.semantic_types:
-                types_prefixes_pipeline.lpush('semantic_types', item)
+            # create a command to get the current semantic types
+            types_prefixes_pipeline.lrange('semantic_types', 0, -1)
+
+            # get the current list of semantic types
+            vals = types_prefixes_pipeline.execute()
+
+            # get the values and insure they are strings
+            current_types: set = set(x.decode("utf-8") for x in vals[0])
+
+            # remove any dupes
+            self.semantic_types = self.semantic_types.difference(current_types)
+
+            if len(self.semantic_types) > 0:
+                # add all the semantic types
+                types_prefixes_pipeline.lpush('semantic_types', *self.semantic_types)
 
             # for each semantic type insert the list of source prefixes
             for item in self.source_prefixes:
@@ -147,15 +159,16 @@ class NodeNormalization:
                     # save the identifier
                     identifier: str = instance['id']['identifier']
 
-                    # save the semantic type
+                    # save the semantic type for the data. this is always the first entry
                     semantic_type: str = instance['type'][0]
 
-                    # save the semantic types in a set to avoid duplicates
-                    self.semantic_types.update([semantic_type])
+                    # save the rest of the related semantic types in a set to avoid duplicates
+                    for item in instance['type']:
+                        self.semantic_types.add(item)
 
                     # have we saved this one already
                     if self.source_prefixes.get(semantic_type) is None:
-                        # add this one in
+                        # add an empty placeholder for this one in
                         self.source_prefixes[semantic_type] = {}
 
                     # go through each equivalent identifier in the data row
