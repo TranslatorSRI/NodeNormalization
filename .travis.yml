@@ -19,6 +19,8 @@ before_script: sudo redis-server /etc/redis/redis.conf --port 6379
 env:
   global:
     - PYTHONPATH=$PWD
+    - REDIS_HOST=127.0.0.1
+    - REDIS_PORT=6379
 
 # command to run tests
 script:
