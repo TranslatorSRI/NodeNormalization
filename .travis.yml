@@ -14,6 +14,7 @@ notifications:
 install:
   - pip install -r requirements.txt
 
+before_script: sudo redis-server /etc/redis/redis.conf --port 6380
 
 env:
   global:
