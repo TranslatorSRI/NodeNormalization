@@ -20,6 +20,8 @@ ADD ./r3 /home/murphy/r3
 ADD ./swagger_ui /home/murphy/swagger_ui
 ADD ./main.py /home/murphy/main.py
 ADD ./setup.py /home/murphy/setup.py
+ADD ./src /home/murphy/src
+
 RUN pip install -e .
 
 # setup entrypoint
