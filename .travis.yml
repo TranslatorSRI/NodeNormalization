@@ -14,6 +14,9 @@ notifications:
 install:
   - pip install -r requirements.txt
 
+services:
+  - redis-server
+
 env:
   global:
     - PYTHONPATH=$PWD
