@@ -1,0 +1,152 @@
+openapi: 3.0.2
+info:
+  title: Node Normalization
+  description: 'Node normalization takes a CURIE, and returns:
+  <ol>
+  <li>The preferred CURIE for this entity
+  <li>All other known equivalent identifiers for the entity
+  <li>Semantic types for the entity as defined by the <a href="https://biolink.github.io/biolink-model/">BioLink Model</a>
+  </ol>
+  The data served by Node Normalization is created by <a href="https://github.com/TranslatorIIPrototypes/Babel">Babel</a>,
+  which attempts to find identifier equivalences, and makes sure that CURIE prefixes are BioLink Model Compliant.  To
+  determine whether Node Normalization is likely to be useful, check /get_semantic_types, which lists the BioLink semantic
+  types for which normalization has been attempted, and /get_curie_prefixes, which lists the number of times each prefix
+  is used for a semantic type.
+  '
+
+  version: '1.0.0'
+  contact:
+    email: kebedey@renci.org
+  termsOfService: http://robokop.renci.org:7055/tos?service_long=Redis-REST+with+Referencing&provider_long=the+Translator+Consortium
+  license:
+    name: MIT
+    url: 'https://opensource.org/licenses/MIT'
+tags:
+  - name: Interfaces
+paths:
+  /get_semantic_types:
+    get:
+      tags:
+        - Interfaces
+      summary: 'Return a list of BioLink semantic types for which normalization has been attempted.'
+      description: 'Returns a distinct set of the semantic types discovered in the compendium data.'
+
+      responses:
+        '200':
+          description: Results
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  semantic_types:
+                    types:
+                      - "cellular_component"
+                      - "named_thing"
+                      - "etc."
+
+  /get_curie_prefixes:
+    get:
+      tags:
+        - Interfaces
+      summary: 'Return the number of times each CURIE prefix appears in an equivalent identifier for a semantic type'
+      description: 'Returns the curies and their hit count for a semantic type(s).'
+      parameters:
+        - in: query
+          name: semantic_type
+          schema:
+            type: array
+            items:
+              type: string
+            example:
+              - "chemical_substance"
+              - "anatomical_entity"
+
+      responses:
+        '200':
+          description: Results
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  chemical_substance:
+                    curie_prefix:
+                      "GO": 1234,
+                      "PUBCHEM": 4567,
+                      "etc.": a hit count
+
+                  anatomical_entity:
+                    curie_prefix:
+                      "CHEBI": 1234,
+                      "UNICHEM": 4567,
+                      "etc.": the hit count
+
+  /get_normalized_nodes:
+    get:
+      tags:
+        - Interfaces
+      summary: 'Get the equivalent identifiers and semantic types for the curie(s) entered.'
+      description: 'Returns the equivalent identifiers and semantic types for the curie(s) entered.'
+      parameters:
+        - in: query
+          name: curie
+          schema:
+            type: array
+            items:
+              type: string
+            example:
+              - "MESH:D014867"
+              - "NCIT:C34373"
+
+      responses:
+        '200':
+          description: Results
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  MESH:D014867:
+                    id:
+                      identifier: "CHEBI:15377"
+                      label: "Water"
+                    equivalent_identifiers:
+                      - identifier: "CHEBI:15377"
+                        label: "Water"
+                      - identifier: "CHEMBL.COMPOUND:CHEMBL1098659"
+                        label: "WATER"
+                      - identifier: "DRUGBANK:DB09145"
+                      - identifier: "PUBCHEM:22247451"
+                      - identifier: "PUBCHEM:962"
+                      - identifier: "MESH:D014867"
+                      - identifier: "HMDB:HMDB0002111"
+                      - identifier: "INCHIKEY:XLYOFNOQVPJJNP-UHFFFAOYSA-N"
+                      - identifier: "UNII:059QF0K00R"
+                      - identifier: "KEGG.COMPOUND:C00001"
+                    type:
+                      - "chemical_substance"
+                      - "molecular_entity"
+                      - "biological_entity"
+                      - "named_thing"
+
+                  NCIT:C34373:
+                    id:
+                      identifier: "MONDO:0004976"
+                      label: "amyotrophic lateral sclerosis"
+                    equivalent_identifiers:
+                      - identifier: "MONDO:0004976"
+                        label: "amyotrophic lateral sclerosis"
+                      - identifier: "DOID:332"
+                      - identifier: "OPPHANET:803"
+                      - identifier: "UMLS:C0393554"
+                      - identifier: "MESH:D000690"
+                      - identifier: "MEDDRA:10002026"
+                      - identifier: "NCIT:C34373"
+                      - identifier: "HP:0007354"
+                        label: "Amyotrophic lateral sclerosis"
+                    type:
+                      - "disease"
+                      - "disease_or_phenotypic_feature"
+                      - "biological_entity"
+                      - "named_thing"

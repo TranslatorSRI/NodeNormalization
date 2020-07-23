@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-normalization-r3-web-deployment
+  labels:
+    service: node-normalization-r3-web
+    app: node-normalization-r3-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: node-normalization-r3-web
+  template:
+    metadata:
+      labels:
+        app: node-normalization-r3-web
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: node-normalization-r3-web
+        image: renciorg/r3_nodenorm:latest
+        ports:
+          - containerPort: 6380
+            name: http
+        env:
+          - name: REDIS_HOST
+            value: "node-normalization-r3-redis"
+          - name: REDIS_PORT
+            value: "6379"
+      restartPolicy: Always

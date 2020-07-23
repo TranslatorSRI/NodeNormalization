@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sysctl-configmap
+  labels:
+    app: node-normalization-r3-redis
+data:
+  vmovercommit: "vm.overcommit_memory = 1"
