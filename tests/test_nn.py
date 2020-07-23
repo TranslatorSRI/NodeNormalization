@@ -1,6 +1,7 @@
 from src.NodeNormalization import NodeNormalization
 import pytest
 
+
 def test_nn_load():
     nn: NodeNormalization = NodeNormalization()
 

@@ -1,15 +1,17 @@
-from src.NodeNormalization import NodeNormalization
+#!/usr/bin/env python
 
+"""Run Redis-REST with referencing."""
+import argparse
+from src.server import app
 
-if __name__ == '__main__':
-    # instantiate the class that does all the work
-    nn = NodeNormalization()
+parser = argparse.ArgumentParser(description='Start REST interface for Redis.')
+parser.add_argument('--host', default='0.0.0.0', type=str)
+parser.add_argument('--port', default=6380, type=int)
 
-    # call to load redis instances with normalized node data
-    success: bool = nn.load()
+args = parser.parse_args()
 
-    # check the return
-    if not success:
-        nn.print_debug_msg(f'Failed to load node normalization data.', True)
-    else:
-        nn.print_debug_msg(f'Success', True)
+app.run(
+    host=args.host,
+    port=args.port,
+    debug=False,
+)

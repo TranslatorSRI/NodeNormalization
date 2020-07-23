@@ -2,3 +2,7 @@ redis
 jsonschema
 pytest==5.3.5
 pytest-cov==2.8.1
+aioredis
+jinja2
+sanic==19.12.2
+swagger_ui_bundle

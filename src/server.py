@@ -5,7 +5,7 @@ import os
 import aioredis
 from sanic import Sanic, response
 
-from r3.apidocs import bp as apidocs_blueprint
+from src.apidocs import bp as apidocs_blueprint
 
 app = Sanic()
 app.config.ACCESS_LOG = False
