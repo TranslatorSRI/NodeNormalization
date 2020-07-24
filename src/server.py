@@ -96,12 +96,12 @@ async def get_curie_prefixes_handler(request):
 
                     # did we get any data
                     if not curies:
-                        curies = '{' + f'"{item}"' + ': "Not Found"}'
+                        curies = '{' + f'"{item}"' + ': "Not found"}'
 
                     curies = json.loads(curies)
 
                     # set the return data
-                    ret_val[item] = {'curie_prefix': [curies]}
+                    ret_val[item] = {'curie_prefix': curies}
             # else it must be a singleton+6+9++
             else:
                 # get the curies for this type
@@ -112,7 +112,7 @@ async def get_curie_prefixes_handler(request):
                     return response.text(f'No curie discovered for {request.args["semantic_type"]}.', status=404)
 
                 # set the return data
-                ret_val[request.args['semantic_type']] = {'curie_prefix': [curies]}
+                ret_val[request.args['semantic_type']] = {'curie_prefix': curies}
         except Exception:
             return response.text('Error parsing query string.', status=500)
     else:
@@ -124,12 +124,12 @@ async def get_curie_prefixes_handler(request):
 
             # did we get any data
             if not curies:
-                curies = '{' + f'"{item}"' + ': "Not Found"}'
+                curies = '{' + f'"{item}"' + ': "Not found"}'
 
             curies = json.loads(curies)
 
             # set the return data
-            ret_val[item] = {'curie_prefix': [curies]}
+            ret_val[item] = {'curie_prefix': curies}
 
 # return the data to the caller
     return response.json(ret_val)
