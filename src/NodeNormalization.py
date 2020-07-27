@@ -149,48 +149,47 @@ class NodeNormalization:
             with open(compendium_filename, 'r', encoding="utf-8") as compendium:
                 self.print_debug_msg(f'Processing {compendium_filename}...', True)
 
+                # init a line counter
                 line_counter: int = 0
 
+                # for each line in the file
                 for line in compendium:
                     line_counter = line_counter + 1
 
+                    # load the line into memory
                     instance: dict = json.loads(line)
 
                     # save the identifier
                     identifier: str = instance['id']['identifier']
 
-                    # save the semantic type for the data. this is always the first entry
-                    semantic_type: str = instance['type'][0]
-
                     # save the rest of the related semantic types in a set to avoid duplicates
-                    for item in instance['type']:
-                        self.semantic_types.add(item)
+                    for semantic_type in instance['type']:
+                        self.semantic_types.add(semantic_type)
 
-                    # have we saved this one already
-                    if self.source_prefixes.get(semantic_type) is None:
-                        # add an empty placeholder for this one in
-                        self.source_prefixes[semantic_type] = {}
+                        #  create a source prefix if it has not been encountered
+                        if self.source_prefixes.get(semantic_type) is None:
+                            self.source_prefixes[semantic_type] = {}
 
-                    # go through each equivalent identifier in the data row
-                    for equivalent_id in instance['equivalent_identifiers']:
-                        # split the identifier to just get the data source out of the curie
-                        source_prefix: str = equivalent_id['identifier'].split(':')[0]
+                        # go through each equivalent identifier in the data row
+                        # each will be assigned the semantic type information
+                        for equivalent_id in instance['equivalent_identifiers']:
+                            # split the identifier to just get the data source out of the curie
+                            source_prefix: str = equivalent_id['identifier'].split(':')[0]
 
-                        # is the source prefix already there? if not save it
-                        if self.source_prefixes[semantic_type].get(source_prefix) is None:
-                            self.source_prefixes[semantic_type][source_prefix] = 1
-                        # else just increment the count for the semantic type/source
-                        else:
-                            self.source_prefixes[semantic_type][source_prefix] = self.source_prefixes[instance['type'][0]][source_prefix] + 1
+                            # save the source prefix if no already there
+                            if self.source_prefixes[semantic_type].get(source_prefix) is None:
+                                self.source_prefixes[semantic_type][source_prefix] = 1
+                            # else just increment the count for the semantic type/source
+                            else:
+                                self.source_prefixes[semantic_type][source_prefix] += 1
 
-                        # equivalent_id might be an array, where the first element is
-                        # the identifier, or it might just be a string.
-                        # Not implemented worrying about that yet.
-                        equivalent_id = equivalent_id['identifier']
-                        term2id_pipeline.set(equivalent_id, identifier)
-                        term2id_pipeline.set(equivalent_id.upper(), identifier)
+                            # equivalent_id might be an array, where the first element is
+                            # the identifier, or it might just be a string. not worrying about that case yet.
+                            equivalent_id = equivalent_id['identifier']
+                            term2id_pipeline.set(equivalent_id, identifier)
+                            term2id_pipeline.set(equivalent_id.upper(), identifier)
 
-                    id2instance_pipeline.set(identifier, line)
+                        id2instance_pipeline.set(identifier, line)
 
                 if self._test_mode != 1:
                     print(f'Dumping to term2id db ...')
