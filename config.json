@@ -4,6 +4,6 @@
     "redis_port": 0,
     "redis_password": "",
     "data_files": "",
-    "test_mode": 0,
-    "debug_messages": 0
+    "test_mode": 1,
+    "debug_messages": 1
 }   
