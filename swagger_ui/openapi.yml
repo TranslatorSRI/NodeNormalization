@@ -15,7 +15,7 @@ info:
     url: https://opensource.org/licenses/MIT
   termsOfService: http://robokop.renci.org:7055/tos?service_long=Redis-REST+with+Referencing&provider_long=the+Translator+Consortium
   title: Node Normalization
-  version: new version
+  version: 1.0.1
 openapi: 3.0.2
 paths:
   /get_curie_prefixes:
