@@ -3,14 +3,14 @@ import pytest
 
 
 def test_nn_load():
-    nn: NodeNormalization = NodeNormalization()
+    nn: NodeNormalization = NodeNormalization(True)
 
     nn._test_mode = 1
 
-    assert(nn.load_compendium("./tests/datafile.json", 5))
+    assert(nn.load_compendium(",/tests/datafile.json", 5))
 
 def test_nn_record_validation():
-    nn: NodeNormalization = NodeNormalization()
+    nn: NodeNormalization = NodeNormalization(True)
 
     assert(nn.validate_compendia("./tests/datafile.json"))
 

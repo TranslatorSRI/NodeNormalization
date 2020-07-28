@@ -22,7 +22,7 @@ class NodeNormalization:
     # Storage for the configuration params
     _config: json = None
 
-    def __init__(self):
+    def __init__(self, test_mode=False):
         self._config = self.get_config()
 
         self._compendium_directory: str = self._config['compendium_directory']
@@ -32,8 +32,9 @@ class NodeNormalization:
         self._test_mode: int = self._config['test_mode']
         self._data_files: list = self._config['data_files'].split(',')
 
-        with open('./src/valid_data_format.json') as json_file:
-            self._validate_with = json.load(json_file)
+        if not test_mode:
+            with open('./src/valid_data_format.json') as json_file:
+                self._validate_with = json.load(json_file)
 
         pass
 
