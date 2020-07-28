@@ -6,7 +6,7 @@ if __name__ == '__main__':
     nn = NodeNormalization()
 
     # call to load redis instances with normalized node data
-    success: bool = nn.load()
+    success: bool = nn.load(500000)
 
     # check the return
     if not success:
