@@ -10,7 +10,7 @@ def test_nn_load():
     assert(nn.load_compendium("./tests/datafile.json", 5))
 
 def test_nn_record_validation():
-    nn: NodeNormalization = NodeNormalization(True)
+    nn: NodeNormalization = NodeNormalization()
 
     assert(nn.validate_compendia("./tests/datafile.json"))
 
