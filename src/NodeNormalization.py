@@ -162,8 +162,9 @@ class NodeNormalization:
                     # save the identifier
                     identifier: str = instance['id']['identifier']
 
-                    # save the rest of the related semantic types in a set to avoid duplicates
+                    # for each semantic type in the list
                     for semantic_type in instance['type']:
+                        # save the semantic type in a set to avoid duplicates
                         self.semantic_types.add(semantic_type)
 
                         #  create a source prefix if it has not been encountered
