@@ -158,6 +158,9 @@ class NodeNormalization:
         be read by R3.  We also load extra keys, which are the upper-cased
         identifiers, for ease of use"""
 
+        # init a line counter
+        line_counter: int = 0
+
         try:
             term2id_redis = self.get_redis(0)
             id2instance_redis = self.get_redis(1)
@@ -167,9 +170,6 @@ class NodeNormalization:
 
             with open(compendium_filename, 'r', encoding="utf-8") as compendium:
                 self.print_debug_msg(f'Processing {compendium_filename}...', True)
-
-                # init a line counter
-                line_counter: int = 0
 
                 # for each line in the file
                 for line in compendium:
