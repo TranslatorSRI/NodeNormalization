@@ -30,6 +30,7 @@ class NodeNormalization:
         self._redis_password: str = self._config['redis_password']
         self._redis_port: int = self._config['redis_port']
         self._test_mode: int = self._config['test_mode']
+        self._data_files: list = self._config['data_files'].split(',')
 
         with open('./src/valid_data_format.json') as json_file:
             self._validate_with = json.load(json_file)
@@ -46,60 +47,63 @@ class NodeNormalization:
 
         return data
 
-    def load(self) -> bool:
+    def load(self, block_size) -> bool:
         """Given a compendia directory, load every file there into a running
         redis instance so that it can be read by R3"""
 
+        # init the return value
+        ret_val = False
+
         if self._test_mode == 1:
             self.print_debug_msg(f'Test mode enabled. No data will be produced.', True)
-
-        # init the return value
-        ret_val = True
 
         try:
             # get the list of files in the directory
             compendia: list = self.get_compendia()
 
-            # for each file validate and process
-            for comp in compendia:
-                # check the validity of the file
-                if self.validate_compendia(comp):
-                    # try to load the file
-                    if not self.load_compendium(comp):
-                        self.print_debug_msg(f'Compendia file {comp} did not load.', True)
+            # did we get all the files
+            if len(compendia) == len(self._data_files):
+                # for each file validate and process
+                for comp in compendia:
+                    # check the validity of the file
+                    if self.validate_compendia(comp):
+                        # try to load the file
+                        if not self.load_compendium(comp, block_size):
+                            self.print_debug_msg(f'Compendia file {comp} did not load.', True)
+                            continue
+                    else:
+                        self.print_debug_msg(f'Compendia file {comp} is invalid.', True)
                         continue
-                else:
-                    self.print_debug_msg(f'Compendia file {comp} is invalid.', True)
-                    continue
 
-            # get the connection and pipeline to the database
-            types_prefixes_redis: redis.Redis = self.get_redis(2)
-            types_prefixes_pipeline = types_prefixes_redis.pipeline()
+                # get the connection and pipeline to the database
+                types_prefixes_redis: redis.Redis = self.get_redis(2)
+                types_prefixes_pipeline = types_prefixes_redis.pipeline()
 
-            # create a command to get the current semantic types
-            types_prefixes_pipeline.lrange('semantic_types', 0, -1)
+                # create a command to get the current semantic types
+                types_prefixes_pipeline.lrange('semantic_types', 0, -1)
 
-            # get the current list of semantic types
-            vals = types_prefixes_pipeline.execute()
+                # get the current list of semantic types
+                vals = types_prefixes_pipeline.execute()
 
-            # get the values and insure they are strings
-            current_types: set = set(x.decode("utf-8") for x in vals[0])
+                # get the values and insure they are strings
+                current_types: set = set(x.decode("utf-8") for x in vals[0])
 
-            # remove any dupes
-            self.semantic_types = self.semantic_types.difference(current_types)
+                # remove any dupes
+                self.semantic_types = self.semantic_types.difference(current_types)
 
-            if len(self.semantic_types) > 0:
-                # add all the semantic types
-                types_prefixes_pipeline.lpush('semantic_types', *self.semantic_types)
+                if len(self.semantic_types) > 0:
+                    # add all the semantic types
+                    types_prefixes_pipeline.lpush('semantic_types', *self.semantic_types)
 
-            # for each semantic type insert the list of source prefixes
-            for item in self.source_prefixes:
-                types_prefixes_pipeline.set(item, json.dumps(self.source_prefixes[item]))
+                # for each semantic type insert the list of source prefixes
+                for item in self.source_prefixes:
+                    types_prefixes_pipeline.set(item, json.dumps(self.source_prefixes[item]))
 
-            if self._test_mode != 1:
-                # add the data to redis
-                types_prefixes_pipeline.execute()
-
+                if self._test_mode != 1:
+                    # add the data to redis
+                    types_prefixes_pipeline.execute()
+            else:
+                self.print_debug_msg(f'Error: 1 or more data files were incorrect', True)
         except Exception as e:
             self.print_debug_msg(f'Exception thrown in load(): {e}', True)
             ret_val = False
@@ -127,14 +131,28 @@ class NodeNormalization:
         return True
 
     def get_compendia(self):
-        """Return the list of compendum files to load"""
-        return [os.path.join(self._compendium_directory, file_name) for file_name in os.listdir(self._compendium_directory)]
+        """Return the list of compendium files to load"""
+        ret_val = []
+
+        filenames = os.listdir(self._compendium_directory)
+
+        files_found = 0
+
+        if len(filenames) == len(self._data_files):
+            for file_name in filenames:
+                if file_name in self._data_files:
+                    files_found += 1
+
+            if files_found == len(self._data_files):
+                ret_val = [os.path.join(self._compendium_directory, file_name) for file_name in filenames]
+
+        return ret_val
 
     def get_redis(self, dbid):
         """Return a redis instance"""
         return redis.StrictRedis(host=self._redis_host, port=self._redis_port, db=dbid, password=self._redis_password)
 
-    def load_compendium(self, compendium_filename: str) -> bool:
+    def load_compendium(self, compendium_filename: str, block_size: int) -> bool:
         """Given the full path to a compendium, load it into redis so that it can
         be read by R3.  We also load extra keys, which are the upper-cased
         identifiers, for ease of use"""
@@ -192,12 +210,14 @@ class NodeNormalization:
 
                         id2instance_pipeline.set(identifier, line)
 
-                if self._test_mode != 1:
-                    print(f'Dumping to term2id db ...')
-                    term2id_pipeline.execute()
+                    if self._test_mode != 1 and line_counter % block_size == 0:
+                        term2id_pipeline.execute()
+                        id2instance_pipeline.execute()
+                        self.print_debug_msg(f'{line_counter} {compendium_filename} lines processed.', True)
 
-                    print(f'Dumping to id2instance db ...')
-                    id2instance_pipeline.execute()
+                term2id_pipeline.execute()
+                id2instance_pipeline.execute()
+                self.print_debug_msg(f'{line_counter} {compendium_filename} total lines processed.', True)
 
                 print(f'Done loading {compendium_filename}...')
         except Exception as e:
