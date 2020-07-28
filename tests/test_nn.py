@@ -7,7 +7,7 @@ def test_nn_load():
 
     nn._test_mode = 1
 
-    assert(nn.load_compendium("./tests/datafile.json"))
+    assert(nn.load_compendium("./tests/datafile.json"), 5)
 
 def test_nn_record_validation():
     nn: NodeNormalization = NodeNormalization()
