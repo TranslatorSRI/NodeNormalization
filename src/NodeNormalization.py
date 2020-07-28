@@ -216,9 +216,10 @@ class NodeNormalization:
                         id2instance_pipeline.execute()
                         self.print_debug_msg(f'{line_counter} {compendium_filename} lines processed.', True)
 
-                term2id_pipeline.execute()
-                id2instance_pipeline.execute()
-                self.print_debug_msg(f'{line_counter} {compendium_filename} total lines processed.', True)
+                if self._test_mode != 1:
+                    term2id_pipeline.execute()
+                    id2instance_pipeline.execute()
+                    self.print_debug_msg(f'{line_counter} {compendium_filename} total lines processed.', True)
 
                 print(f'Done loading {compendium_filename}...')
         except Exception as e:
