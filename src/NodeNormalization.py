@@ -32,9 +32,10 @@ class NodeNormalization:
         self._test_mode: int = self._config['test_mode']
         self._data_files: list = self._config['data_files'].split(',')
 
-        if not test_mode:
-            with open('./src/valid_data_format.json') as json_file:
-                self._validate_with = json.load(json_file)
+        this_dir = os.path.dirname(os.path.realpath(__file__))
+
+        with open(os.path.join(this_dir, 'valid_data_format.json')) as json_file:
+            self._validate_with = json.load(json_file)
 
         pass
 
