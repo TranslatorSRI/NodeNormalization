@@ -4,6 +4,6 @@
     "redis_port": 0,
     "redis_password": "",
     "data_files": "anatomy.txt,biological_process.txt,cell.txt,cellular_component.txt,chemconc.txt,disease.txt,gene_compendium.txt,gene_family_compendium.txt,molecular_activity.txt,pathways.txt,phenotypes.txt,taxon_compendium.txt",
-    "test_mode": 0,
+    "test_mode": 1,
     "debug_messages": 0
 }   
