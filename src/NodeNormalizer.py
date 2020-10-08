@@ -7,14 +7,14 @@ from datetime import datetime
 
 
 ##############
-# Class: NodeNormalization
+# Class: NodeNormalizer
 #
 # By: Yaphete Kebede
 # Date: 1/2020
 # Desc: Class that gets all node definitions from a series of flat files
 #       and produces Translator compliant nodes which are then loaded into a redis database.
 ##############
-class NodeNormalization:
+class NodeNormalizer:
     # storage for the semantic types and source prefixes
     semantic_types: set = set()
     source_prefixes: dict = {}
@@ -54,7 +54,7 @@ class NodeNormalization:
         redis instance so that it can be read by R3"""
 
         # init the return value
-        ret_val = False
+        ret_val = True
 
         if self._test_mode == 1:
             self.print_debug_msg(f'Test mode enabled. No data will be produced.', True)

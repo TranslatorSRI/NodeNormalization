@@ -1,4 +1,4 @@
-from src.NodeNormalization import NodeNormalization
+from src.NodeNormalizer import NodeNormalization
 import os
 import pytest
 

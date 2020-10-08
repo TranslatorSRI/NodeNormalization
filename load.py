@@ -1,15 +1,19 @@
-from src.NodeNormalization import NodeNormalization
+from src.NodeNormalizer import NodeNormalizer
 
 
-if __name__ == '__main__':
+def load_redis():
     # instantiate the class that does all the work
-    nn = NodeNormalization()
+    normalizer = NodeNormalizer()
 
     # call to load redis instances with normalized node data
-    success: bool = nn.load(500000)
+    success: bool = normalizer.load(500000)
 
     # check the return
     if not success:
-        nn.print_debug_msg(f'Failed to load node normalization data.', True)
+        normalizer.print_debug_msg(f'Failed to load node normalization data.', True)
     else:
-        nn.print_debug_msg(f'Success', True)
+        normalizer.print_debug_msg(f'Success', True)
+
+
+if __name__ == '__main__':
+    load_redis()

@@ -2,13 +2,13 @@
 from setuptools import setup
 
 setup(
-    name='r3',
+    name='NodeNormalization',
     version='1.0.0',
     author='Patrick Wang',
     author_email='patrick@covar.com',
     url='https://github.com/patrickkwang/r3',
-    description='Redis-REST with referencing',
-    packages=['r3'],
+    description='Takes a CURIE and returns the preferred CURIE for this entity',
+    packages=[],
     include_package_data=True,
     zip_safe=False,
     license='MIT',
