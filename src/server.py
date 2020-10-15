@@ -15,6 +15,10 @@ app.blueprint(apidocs_blueprint)
 
 normalizer = NodeNormalizer()
 
+# This might get complicated with kubernetes, if so change back to
+# redis_host = os.environ.get('REDIS_HOST', 'localhost')
+# redis_port = os.environ.get('REDIS_PORT', 6379)
+
 redis_host = os.environ.get('REDIS_HOST', normalizer.get_config()['redis_host'])
 redis_port = os.environ.get('REDIS_PORT', normalizer.get_config()['redis_port'])
 

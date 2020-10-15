@@ -90,3 +90,10 @@ After the proper configuration run
     $ python main.py
 
 Then navigate to http://localhost:6380/apidocs/
+
+
+### Docker-compose
+
+As an alternative to running redis and the app indepedently, a docker-compose file is included:
+
+    $ docker-compose up

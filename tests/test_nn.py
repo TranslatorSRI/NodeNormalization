@@ -1,9 +1,10 @@
-from src.NodeNormalizer import NodeNormalization
+from src.NodeNormalizer import NodeNormalizer
 import os
 import pytest
 
+
 def test_nn_load():
-    nn: NodeNormalization = NodeNormalization(True)
+    nn: NodeNormalizer = NodeNormalizer(True)
 
     this_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -11,8 +12,9 @@ def test_nn_load():
 
     assert(nn.load_compendium(os.path.join(this_dir, "datafile.json"), 5))
 
+
 def test_nn_record_validation():
-    nn: NodeNormalization = NodeNormalization(True)
+    nn: NodeNormalizer = NodeNormalizer(True)
 
     this_dir = os.path.dirname(os.path.realpath(__file__))
 

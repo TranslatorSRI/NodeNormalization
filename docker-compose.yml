@@ -1,0 +1,22 @@
+version: "3"
+services:
+  redis:
+    container_name: redis
+    image: redis
+    restart: "unless-stopped"
+    ports:
+      - "6379:6379"
+        
+  node_normalizer:
+    container_name: node_normalizer
+    image: node_normalizer
+    build: .
+    ports:
+      - "6380:6380"
+    volumes:
+      - "./config:/home/murphy/config"
+      - "./data:/home/murphy/data"
+    depends_on:
+      - "redis"
+    restart: "unless-stopped"
+    command: "/bin/sh -c 'python /home/murphy/load.py && python /home/murphy/main.py'"

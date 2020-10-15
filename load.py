@@ -11,6 +11,7 @@ def load_redis():
     # check the return
     if not success:
         normalizer.print_debug_msg(f'Failed to load node normalization data.', True)
+        exit(1)
     else:
         normalizer.print_debug_msg(f'Success', True)
 

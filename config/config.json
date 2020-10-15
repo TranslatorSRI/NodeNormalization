@@ -1,7 +1,7 @@
 {
-    "compendium_directory": "./compendia/",
-    "redis_host": "127.0.0.1",
-    "redis_port": 7000,
+    "compendium_directory": "/home/murphy/data/",
+    "redis_host": " redis",
+    "redis_port": 6379,
     "redis_password": "",
     "data_files": "anatomy.txt,biological_process.txt,cell.txt,cellular_component.txt,disease.txt,molecular_activity.txt,phenotypes.txt",
     "test_mode": 0,

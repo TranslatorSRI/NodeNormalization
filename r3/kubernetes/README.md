@@ -9,10 +9,3 @@ Export the following variables:
 Run 
     
     ./deploy
-
-    
-
-
-
-
- 
