@@ -42,7 +42,7 @@ class NodeNormalizer:
     @staticmethod
     def get_config() -> json:
         """ class constructor """
-        cname = os.path.join(os.path.dirname(__file__), '../config/', 'config.json')
+        cname = os.path.join(os.path.dirname(__file__), '..', 'config.json')
 
         with open(cname, 'r') as json_file:
             data = json.load(json_file)
@@ -106,7 +106,6 @@ class NodeNormalizer:
                     types_prefixes_pipeline.execute()
             else:
                 self.print_debug_msg(f'Error: 1 or more data files were incorrect', True)
-                ret_val = False
         except Exception as e:
             self.print_debug_msg(f'Exception thrown in load(): {e}', True)
             ret_val = False
@@ -135,24 +134,21 @@ class NodeNormalizer:
 
     def get_compendia(self):
         """Return the list of compendium files to load"""
-        file_list = []
+        ret_val = []
 
         filenames = os.listdir(self._compendium_directory)
 
         files_found = 0
 
-        if len(filenames) >= len(self._data_files):
+        if len(filenames) == len(self._data_files):
             for file_name in filenames:
                 if file_name in self._data_files:
                     files_found += 1
 
-            if files_found >= len(self._data_files):
-                file_list = [os.path.join(self._compendium_directory, file_name) for file_name in self._data_files]
-        else:
-            self.print_debug_msg(f'DEBUG: files found: {filenames}')
-            self.print_debug_msg(f'DEBUG: file list: {file_list}')
+            if files_found == len(self._data_files):
+                ret_val = [os.path.join(self._compendium_directory, file_name) for file_name in filenames]
 
-        return file_list
+        return ret_val
 
     def get_redis(self, dbid):
         """Return a redis instance"""
