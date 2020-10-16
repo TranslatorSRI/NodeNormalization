@@ -70,7 +70,7 @@ After the proper configuration run
 ### Kubernetes configurations
     kubernetes configurations and helm charts for this project can be found at: 
     
-    note: the helm charts for edge normalization are also shared with node normalization
+    note: the helm charts for node normalization are also shared with edge normalization
     
     https://github.com/helxplatform/translator-devops/helm/edge-normalization
     
