@@ -41,6 +41,10 @@ To run both Redis database and REST interface, a docker-compose file is provided
 ```bash
 docker-compose up
 ```
+### Kubernetes configurations
+    kubernetes configurations and helm charts for this project can be found at: 
+    
+    https://github.com/helxplatform/translator-devops/helm/r3
 
 ## Usage
 
