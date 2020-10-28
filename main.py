@@ -2,7 +2,7 @@
 
 """Run Redis-REST with referencing."""
 import argparse
-from src.server import app
+from node_normalizer.sanic import app
 
 
 parser = argparse.ArgumentParser(description='Start REST interface for Redis.')

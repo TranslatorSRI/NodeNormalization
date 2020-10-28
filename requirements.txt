@@ -1,4 +1,7 @@
 redis
+fastapi
+git+https://github.com/ranking-agent/reasoner-pydantic#egg=reasoner-pydantic
+uvicorn
 jsonschema
 pytest==5.3.5
 pytest-cov==2.8.1

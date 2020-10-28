@@ -7,14 +7,14 @@ from datetime import datetime
 
 
 ##############
-# Class: NodeNormalizer
+# Class: NodeLoader
 #
 # By: Yaphete Kebede
 # Date: 1/2020
 # Desc: Class that gets all node definitions from a series of flat files
 #       and produces Translator compliant nodes which are then loaded into a redis database.
 ##############
-class NodeNormalizer:
+class NodeLoader:
     # storage for the semantic types and source prefixes
     semantic_types: set = set()
     source_prefixes: dict = {}
@@ -106,6 +106,7 @@ class NodeNormalizer:
                     types_prefixes_pipeline.execute()
             else:
                 self.print_debug_msg(f'Error: 1 or more data files were incorrect', True)
+                ret_val = False
         except Exception as e:
             self.print_debug_msg(f'Exception thrown in load(): {e}', True)
             ret_val = False
@@ -134,21 +135,24 @@ class NodeNormalizer:
 
     def get_compendia(self):
         """Return the list of compendium files to load"""
-        ret_val = []
+        file_list = []
 
         filenames = os.listdir(self._compendium_directory)
 
         files_found = 0
 
-        if len(filenames) == len(self._data_files):
+        if len(filenames) >= len(self._data_files):
             for file_name in filenames:
                 if file_name in self._data_files:
                     files_found += 1
 
-            if files_found == len(self._data_files):
-                ret_val = [os.path.join(self._compendium_directory, file_name) for file_name in filenames]
+            if files_found >= len(self._data_files):
+                file_list = [os.path.join(self._compendium_directory, file_name) for file_name in self._data_files]
+        else:
+            self.print_debug_msg(f'DEBUG: files found: {filenames}')
+            self.print_debug_msg(f'DEBUG: file list: {file_list}')
 
-        return ret_val
+        return file_list
 
     def get_redis(self, dbid):
         """Return a redis instance"""

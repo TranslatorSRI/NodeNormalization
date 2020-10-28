@@ -1,4 +1,4 @@
-from src.server import app
+from node_normalizer.sanic import app
 
 
 def test_semantic_type_endpoint():

@@ -53,7 +53,7 @@ https://files.renci.org/outgoing/Babel-compendia/
 
 Running redis via docker: https://hub.docker.com/_/redis with a port mappings, such as
 
-    docker run --name node-norm -p 7000:6379 -d redis redis-server --appendonly yes
+    docker run --name node-norm -p 6379:6379 -d redis redis-server --appendonly yes
 
 
 ### Starting redis server 
@@ -90,3 +90,10 @@ After the proper configuration run
     $ python main.py
 
 Then navigate to http://localhost:6380/apidocs/
+
+
+### Starting the fastapi server
+```
+pip install -r requirements.txt
+uvicorn node_normalizer.server:app --reload --port 8000
+```
