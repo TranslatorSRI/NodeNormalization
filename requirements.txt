@@ -10,3 +10,4 @@ jinja2
 sanic==19.12.2
 swagger_ui_bundle
 pyyaml
+git+git://github.com/NCATS-Tangerine/kgx@master

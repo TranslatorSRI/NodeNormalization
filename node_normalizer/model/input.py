@@ -23,7 +23,7 @@ class CurieList(BaseModel):
         }
 
 
-class SemanticTypes(BaseModel):
+class SemanticTypesInput(BaseModel):
     """Semantic type input model"""
 
     semantic_types: List[str] = Field(

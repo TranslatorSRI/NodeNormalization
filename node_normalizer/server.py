@@ -5,11 +5,12 @@ from typing import List, Optional, Dict
 
 import aioredis
 from fastapi import FastAPI, HTTPException, Query
+from reasoner_pydantic import KnowledgeGraph
+from kgx.transformers.rsa_transformer import RsaTransformer
 
 from .loader import NodeLoader
 from .apidocs import app_info
-from .model.response import SemanticTypes, CuriePivot
-from .model.input import CurieList, SemanticTypes
+from .model import SemanticTypes, CuriePivot, CurieList, SemanticTypesInput
 from .normalizer import get_normalized_nodes, get_curie_prefixes
 
 # Some metadata not implemented see
@@ -48,6 +49,25 @@ async def shutdown_event():
     await app.redis_connection2.wait_closed()
 
 
+@app.post(
+    '/knowledge_graph',
+    summary='Normalizes a TRAPI compliant knowledge graph',
+    description='Returns the knowledge graph with merged nodes and edges'
+)
+async def normalize_kgraph(kgraph: KnowledgeGraph) -> KnowledgeGraph:
+    """
+    Normalizes a TRAPI compliant knowledge graph
+    """
+    graph =  {
+        'knowledge_graph': kgraph.dict()
+    }
+    # As a test round trip through KGX, fails with
+    # raise KeyError("edge does not have 'edge_label'
+    biolinkified = RsaTransformer()
+    biolinkified.load(graph)
+    return kgraph
+
+
 @app.get(
     '/get_normalized_nodes',
     summary='Get the equivalent identifiers and semantic types for the curie(s) entered.',
@@ -74,7 +94,6 @@ async def get_normalized_node_handler(curies: CurieList):
     """
     Get value(s) for key(s) using redis MGET
     """
-    print(curies)
     normalized_nodes = await get_normalized_nodes(app, curies.curies)
 
     if not normalized_nodes:
@@ -128,6 +147,6 @@ async def get_curie_prefixes_handler(
     summary='Return the number of times each CURIE prefix appears in an equivalent identifier for a semantic type',
     description='Returns the curies and their hit count for a semantic type(s).'
 )
-async def get_curie_prefixes_handler(semantic_types: SemanticTypes) -> Dict[str, CuriePivot]:
+async def get_curie_prefixes_handler(semantic_types: SemanticTypesInput) -> Dict[str, CuriePivot]:
 
     return await get_curie_prefixes(app, semantic_types.semantic_types)
