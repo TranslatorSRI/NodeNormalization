@@ -9,6 +9,8 @@ from fastapi import FastAPI, HTTPException, Query
 from .loader import NodeLoader
 from .apidocs import app_info
 from .model.response import SemanticTypes, CuriePivot
+from .model.input import CurieList, SemanticTypes
+from .normalizer import get_normalized_nodes, get_curie_prefixes
 
 # Some metadata not implemented see
 # https://github.com/tiangolo/fastapi/pull/1812
@@ -55,18 +57,30 @@ async def get_normalized_node_handler(curie: List[str] = Query(['MESH:D014867', 
     """
     Get value(s) for key(s) using redis MGET
     """
-    references = await app.state.redis_connection0.mget(*curie, encoding='utf-8')
-    references_nonnan = [reference for reference in references if reference is not None]
-    if not references_nonnan:
-        raise HTTPException(detail='No matches found for the specified curie(s).', status_code=404)
-    values = await app.state.redis_connection1.mget(*references_nonnan, encoding='utf-8')
-    values = [json.loads(value) if value is not None else None for value in values]
-    dereference = dict(zip(references_nonnan, values))
+    normalized_nodes = await get_normalized_nodes(app, curie)
 
-    return {
-        key: dereference[reference] if reference is not None else None
-        for key, reference in zip(curie, references)
-    }
+    if not normalized_nodes:
+        raise HTTPException(detail='No matches found for the specified curie(s).', status_code=404)
+
+    return normalized_nodes
+
+
+@app.post(
+    '/get_normalized_nodes',
+    summary='Get the equivalent identifiers and semantic types for the curie(s) entered.',
+    description='Returns the equivalent identifiers and semantic types for the curie(s)'
+)
+async def get_normalized_node_handler(curies: CurieList):
+    """
+    Get value(s) for key(s) using redis MGET
+    """
+    print(curies)
+    normalized_nodes = await get_normalized_nodes(app, curies.curies)
+
+    if not normalized_nodes:
+        raise HTTPException(detail='No matches found for the specified curie(s).', status_code=404)
+
+    return normalized_nodes
 
 
 @app.get(
@@ -100,41 +114,20 @@ async def get_semantic_types_handler() -> SemanticTypes:
 )
 async def get_curie_prefixes_handler(
         semantic_type: Optional[List[str]] = Query(
-            None,
+            [],
             description="e.g. chemical_substance, anatomical_entity"
         )
 ) -> Dict[str, CuriePivot]:
-    # storage for the returned data
-    ret_val: dict = {}
 
-    # was an arg passed in
-    if semantic_type:
-        for item in semantic_type:
-            # get the curies for this type
-            curies = await app.state.redis_connection2.get(item, encoding='utf-8')
+    return await get_curie_prefixes(app, semantic_type)
 
-            # did we get any data
-            if not curies:
-                curies = '{' + f'"{item}"' + ': "Not found"}'
 
-            curies = json.loads(curies)
+@app.post(
+    '/get_curie_prefixes',
+    response_model=Dict[str, CuriePivot],
+    summary='Return the number of times each CURIE prefix appears in an equivalent identifier for a semantic type',
+    description='Returns the curies and their hit count for a semantic type(s).'
+)
+async def get_curie_prefixes_handler(semantic_types: SemanticTypes) -> Dict[str, CuriePivot]:
 
-            # set the return data
-            ret_val[item] = {'curie_prefix': curies}
-    else:
-        types = await app.state.redis_connection2.lrange('semantic_types', 0, -1, encoding='utf-8')
-
-        for item in types:
-            # get the curies for this type
-            curies = await app.state.redis_connection2.get(item, encoding='utf-8')
-
-            # did we get any data
-            if not curies:
-                curies = '{' + f'"{item}"' + ': "Not found"}'
-
-            curies = json.loads(curies)
-
-            # set the return data
-            ret_val[item] = {'curie_prefix': curies}
-
-    return ret_val
+    return await get_curie_prefixes(app, semantic_types.semantic_types)

@@ -23,5 +23,6 @@ class SemanticTypes(BaseModel):
             }
         }
 
+
 class CuriePivot(BaseModel):
     curie_prefix: Dict[str, str]
