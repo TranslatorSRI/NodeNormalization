@@ -1,4 +1,6 @@
 info:
+  title: Node Normalization
+  version: 1.0.1
   contact:
     email: kebedey@renci.org
   description: 'Node normalization takes a CURIE, and returns: <ol> <li>The preferred
@@ -14,8 +16,6 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
   termsOfService: http://robokop.renci.org:7055/tos?service_long=Redis-REST+with+Referencing&provider_long=the+Translator+Consortium
-  title: Node Normalization
-  version: 1.0.1
 openapi: 3.0.2
 paths:
   /get_curie_prefixes:

@@ -1,13 +1,17 @@
-from node_normalizer.sanic import app
+"""Test node_normalizer server.py"""
+import json
+from node_normalizer.server import app
+from starlette.testclient import TestClient
+from pathlib import Path
 
 
-def test_semantic_type_endpoint():
-    pass
+class TestServer():
 
+    @classmethod
+    def setup_class(self):
+        app.testing = True
+        self.test_client = TestClient(app)
 
-def test_curie_prefixes_endpoint():
-    pass
-
-
-def test_normalized_nodes_endpoint():
-    pass
+    @classmethod
+    def teardown_class(self):
+        self.test_client = None
