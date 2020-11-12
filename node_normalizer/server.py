@@ -1,12 +1,10 @@
 """FastAPI server."""
-import json
 import os
 from typing import List, Optional, Dict
 
 import aioredis
 from fastapi import FastAPI, HTTPException, Query
 from reasoner_pydantic import KnowledgeGraph
-from kgx.transformers.rsa_transformer import RsaTransformer
 
 from .loader import NodeLoader
 from .apidocs import get_app_info

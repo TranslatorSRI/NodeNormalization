@@ -7,4 +7,3 @@ pytest==5.3.5
 pytest-cov==2.8.1
 aioredis
 pyyaml
-git+git://github.com/NCATS-Tangerine/kgx@master
