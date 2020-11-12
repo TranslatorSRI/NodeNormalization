@@ -1,48 +1,115 @@
 import json
-from typing import List, Dict, Optional, Any
-from aioredis import Redis
+from typing import List, Dict, Optional, Any, Union, Set, Tuple
 
 from fastapi import FastAPI
+from reasoner_pydantic import KnowledgeGraph
 
 
-def simple_normalize():
+async def normalize_kg(app: FastAPI, kgraph: KnowledgeGraph) -> Dict:
     """
-    The simple normalizer takes a knowledge graph as input,
-    and for each node converts the ID to the hash of the
-    equivalent list, and merges identical nodes and their
-    edges
+    Given a TRAPI knowledge graph creates a merged graph
+    by iterating over each node, getting the primary id,
+    and merging nodes and edges (as needed)
     """
+    # cache for primary node ids
+    primary_nodes_seen = set()
 
+    # cache for nodes
+    nodes_seen = set()
 
-def priority_normalize():
-    """
-    The priority normalizer takes a knowledge graph as input
-    and a namespace-semantic type priority map
-    and for each node picks a clique leader based on it's
-    namespace
+    # cache for source,relation,target tuples
+    edges_seen: Set[Tuple[str, str, str]] = set()
 
-    TO DO - handle cases where >1 nodes have the same ns
+    # Map for each id and its primary id
+    id_primary_id: Dict[str, str] = {}
 
-    alternatively this could come from kgx - see
-    https://github.com/biolink/kgx/issues/224
-    """
+    merged_kgraph: Dict = {
+        'nodes': [],
+        'edges': []
+    }
 
+    for node in kgraph.nodes:
+        if node.id in nodes_seen:
+            continue
+
+        nodes_seen.add(node.id)
+        id_primary_id[node.id] = node.id  # expected to overridden by primary id
+
+        merged_node = node.dict()
+
+        equivalent_curies = await get_equivalent_curies(app, node.id)
+
+        if node.id in equivalent_curies:
+            primary_id = equivalent_curies[node.id]['id']['identifier']
+            id_primary_id[node.id] = primary_id
+
+            if primary_id in primary_nodes_seen:
+                continue
+
+            primary_nodes_seen.add(primary_id)
+
+            if 'label' in equivalent_curies[node.id]['id']:
+                primary_label = equivalent_curies[node.id]['id']['label']
+            elif 'name' in merged_node:
+                primary_label = merged_node['name']
+            else:
+                primary_label = ''
+
+            merged_node['id'] = primary_id
+            merged_node['name'] = primary_label
+
+            if 'equivalent_identifiers' in equivalent_curies[node.id]:
+                merged_node['same_as'] = [
+                    node['identifier']
+                    for node in equivalent_curies[node.id]['equivalent_identifiers']
+                ]
+            if 'type' in equivalent_curies[node.id]:
+                merged_node['category'] = [
+                    'biolink:' + _to_upper_camel_case(category)
+                    for category in equivalent_curies[node.id]['type']
+                ]
+
+        merged_kgraph['nodes'].append(merged_node)
+
+    for edge in kgraph.edges:
+        triple = (
+            id_primary_id[edge.source_id],
+            edge.type,
+            id_primary_id[edge.target_id]
+        )
+        if triple in edges_seen:
+            continue
+
+        edges_seen.add(triple)
+        merged_edge = edge.dict()
+        merged_edge['source_id'] = id_primary_id[edge.source_id]
+        merged_edge['target_id'] = id_primary_id[edge.target_id]
+
+        merged_kgraph['edges'].append(merged_edge)
+
+    return merged_kgraph
 
 
 async def get_equivalent_curies(
-        redis_connection0: Redis,
-        redis_connection1: Redis,
-        curie: List[str]
-) -> List[str]:
+        app: FastAPI,
+        curie: str
+) -> Dict:
     """
-    Get equivalent curies using redis GET
+    Get primary id and equivalent curies using redis GET
+
+    Returns either an empty list or a list containing two
+    dicts with the format:
+    {
+      ${curie}: {'identifier': 'foo', 'label': bar},
+      'equivalent_identifiers': [{'identifier': 'foo', 'label': bar}, ...]
+    }
     """
     # Get the equivalent list primary key identifier
-    reference = await redis_connection0.get(curie, encoding='utf-8')
+    reference = await app.state.redis_connection0.get(curie, encoding='utf-8')
     if reference is None:
-        return []
-    value = await redis_connection1.get(reference, encoding='utf-8')
-    return json.loads(value) if value is not None else []
+        return {}
+    value = await app.state.redis_connection1.get(reference, encoding='utf-8')
+    return json.loads(value) if value is not None else {}
 
 
 async def get_normalized_nodes(app: FastAPI, curies: List[str]) -> Dict[str, Optional[str]]:
@@ -104,3 +171,10 @@ async def get_curie_prefixes(
             ret_val[item] = {'curie_prefix': curies}
 
     return ret_val
+
+
+def _to_upper_camel_case(snake_str):
+    """
+    credit https://stackoverflow.com/a/19053800
+    """
+    return ''.join(x.title() for x in snake_str.split('_'))

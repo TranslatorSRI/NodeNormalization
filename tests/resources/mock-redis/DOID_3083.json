@@ -1,0 +1,43 @@
+{
+  "DOID:3083": {
+    "id": {
+      "identifier": "MONDO:0005002",
+      "label": "chronic obstructive pulmonary disease"
+    },
+    "equivalent_identifiers": [
+      {
+        "identifier": "MONDO:0005002",
+        "label": "chronic obstructive pulmonary disease"
+      },
+      {
+        "identifier": "DOID:3083"
+      },
+      {
+        "identifier": "EFO:0000341",
+        "label": "chronic obstructive pulmonary disease"
+      },
+      {
+        "identifier": "UMLS:C0024117"
+      },
+      {
+        "identifier": "MESH:D029424"
+      },
+      {
+        "identifier": "NCIT:C3199"
+      },
+      {
+        "identifier": "SNOMEDCT:13645005"
+      },
+      {
+        "identifier": "HP:0006510",
+        "label": "Chronic pulmonary obstruction"
+      }
+    ],
+    "type": [
+      "disease",
+      "named_thing",
+      "biological_entity",
+      "disease_or_phenotypic_feature"
+    ]
+  }
+}

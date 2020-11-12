@@ -1,0 +1,76 @@
+{
+  "nodes": [
+    {
+      "id": "HGNC:11603",
+      "name": "TBX4",
+      "type": [
+        "biolink:Gene"
+      ]
+    },
+    {
+      "id": "NCBIGene:9496",
+      "name": "T-box transcription factor 4",
+      "type": [
+        "biolink:Gene"
+      ]
+    },
+    {
+      "id": "MONDO:0005002",
+      "name": "chronic obstructive pulmonary disease",
+      "type": [
+        "biolink:Disease"
+      ]
+    },
+    {
+      "id": "DOID:3083",
+      "name": "chronic obstructive pulmonary disease",
+      "type": [
+        "biolink:Disease"
+      ]
+    },
+    {
+      "id": "OMIM:613355",
+      "name": "CHROMOSOME 17q23.1-q23.2 DELETION SYNDROME",
+      "type": [
+        "biolink:Disease"
+      ]
+    },
+    {
+      "id": "UMLS:CN202575",
+      "name": "heritable pulmonary arterial hypertension",
+      "type": [
+        "biolink:Disease"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "a8575c4e-61a6-428a-bf09-fcb3e8d1644d",
+      "source_id": "HGNC:11603",
+      "target_id": "MONDO:0005002",
+      "type": "biolink:related_to",
+      "relation": "RO:0003304"
+    },
+    {
+      "id": "b4971c4e-61a6-428a-bf09-fcb31234gfbs",
+      "source_id": "NCBIGene:9496",
+      "target_id": "DOID:3083",
+      "type": "biolink:related_to",
+      "relation": "RO:0003304"
+    },
+    {
+      "id": "2d38345a-e9bf-4943-accb-dccba351dd04",
+      "source_id": "NCBIGene:9496",
+      "target_id": "OMIM:613355",
+      "type": "biolink:related_to",
+      "relation": "RO:0003304"
+    },
+    {
+      "id": "044a7916-fba9-4b4f-ae48-f0815b0b222d",
+      "source_id": "HGNC:11603",
+      "target_id": "UMLS:CN202575",
+      "type": "biolink:related_to",
+      "relation": "RO:0004013"
+    }
+  ]
+}

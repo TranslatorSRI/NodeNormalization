@@ -1,0 +1,38 @@
+{
+  "OMIM:613355": {
+    "id": {
+      "identifier": "MONDO:0013238",
+      "label": "chromosome 17q23.1-q23.2 deletion syndrome"
+    },
+    "equivalent_identifiers": [
+      {
+        "identifier": "MONDO:0013238",
+        "label": "chromosome 17q23.1-q23.2 deletion syndrome"
+      },
+      {
+        "identifier": "DOID:0060405"
+      },
+      {
+        "identifier": "OMIM:613355"
+      },
+      {
+        "identifier": "ORPHANET:261279"
+      },
+      {
+        "identifier": "UMLS:C3150607"
+      },
+      {
+        "identifier": "UMLS:C4304591"
+      },
+      {
+        "identifier": "SNOMEDCT:719584008"
+      }
+    ],
+    "type": [
+      "disease",
+      "named_thing",
+      "biological_entity",
+      "disease_or_phenotypic_feature"
+    ]
+  }
+}

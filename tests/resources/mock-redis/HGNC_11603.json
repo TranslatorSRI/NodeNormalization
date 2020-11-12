@@ -1,0 +1,32 @@
+{
+  "HGNC:11603": {
+    "id": {
+      "identifier": "NCBIGene:9496",
+      "label": "TBX4"
+    },
+    "equivalent_identifiers": [
+      {
+        "identifier": "NCBIGene:9496"
+      },
+      {
+        "identifier": "ENSEMBL:ENSG00000121075"
+      },
+      {
+        "identifier": "HGNC:11603",
+        "label": "TBX4"
+      },
+      {
+        "identifier": "UniProtKB:P57082"
+      }
+    ],
+    "type": [
+      "gene",
+      "named_thing",
+      "biological_entity",
+      "molecular_entity",
+      "genomic_entity",
+      "macromolecular_machine",
+      "gene_or_gene_product"
+    ]
+  }
+}

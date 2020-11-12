@@ -11,7 +11,7 @@ from kgx.transformers.rsa_transformer import RsaTransformer
 from .loader import NodeLoader
 from .apidocs import get_app_info
 from .model import SemanticTypes, CuriePivot, CurieList, SemanticTypesInput
-from .normalizer import get_normalized_nodes, get_curie_prefixes
+from .normalizer import get_normalized_nodes, get_curie_prefixes, normalize_kg
 
 # Some metadata not implemented see
 # https://github.com/tiangolo/fastapi/pull/1812
@@ -42,11 +42,11 @@ async def shutdown_event():
     Shut down Redis connection
     """
     app.state.redis_connection0.close()
-    await app.redis_connection0.wait_closed()
+    await app.state.redis_connection0.wait_closed()
     app.state.redis_connection1.close()
-    await app.redis_connection1.wait_closed()
+    await app.state.redis_connection1.wait_closed()
     app.state.redis_connection2.close()
-    await app.redis_connection2.wait_closed()
+    await app.state.redis_connection2.wait_closed()
 
 
 @app.post(
@@ -58,15 +58,7 @@ async def normalize_kgraph(kgraph: KnowledgeGraph) -> KnowledgeGraph:
     """
     Normalizes a TRAPI compliant knowledge graph
     """
-    graph = {
-        'knowledge_graph': kgraph.dict()
-    }
-    # As a test round trip through KGX, fails with
-    # raise KeyError("edge does not have 'edge_label'
-    biolinkified = RsaTransformer()
-    biolinkified.load(graph)
-
-    return kgraph
+    return KnowledgeGraph.parse_obj(await normalize_kg(app, kgraph))
 
 
 @app.get(
