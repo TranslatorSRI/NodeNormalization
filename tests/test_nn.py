@@ -10,7 +10,7 @@ bad_json = Path(__file__).parent / 'resources' / 'datafile_with_errors.json'
 
 
 def test_nn_load():
-    node_loader: NodeLoader = NodeLoader(True)
+    node_loader: NodeLoader = NodeLoader()
 
     node_loader._test_mode = 1
 
@@ -18,7 +18,7 @@ def test_nn_load():
 
 
 def test_nn_record_validation():
-    node_loader: NodeLoader = NodeLoader(True)
+    node_loader: NodeLoader = NodeLoader()
 
     ret_val = node_loader.validate_compendia(good_json)
 
