@@ -92,3 +92,9 @@ uvicorn node_normalizer.server:app --reload --port 8000
 ```
 
 Then navigate to http://localhost:8000/docs
+
+### Kubernetes configurations
+    kubernetes configurations and helm charts for this project can be found at: 
+
+    https://github.com/helxplatform/translator-devops/helm/r3
+  
