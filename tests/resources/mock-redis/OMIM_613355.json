@@ -29,10 +29,10 @@
       }
     ],
     "type": [
-      "disease",
-      "named_thing",
-      "biological_entity",
-      "disease_or_phenotypic_feature"
+      "biolink:Disease",
+      "biolink:NamedThing",
+      "biolink:BiologicalEntity",
+      "biolink:DiseaseOrPhenotypicFeature"
     ]
   }
 }

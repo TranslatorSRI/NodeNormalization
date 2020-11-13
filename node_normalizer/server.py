@@ -9,8 +9,7 @@ from reasoner_pydantic import KnowledgeGraph
 from .loader import NodeLoader
 from .apidocs import get_app_info
 from .model import SemanticTypes, CuriePivot, CurieList, SemanticTypesInput
-from .normalizer import get_normalized_nodes, get_curie_prefixes,\
-    normalize_kg, to_upper_camel_case
+from .normalizer import get_normalized_nodes, get_curie_prefixes, normalize_kg
 
 # Some metadata not implemented see
 # https://github.com/tiangolo/fastapi/pull/1812
@@ -112,11 +111,7 @@ async def get_semantic_types_handler() -> SemanticTypes:
     # https://github.com/TranslatorSRI/NodeNormalization/issues/29
     ret_val = SemanticTypes(
         semantic_types= {
-            'types': [
-                'biolink:' + to_upper_camel_case(typ)
-                if not typ.startswith('biolink') else typ
-                for typ in types
-            ]
+            'types': types
         }
     )
 

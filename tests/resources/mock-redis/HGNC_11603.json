@@ -20,13 +20,13 @@
       }
     ],
     "type": [
-      "gene",
-      "named_thing",
-      "biological_entity",
-      "molecular_entity",
-      "genomic_entity",
-      "macromolecular_machine",
-      "gene_or_gene_product"
+      "biolink:Gene",
+      "biolink:NamedThing",
+      "biolink:BiologicalEntity",
+      "biolink:MolecularEntity",
+      "biolink:GenomicEntity",
+      "biolink:MacromolecularMachine",
+      "biolink:GeneOrGeneProduct"
     ]
   }
 }

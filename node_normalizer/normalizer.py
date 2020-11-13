@@ -66,11 +66,7 @@ async def normalize_kg(app: FastAPI, kgraph: KnowledgeGraph) -> Dict:
             if 'type' in equivalent_curies[node.id]:
                 # Set the type from babel as the node category?
                 # TODO not sure if this is right
-                merged_node['category'] = [
-                    'biolink:' + to_upper_camel_case(category)
-                    if not category.startswith('biolink') else category
-                    for category in equivalent_curies[node.id]['type']
-                ]
+                merged_node['category'] = equivalent_curies[node.id]['type']
 
         merged_kgraph['nodes'].append(merged_node)
 
@@ -125,16 +121,7 @@ async def get_equivalent_curies(
     if reference is None:
         return {}
     value = await app.state.redis_connection1.get(reference, encoding='utf-8')
-    eq_obj = json.loads(value) if value is not None else {}
-
-    # https://github.com/TranslatorSRI/NodeNormalization/issues/29
-    if 'type' in eq_obj:
-        eq_obj['type'] = [
-            'biolink:' + to_upper_camel_case(category)
-            if not category.startswith('biolink') else category
-            for category in eq_obj['type']
-        ]
-    return eq_obj
+    return json.loads(value) if value is not None else {}
 
 
 async def get_normalized_nodes(app: FastAPI, curies: List[str]) -> Dict[str, Optional[str]]:
@@ -152,14 +139,6 @@ async def get_normalized_nodes(app: FastAPI, curies: List[str]) -> Dict[str, Opt
             key: dereference[reference] if reference is not None else None
             for key, reference in zip(curies, references)
         }
-
-    for curie, eq_obj in normal_nodes.items():
-        if eq_obj and 'type' in eq_obj:
-            eq_obj['type'] = [
-                'biolink:' + to_upper_camel_case(category)
-                if not category.startswith('biolink') else category
-                for category in eq_obj['type']
-            ]
 
     return normal_nodes
 
@@ -204,10 +183,3 @@ async def get_curie_prefixes(
             ret_val[item] = {'curie_prefix': curies}
 
     return ret_val
-
-
-def to_upper_camel_case(snake_str):
-    """
-    credit https://stackoverflow.com/a/19053800
-    """
-    return ''.join(x.title() for x in snake_str.split('_'))
