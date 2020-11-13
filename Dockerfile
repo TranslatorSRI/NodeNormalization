@@ -18,11 +18,11 @@ RUN pip install -r /home/murphy/requirements.txt --src /usr/local/src
 # install library
 ADD ./r3 /home/murphy/r3
 ADD ./swagger_ui /home/murphy/swagger_ui
-ADD ./main.py /home/murphy/main.py
 ADD ./setup.py /home/murphy/setup.py
 ADD ./src /home/murphy/node_normalizer
 
 RUN pip install -e .
 
 # setup entrypoint
-ENTRYPOINT ["python", "/home/murphy/main.py"]
+# gunicorn, hypercorn also options https://fastapi.tiangolo.com/deployment/manually/
+ENTRYPOINT ["python", "uvicorn node_normalizer.server:app --app-dir /home/murphy/ --port 6380"]
