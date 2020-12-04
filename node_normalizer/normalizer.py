@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from reasoner_pydantic import KnowledgeGraph
 
 
-async def normalize_kg(app: FastAPI, kgraph: KnowledgeGraph) -> Dict:
+async def normalize_kgraph(app: FastAPI, kgraph: KnowledgeGraph) -> KnowledgeGraph:
     """
     Given a TRAPI knowledge graph creates a merged graph
     by iterating over each node, getting the primary id,
@@ -24,68 +24,85 @@ async def normalize_kg(app: FastAPI, kgraph: KnowledgeGraph) -> Dict:
     id_primary_id: Dict[str, str] = {}
 
     merged_kgraph: Dict = {
-        'nodes': [],
-        'edges': []
+        'nodes': {},
+        'edges': {}
     }
 
-    for node in kgraph.nodes:
-        if node.id in nodes_seen:
+    for node_id, node in kgraph.nodes.items():
+        if node_id in nodes_seen:
             continue
 
-        nodes_seen.add(node.id)
-        id_primary_id[node.id] = node.id  # expected to overridden by primary id
+        nodes_seen.add(node_id)
+        id_primary_id[node_id] = node_id  # expected to overridden by primary id
 
         merged_node = node.dict()
 
-        equivalent_curies = await get_equivalent_curies(app, node.id)
+        equivalent_curies = await get_equivalent_curies(app, node_id)
 
-        if node.id in equivalent_curies:
-            primary_id = equivalent_curies[node.id]['id']['identifier']
-            id_primary_id[node.id] = primary_id
+        if node_id in equivalent_curies:
+            primary_id = equivalent_curies[node_id]['id']['identifier']
+            id_primary_id[node_id] = primary_id
 
             if primary_id in primary_nodes_seen:
                 continue
 
             primary_nodes_seen.add(primary_id)
 
-            if 'label' in equivalent_curies[node.id]['id']:
-                primary_label = equivalent_curies[node.id]['id']['label']
+            if 'label' in equivalent_curies[node_id]['id']:
+                primary_label = equivalent_curies[node_id]['id']['label']
             elif 'name' in merged_node:
                 primary_label = merged_node['name']
             else:
                 primary_label = ''
 
-            merged_node['id'] = primary_id
             merged_node['name'] = primary_label
 
-            if 'equivalent_identifiers' in equivalent_curies[node.id]:
-                merged_node['same_as'] = [
-                    node['identifier']
-                    for node in equivalent_curies[node.id]['equivalent_identifiers']
+            # TODO define behavior if there is already a same_as attribute
+            if 'equivalent_identifiers' in equivalent_curies[node_id]:
+                merged_node['attributes'] = [
+                    {
+                        'type': 'biolink:same_as',
+                        'value': [
+                            node['identifier']
+                            for node in equivalent_curies[node_id]['equivalent_identifiers']
+                        ],
+                        'name': 'same_as',
+
+                        # TODO, should we add the app version as the source
+                        # or perhaps the babel/redis cache version
+                        # This will make unit testing a little more tricky
+                        # see https://stackoverflow.com/q/57624731
+
+                        # 'source': f'{app.title} {app.version}',
+                    }
                 ]
-            if 'type' in equivalent_curies[node.id]:
-                # Set the type from babel as the node category?
-                # TODO not sure if this is right
-                merged_node['category'] = equivalent_curies[node.id]['type']
 
-        merged_kgraph['nodes'].append(merged_node)
+            if 'type' in equivalent_curies[node_id]:
+                merged_node['category'] = equivalent_curies[node_id]['type']
 
-    for edge in kgraph.edges:
-        if edge.source_id in id_primary_id:
-            primary_source_id = id_primary_id[edge.source_id]
+            merged_kgraph['nodes'][primary_id] = merged_node
+        else:
+            merged_kgraph['nodes'][node_id] = merged_node
+
+    for edge_id, edge in kgraph.edges.items():
+        # Accessing __root__ directly seems wrong,
+        # https://github.com/samuelcolvin/pydantic/issues/730
+        # could also do str(edge.subject)
+        if edge.subject.__root__ in id_primary_id:
+            primary_subject = id_primary_id[edge.subject.__root__]
         else:
             # should we throw a validation error here?
-            primary_source_id = edge.source_id
+            primary_subject = edge.subject
 
-        if edge.target_id in id_primary_id:
-            primary_target_id = id_primary_id[edge.target_id]
+        if edge.object.__root__ in id_primary_id:
+            primary_object = id_primary_id[edge.object.__root__]
         else:
-            primary_target_id = edge.target_id
+            primary_object = edge.object
 
         triple = (
-            primary_source_id,
-            edge.type,
-            primary_target_id
+            primary_subject,
+            edge.predicate.__root__,
+            primary_object
         )
         if triple in edges_seen:
             continue
@@ -93,12 +110,11 @@ async def normalize_kg(app: FastAPI, kgraph: KnowledgeGraph) -> Dict:
         edges_seen.add(triple)
         merged_edge = edge.dict()
 
-        merged_edge['source_id'] = primary_source_id
-        merged_edge['target_id'] = primary_target_id
+        merged_edge['subject'] = primary_subject
+        merged_edge['object'] = primary_object
+        merged_kgraph['edges'][edge_id] = merged_edge
 
-        merged_kgraph['edges'].append(merged_edge)
-
-    return merged_kgraph
+    return KnowledgeGraph.parse_obj(merged_kgraph)
 
 
 async def get_equivalent_curies(

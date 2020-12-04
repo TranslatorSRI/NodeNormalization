@@ -4,12 +4,12 @@ from typing import List, Optional, Dict
 
 import aioredis
 from fastapi import FastAPI, HTTPException, Query
-from reasoner_pydantic import KnowledgeGraph
+from reasoner_pydantic import Message, KnowledgeGraph
 
 from .loader import NodeLoader
 from .apidocs import get_app_info
 from .model import SemanticTypes, CuriePivot, CurieList, SemanticTypesInput
-from .normalizer import get_normalized_nodes, get_curie_prefixes, normalize_kg
+from .normalizer import get_normalized_nodes, get_curie_prefixes, normalize_kgraph
 
 # Some metadata not implemented see
 # https://github.com/tiangolo/fastapi/pull/1812
@@ -47,16 +47,18 @@ async def shutdown_event():
     await app.state.redis_connection2.wait_closed()
 
 
+
 @app.post(
-    '/knowledge_graph',
-    summary='Normalizes a TRAPI compliant knowledge graph',
-    description='Returns the knowledge graph with merged nodes and edges'
+    '/message',
+    summary='Normalizes a TRAPI message object',
+    description='Returns the results object with a merged '
+                'knowledge graph and query graph bindings'
 )
-async def normalize_kgraph(kgraph: KnowledgeGraph) -> KnowledgeGraph:
+async def normalize_results(message: KnowledgeGraph) -> KnowledgeGraph:
     """
     Normalizes a TRAPI compliant knowledge graph
     """
-    return KnowledgeGraph.parse_obj(await normalize_kg(app, kgraph))
+    return await normalize_kgraph(app, message)
 
 
 @app.get(
