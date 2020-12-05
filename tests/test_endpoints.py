@@ -4,11 +4,13 @@ from node_normalizer.server import app
 from starlette.testclient import TestClient
 from pathlib import Path
 from unittest.mock import Mock, patch
-from tests.redis_mocks import mock_get_equivalent_curies
+
+# Need to add to sources root to avoid linter warnings
+from redis_mocks import mock_get_equivalent_curies
 
 
-premerged_graph = Path(__file__).parent / 'resources' / 'premerged_kgraph.json'
-postmerged_graph = Path(__file__).parent / 'resources' / 'postmerged_kgraph.json'
+premerged_message = Path(__file__).parent / 'resources' / 'premerged_message.json'
+postmerged_message = Path(__file__).parent / 'resources' / 'postmerged_message.json'
 
 
 class TestServer:
@@ -24,10 +26,10 @@ class TestServer:
 
     @patch('node_normalizer.normalizer.get_equivalent_curies', Mock(side_effect=mock_get_equivalent_curies))
     def test_kg_normalize(self):
-        with open(premerged_graph, 'r') as pre:
+        with open(premerged_message, 'r') as pre:
             premerged_data = json.load(pre)
 
-        with open(postmerged_graph, 'r') as post:
+        with open(postmerged_message, 'r') as post:
             postmerged_from_file = json.load(post)
 
         response = self.test_client.post('/message', json=premerged_data)

@@ -6,7 +6,8 @@ import pytest
 
 from reasoner_pydantic import KnowledgeGraph
 
-from tests.redis_mocks import mock_get_equivalent_curies
+# Need to add to sources root to avoid linter warnings
+from redis_mocks import mock_get_equivalent_curies
 from node_normalizer.normalizer import normalize_kgraph
 
 
@@ -26,7 +27,7 @@ class TestNormalizer:
         with open(postmerged_graph, 'r') as post:
             postmerged_from_file = json.load(post)
 
-        postmerged_from_api = await normalize_kgraph(app, premerged_data)
+        postmerged_from_api, nmap, emap = await normalize_kgraph(app, premerged_data)
 
         # dictionary equality might be brittle
         assert postmerged_from_api.dict() == postmerged_from_file
