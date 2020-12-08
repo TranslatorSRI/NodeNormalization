@@ -1,0 +1,32 @@
+{
+  "UMLS:CN202575": {
+    "id": {
+      "identifier": "MONDO:0017148",
+      "label": "heritable pulmonary arterial hypertension"
+    },
+    "equivalent_identifiers": [
+      {
+        "identifier": "MONDO:0017148",
+        "label": "heritable pulmonary arterial hypertension"
+      },
+      {
+        "identifier": "ORPHANET:275777"
+      },
+      {
+        "identifier": "UMLS:CN202575"
+      },
+      {
+        "identifier": "NCIT:C121945"
+      },
+      {
+        "identifier": "SNOMEDCT:697897003"
+      }
+    ],
+    "type": [
+      "biolink:Disease",
+      "biolink:DiseaseOrPhenotypicFeature",
+      "biolink:BiologicalEntity",
+      "biolink:NamedThing"
+    ]
+  }
+}

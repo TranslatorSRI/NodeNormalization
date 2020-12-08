@@ -1,0 +1,32 @@
+{
+  "NCBIGene:9496": {
+    "id": {
+      "identifier": "NCBIGene:9496",
+      "label": "TBX4"
+    },
+    "equivalent_identifiers": [
+      {
+        "identifier": "NCBIGene:9496"
+      },
+      {
+        "identifier": "ENSEMBL:ENSG00000121075"
+      },
+      {
+        "identifier": "HGNC:11603",
+        "label": "TBX4"
+      },
+      {
+        "identifier": "UniProtKB:P57082"
+      }
+    ],
+    "type": [
+      "biolink:Gene",
+      "biolink:NamedThing",
+      "biolink:BiologicalEntity",
+      "biolink:MolecularEntity",
+      "biolink:GenomicEntity",
+      "biolink:MacromolecularMachine",
+      "biolink:GeneOrGeneProduct"
+    ]
+  }
+}

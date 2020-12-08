@@ -1,48 +1,43 @@
-import redis
-import os
-import json
-import jsonschema
+from pathlib import Path
 from itertools import islice
 from datetime import datetime
+from typing import Dict, Any
+import json
+import jsonschema
+
+import redis
 
 
-##############
-# Class: NodeNormalization
-#
-# By: Yaphete Kebede
-# Date: 1/2020
-# Desc: Class that gets all node definitions from a series of flat files
-#       and produces Translator compliant nodes which are then loaded into a redis database.
-##############
-class NodeNormalization:
-    # storage for the semantic types and source prefixes
-    semantic_types: set = set()
-    source_prefixes: dict = {}
+class NodeLoader:
+    """
+    Class that gets all node definitions from a series of flat files
+    and produces Translator compliant nodes which are then loaded into
+    a redis database.
+    """
 
-    # Storage for the configuration params
-    _config: json = None
-
-    def __init__(self, test_mode=False):
+    def __init__(self):
         self._config = self.get_config()
 
-        self._compendium_directory: str = self._config['compendium_directory']
+        self._compendium_directory: Path = Path(self._config['compendium_directory'])
         self._redis_host: str = self._config['redis_host']
         self._redis_password: str = self._config['redis_password']
         self._redis_port: int = self._config['redis_port']
         self._test_mode: int = self._config['test_mode']
         self._data_files: list = self._config['data_files'].split(',')
 
-        this_dir = os.path.dirname(os.path.realpath(__file__))
+        json_schema = Path(__file__).parent / 'resources' / 'valid_data_format.json'
 
-        with open(os.path.join(this_dir, 'valid_data_format.json')) as json_file:
+        with open(json_schema) as json_file:
             self._validate_with = json.load(json_file)
 
-        pass
+        # Initalize storage instance vars for the semantic types and source prefixes
+        self.semantic_types: set = set()
+        self.source_prefixes: Dict = {}
 
     @staticmethod
-    def get_config() -> json:
-        """ class constructor """
-        cname = os.path.join(os.path.dirname(__file__), '..', 'config.json')
+    def get_config() -> Dict[str, Any]:
+        """ get configuration file """
+        cname = Path(__file__).parents[1] / 'config.json'
 
         with open(cname, 'r') as json_file:
             data = json.load(json_file)
@@ -50,11 +45,13 @@ class NodeNormalization:
         return data
 
     def load(self, block_size) -> bool:
-        """Given a compendia directory, load every file there into a running
-        redis instance so that it can be read by R3"""
+        """
+        Given a compendia directory, load every file there into a running
+        redis instance so that it can be read by R3
+        """
 
         # init the return value
-        ret_val = False
+        ret_val = True
 
         if self._test_mode == 1:
             self.print_debug_msg(f'Test mode enabled. No data will be produced.', True)
@@ -106,6 +103,7 @@ class NodeNormalization:
                     types_prefixes_pipeline.execute()
             else:
                 self.print_debug_msg(f'Error: 1 or more data files were incorrect', True)
+                ret_val = False
         except Exception as e:
             self.print_debug_msg(f'Exception thrown in load(): {e}', True)
             ret_val = False
@@ -133,31 +131,31 @@ class NodeNormalization:
         return True
 
     def get_compendia(self):
-        """Return the list of compendium files to load"""
-        ret_val = []
+        """
+        Return the list of compendium files to load
+        """
+        file_list = [self._compendium_directory / file_name
+                     for file_name in self._data_files]
 
-        filenames = os.listdir(self._compendium_directory)
+        for file in file_list:
+            if not file.exists():
+                # This should probably raise an exception
+                self.print_debug_msg(f'DEBUG: file not found: {file.name}')
 
-        files_found = 0
-
-        if len(filenames) == len(self._data_files):
-            for file_name in filenames:
-                if file_name in self._data_files:
-                    files_found += 1
-
-            if files_found == len(self._data_files):
-                ret_val = [os.path.join(self._compendium_directory, file_name) for file_name in filenames]
-
-        return ret_val
+        return file_list
 
     def get_redis(self, dbid):
-        """Return a redis instance"""
+        """
+        Return a redis instance
+        """
         return redis.StrictRedis(host=self._redis_host, port=self._redis_port, db=dbid, password=self._redis_password)
 
     def load_compendium(self, compendium_filename: str, block_size: int) -> bool:
-        """Given the full path to a compendium, load it into redis so that it can
+        """
+        Given the full path to a compendium, load it into redis so that it can
         be read by R3.  We also load extra keys, which are the upper-cased
-        identifiers, for ease of use"""
+        identifiers, for ease of use
+        """
 
         # init a line counter
         line_counter: int = 0
@@ -231,7 +229,9 @@ class NodeNormalization:
         return True
 
     def print_debug_msg(self, msg: str, force: bool = False):
-        """ Prints a debug message if enabled in the config file """
+        """
+        Prints a debug message if enabled in the config file
+        """
         if self._config['debug_messages'] == 1 or force:
             now: datetime = datetime.now()
 

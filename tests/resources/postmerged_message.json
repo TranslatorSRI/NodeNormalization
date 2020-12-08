@@ -1,0 +1,223 @@
+{
+  "query_graph": {
+    "nodes": {
+      "n1": {
+        "id": "NCBIGene:9496",
+        "category": [
+          "biolink:Gene"
+        ],
+        "is_set": false
+      },
+      "n2": {
+        "id": "NCBIGene:9496",
+        "category": [
+          "biolink:Gene"
+        ],
+        "is_set": false
+      },
+      "n3": {
+        "id": "MONDO:0005002",
+        "category": [
+          "biolink:Disease"
+        ],
+        "is_set": false
+      },
+      "n4": {
+        "id": "MONDO:0005002",
+        "category": [
+          "biolink:Disease"
+        ],
+        "is_set": false
+      },
+      "n5": {
+        "category": [
+          "biolink:Disease"
+        ],
+        "id": null,
+        "is_set": false
+      }
+    },
+    "edges": {
+      "e1": {
+        "subject": "n1",
+        "object": "n3",
+        "predicate": null,
+        "relation": null
+      },
+      "e2": {
+        "subject": "n2",
+        "object": "n4",
+        "predicate": "biolink:related_to",
+        "relation": null
+      },
+      "e3": {
+        "subject": "n1",
+        "object": "n5",
+        "predicate": null,
+        "relation": null
+      }
+    }
+  },
+  "knowledge_graph": {
+    "nodes": {
+      "NCBIGene:9496": {
+        "attributes": [
+          {
+            "type": "biolink:same_as",
+            "source": null,
+            "name": "same_as",
+            "url": null,
+            "value": [
+              "NCBIGene:9496",
+              "ENSEMBL:ENSG00000121075",
+              "HGNC:11603",
+              "UniProtKB:P57082"
+            ]
+          }
+        ],
+        "category": [
+          "biolink:Gene",
+          "biolink:NamedThing",
+          "biolink:BiologicalEntity",
+          "biolink:MolecularEntity",
+          "biolink:GenomicEntity",
+          "biolink:MacromolecularMachine",
+          "biolink:GeneOrGeneProduct"
+        ],
+        "name": "TBX4"
+      },
+      "MONDO:0005002": {
+        "attributes": [
+          {
+            "type": "biolink:same_as",
+            "source": null,
+            "name": "same_as",
+            "url": null,
+            "value": [
+              "MONDO:0005002",
+              "DOID:3083",
+              "EFO:0000341",
+              "UMLS:C0024117",
+              "MESH:D029424",
+              "NCIT:C3199",
+              "SNOMEDCT:13645005",
+              "HP:0006510"
+            ]
+          }
+        ],
+        "category": [
+          "biolink:Disease",
+          "biolink:NamedThing",
+          "biolink:BiologicalEntity",
+          "biolink:DiseaseOrPhenotypicFeature"
+        ],
+        "name": "chronic obstructive pulmonary disease"
+      },
+      "MONDO:0017148": {
+        "attributes": [
+          {
+            "type": "biolink:same_as",
+            "source": null,
+            "name": "same_as",
+            "url": null,
+            "value": [
+              "MONDO:0017148",
+              "ORPHANET:275777",
+              "UMLS:CN202575",
+              "NCIT:C121945",
+              "SNOMEDCT:697897003"
+            ]
+          }
+        ],
+        "category": [
+          "biolink:Disease",
+          "biolink:DiseaseOrPhenotypicFeature",
+          "biolink:BiologicalEntity",
+          "biolink:NamedThing"
+        ],
+        "name": "heritable pulmonary arterial hypertension"
+      }
+    },
+    "edges": {
+      "044a7916-fba9-4b4f-ae48-f0815b0b222d": {
+        "subject": "NCBIGene:9496",
+        "object": "MONDO:0017148",
+        "predicate": "biolink:related_to",
+        "relation": "RO:0004013",
+        "attributes": null
+      },
+      "a8575c4e-61a6-428a-bf09-fcb3e8d1644d": {
+        "subject": "NCBIGene:9496",
+        "object": "MONDO:0005002",
+        "predicate": "biolink:related_to",
+        "relation": "RO:0003304",
+        "attributes": null
+      }
+    }
+  },
+  "results": [
+    {
+      "node_bindings": {
+        "n1": [
+          {
+            "id": "NCBIGene:9496"
+          }
+        ],
+        "n3": [
+          {
+            "id": "MONDO:0005002"
+          }
+        ]
+      },
+      "edge_bindings": {
+        "e1": [
+          {
+            "id": "a8575c4e-61a6-428a-bf09-fcb3e8d1644d"
+          }
+        ]
+      }
+    },
+    {
+      "node_bindings": {
+        "n2": [
+          {
+            "id": "NCBIGene:9496"
+          }
+        ],
+        "n4": [
+          {
+            "id": "MONDO:0005002"
+          }
+        ]
+      },
+      "edge_bindings": {
+        "e2": [
+          {
+            "id": "a8575c4e-61a6-428a-bf09-fcb3e8d1644d"
+          }
+        ]
+      }
+    },
+    {
+      "node_bindings": {
+        "n1": [
+          {
+            "id": "NCBIGene:9496"
+          }
+        ],
+        "n5": [
+          {
+            "id": "MONDO:0017148"
+          }
+        ]
+      },
+      "edge_bindings": {
+        "e3": [
+          {
+            "id": "044a7916-fba9-4b4f-ae48-f0815b0b222d"
+          }
+        ]
+      }
+    }
+  ]
+}
