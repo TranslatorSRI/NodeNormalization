@@ -19,7 +19,8 @@ RUN pip install -r /home/murphy/requirements.txt --src /usr/local/src
 ADD ./r3 /home/murphy/r3
 ADD ./swagger_ui /home/murphy/swagger_ui
 ADD ./setup.py /home/murphy/setup.py
-ADD ./src /home/murphy/node_normalizer
+ADD ./node_normalizer /home/murphy/node_normalizer
+ADD ./config.json /home/murphy/config.json
 
 RUN pip install -e .
 
