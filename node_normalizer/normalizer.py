@@ -257,7 +257,7 @@ async def get_equivalent_curies(
     if reference is None:
         return default_return
     value = await app.state.redis_connection1.get(reference, encoding='utf-8')
-    return json.loads(value) if value is not None else default_return
+    return {curie: json.loads(value) if value is not None else None}
 
 
 async def get_normalized_nodes(

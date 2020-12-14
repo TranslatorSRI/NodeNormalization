@@ -1,9 +1,9 @@
 {
-    "compendium_directory": "",
-    "redis_host": "",
-    "redis_port": 0,
+    "compendium_directory": "./data/",
+    "redis_host": "localhost",
+    "redis_port": 6379,
     "redis_password": "",
-    "data_files": "anatomy.txt,biological_process.txt,cell.txt,cellular_component.txt,chemconc.txt,disease.txt,gene_compendium.txt,gene_family_compendium.txt,molecular_activity.txt,pathways.txt,phenotypes.txt,taxon_compendium.txt",
-    "test_mode": 1,
+    "data_files": "anatomy.txt,biological_process.txt,cell.txt,cellular_component.txt,disease.txt,molecular_activity.txt,phenotypes.txt",
+    "test_mode": 0,
     "debug_messages": 0
 }   

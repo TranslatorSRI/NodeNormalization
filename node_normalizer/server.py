@@ -4,7 +4,7 @@ from typing import List, Optional, Dict
 
 import aioredis
 from fastapi import FastAPI, HTTPException, Query
-from reasoner_pydantic import Message
+from reasoner_pydantic import Response
 
 from .loader import NodeLoader
 from .apidocs import get_app_info
@@ -47,18 +47,18 @@ async def shutdown_event():
     await app.state.redis_connection2.wait_closed()
 
 
-
 @app.post(
-    '/message',
-    summary='Normalizes a TRAPI message object',
-    description='Returns the results object with a merged '
+    '/response',
+    summary='Normalizes a TRAPI response object',
+    description='Returns the response object with a merged '
                 'knowledge graph and query graph bindings'
 )
-async def normalize_msg(message: Message) -> Message:
+async def normalize_response(response: Response) -> Response:
     """
     Normalizes a TRAPI compliant knowledge graph
     """
-    return await normalize_message(app, message)
+    response.message = await normalize_message(app, response.message)
+    return response
 
 
 @app.get(
