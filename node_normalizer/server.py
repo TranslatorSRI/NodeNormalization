@@ -72,9 +72,6 @@ async def get_normalized_node_handler(curie: List[str] = Query([], example=['MES
     """
     normalized_nodes = await get_normalized_nodes(app, curie)
 
-    if not normalized_nodes:
-        raise HTTPException(detail='No matches found for the specified curie(s).', status_code=404)
-
     return normalized_nodes
 
 
@@ -88,9 +85,6 @@ async def get_normalized_node_handler(curies: CurieList):
     Get value(s) for key(s) using redis MGET
     """
     normalized_nodes = await get_normalized_nodes(app, curies.curies)
-
-    if not normalized_nodes:
-        raise HTTPException(detail='No matches found for the specified curie(s).', status_code=404)
 
     return normalized_nodes
 
