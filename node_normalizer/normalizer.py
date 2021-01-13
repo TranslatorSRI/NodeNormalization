@@ -279,10 +279,12 @@ async def get_normalized_nodes(
         values = await app.state.redis_connection1.mget(*references_nonan, encoding='utf-8')
         values = [json.loads(value) if value is not None else None for value in values]
         dereference = dict(zip(references_nonan, values))
-        normal_nodes = {
-            key: dereference[reference] if reference is not None else None
-            for key, reference in zip(curies, references)
-        }
+    else:
+        dereference = dict()
+    normal_nodes = {
+        key: dereference.get(reference, None)
+        for key, reference in zip(curies, references)
+    }
 
     return normal_nodes
 
