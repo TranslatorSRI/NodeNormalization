@@ -21,3 +21,13 @@ def test_not_found():
     response = client.post('/get_normalized_nodes', json={"curies": ["UNKNOWN:000000"]})
     result = json.loads(response.text)
     assert result == {"UNKNOWN:000000": None}
+
+
+def test_empty():
+    client = TestClient(app)
+    response = client.get('/get_normalized_nodes', params={"curie": []})
+    result = json.loads(response.text)
+    assert result == dict()
+    response = client.post('/get_normalized_nodes', json={"curies": []})
+    result = json.loads(response.text)
+    assert result == dict()
