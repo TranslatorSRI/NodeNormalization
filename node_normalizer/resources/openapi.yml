@@ -1,8 +1,12 @@
+openapi: 3.0.2
 info:
   title: Node Normalization
   version: 1.0.1
   contact:
-    email: kebedey@renci.org
+    email: bizon@renci.org
+    name: Chris Bizon
+    x-id: https://github.com/cbizon
+    x-role: responsible developer
   description: 'Node normalization takes a CURIE, and returns: <ol> <li>The preferred
     CURIE for this entity <li>All other known equivalent identifiers for the entity
     <li>Semantic types for the entity as defined by the <a href="https://biolink.github.io/biolink-model/">BioLink
@@ -11,12 +15,18 @@ info:
     are BioLink Model Compliant.  To determine whether Node Normalization is likely
     to be useful, check /get_semantic_types, which lists the BioLink semantic types
     for which normalization has been attempted, and /get_curie_prefixes, which lists
-    the number of times each prefix is used for a semantic type. '
+    the number of times each prefix is used for a semantic type.'
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
-  termsOfService: http://robokop.renci.org:7055/tos?service_long=Redis-REST+with+Referencing&provider_long=the+Translator+Consortium
-openapi: 3.0.2
+  termsOfService: http://linkmissing
+  x-translator:
+    component: Utility
+    teams:
+      - Standards Reference Implementation Team
+servers:
+  - description: Default server
+    url: https://nodenormalization-sri.renci.org/docs
 paths:
   /get_curie_prefixes:
     get:
