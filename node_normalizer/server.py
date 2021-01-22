@@ -7,7 +7,7 @@ from fastapi import FastAPI, HTTPException, Query
 from reasoner_pydantic import Response
 
 from .loader import NodeLoader
-from .apidocs import get_app_info
+from .apidocs import get_app_info, construct_open_api_schema
 from .model import SemanticTypes, CuriePivot, CurieList, SemanticTypesInput
 from .normalizer import get_normalized_nodes, get_curie_prefixes, normalize_message
 
@@ -140,3 +140,6 @@ async def get_curie_prefixes_handler(
 async def get_curie_prefixes_handler(semantic_types: SemanticTypesInput) -> Dict[str, CuriePivot]:
 
     return await get_curie_prefixes(app, semantic_types.semantic_types)
+
+# Override open api schema with custom schema
+app.openapi_schema = construct_open_api_schema(app)
