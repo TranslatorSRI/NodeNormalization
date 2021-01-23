@@ -26,7 +26,7 @@ info:
       - Standards Reference Implementation Team
 servers:
   - description: Default server
-    url: https://nodenormalization-sri.renci.org/docs
+    url: https://nodenormalization-sri.renci.org/
 paths:
   /get_curie_prefixes:
     get:
