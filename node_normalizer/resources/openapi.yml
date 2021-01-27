@@ -19,14 +19,16 @@ info:
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
-  termsOfService: http://linkmissing
+  termsOfService: http://robokop.renci.org:7055/tos?service_long=Node+Normalization&provider_long=the+Translator+Consortium
   x-translator:
     component: Utility
-    teams:
+    team:
       - Standards Reference Implementation Team
 servers:
   - description: Default server
     url: https://nodenormalization-sri.renci.org/
+tags:
+  - name: translator
 paths:
   /get_curie_prefixes:
     get:
