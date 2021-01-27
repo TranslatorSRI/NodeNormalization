@@ -35,20 +35,28 @@ async def normalize_results(
             'node_bindings': {},
             'edge_bindings': {}
         }
+        nodes_seen = set()
+        edges_seen = set()
         for node_code, node_bindings in result.node_bindings.items():
             merged_node_bindings = []
             for n_bind in node_bindings:
+                if node_id_map[n_bind.id.__root__] in nodes_seen:
+                    continue
                 merged_binding = n_bind.dict()
                 merged_binding['id'] = node_id_map[n_bind.id.__root__]
                 merged_node_bindings.append(merged_binding)
+                nodes_seen.add(node_id_map[n_bind.id.__root__])
             merged_result['node_bindings'][node_code] = merged_node_bindings
 
         for edge_code, edge_bindings in result.edge_bindings.items():
             merged_edge_bindings = []
             for e_bind in edge_bindings:
+                if edge_id_map[e_bind.id] in edges_seen:
+                    continue
                 merged_binding = e_bind.dict()
                 merged_binding['id'] = edge_id_map[e_bind.id]
                 merged_edge_bindings.append(merged_binding)
+                edges_seen.add(edge_id_map[e_bind.id])
             merged_result['edge_bindings'][edge_code] = merged_edge_bindings
 
         merged_results.append(Result.parse_obj(merged_result))
