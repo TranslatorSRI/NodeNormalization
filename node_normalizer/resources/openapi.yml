@@ -29,6 +29,7 @@ servers:
     url: https://nodenormalization-sri.renci.org/
 tags:
   - name: translator
+  - name: Interfaces
 paths:
   /get_curie_prefixes:
     get:
@@ -154,5 +155,3 @@ paths:
         been attempted.
       tags:
       - Interfaces
-tags:
-- name: Interfaces
