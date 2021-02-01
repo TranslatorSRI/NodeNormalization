@@ -40,8 +40,6 @@ async def normalize_results(
         for node_code, node_bindings in result.node_bindings.items():
             merged_node_bindings = []
             for n_bind in node_bindings:
-                if node_id_map[n_bind.id.__root__] in nodes_seen:
-                    continue
                 merged_binding = n_bind.dict()
                 merged_binding['id'] = node_id_map[n_bind.id.__root__]
                 merged_node_bindings.append(merged_binding)
