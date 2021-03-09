@@ -67,8 +67,8 @@ class NodeLoader:
             # did we get all the files
             if len(compendia) == len(self._data_files):
                 # open the output file and start loading it
-                with open(os.path.join(self._compendium_directory, outfile_name + '_nodes.jl'), 'w', encoding="utf-8") as node_file, \
-                     open(os.path.join(self._compendium_directory, outfile_name + '_edges.jl'), 'w', encoding="utf-8") as edge_file:
+                with open(os.path.join(self._compendium_directory, outfile_name + '_nodes.jsonl'), 'w', encoding="utf-8") as node_file, \
+                     open(os.path.join(self._compendium_directory, outfile_name + '_edges.jsonl'), 'w', encoding="utf-8") as edge_file:
 
                     # set the flag for suppressing the first ",\n" in the written data
                     first = True
@@ -160,10 +160,6 @@ class NodeLoader:
                         else:
                             self.print_debug_msg(f'Compendia file {comp} is invalid.', True)
                             continue
-
-                    # finish off files
-                    node_file.write(']}')
-                    edge_file.write(']}')
 
         except Exception as e:
             self.print_debug_msg(f'Exception thrown in convert_to_KGX(): {e}', True)
