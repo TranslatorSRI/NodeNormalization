@@ -67,11 +67,8 @@ class NodeLoader:
             # did we get all the files
             if len(compendia) == len(self._data_files):
                 # open the output file and start loading it
-                with open(os.path.join(self._compendium_directory, outfile_name + '_node.json'), 'w', encoding="utf-8") as node_file, \
-                     open(os.path.join(self._compendium_directory, outfile_name + '_edge.json'), 'w', encoding="utf-8") as edge_file:
-                    # start the output files
-                    node_file.write('{"nodes": [\n')
-                    edge_file.write('{"edges": [\n')
+                with open(os.path.join(self._compendium_directory, outfile_name + '_nodes.jl'), 'w', encoding="utf-8") as node_file, \
+                     open(os.path.join(self._compendium_directory, outfile_name + '_edges.jl'), 'w', encoding="utf-8") as edge_file:
 
                     # set the flag for suppressing the first ",\n" in the written data
                     first = True
@@ -130,7 +127,7 @@ class NodeLoader:
                                         if first:
                                             prefix = ""
                                         else:
-                                            prefix = ",\n"
+                                            prefix = "\n"
 
                                         # reset the first record flag
                                         first = False
@@ -139,13 +136,13 @@ class NodeLoader:
                                         line_counter = 0
 
                                         # get all the nodes in a string and write them out
-                                        nodes_to_write = prefix + ",\n".join([json.dumps(node) for node in nodes])
+                                        nodes_to_write = prefix + "\n".join([json.dumps(node) for node in nodes])
                                         node_file.write(nodes_to_write)
 
                                         # are there any edges to output
                                         if len(edges) > 0:
                                             # get all the edges in a string and write them out
-                                            edges_to_write = prefix + ",\n".join([json.dumps(edge) for edge in edges])
+                                            edges_to_write = prefix + "\n".join([json.dumps(edge) for edge in edges])
                                             edge_file.write(edges_to_write)
 
                                         # reset for the next group
@@ -154,11 +151,11 @@ class NodeLoader:
 
                                 # pick up any remainders in the file
                                 if len(nodes) > 0:
-                                    nodes_to_write = ",\n" + ",\n".join([json.dumps(node) for node in nodes])
+                                    nodes_to_write = "\n" + "\n".join([json.dumps(node) for node in nodes])
                                     node_file.write(nodes_to_write)
 
                                 if len(edges) > 0:
-                                    edges_to_write = ",\n" + ",\n".join([json.dumps(edge) for edge in edges])
+                                    edges_to_write = "\n" + "\n".join([json.dumps(edge) for edge in edges])
                                     edge_file.write(edges_to_write)
                         else:
                             self.print_debug_msg(f'Compendia file {comp} is invalid.', True)
