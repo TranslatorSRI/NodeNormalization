@@ -33,18 +33,34 @@ async def normalize_results(
     """
     merged_results: List[Result] = []
     result_seen = set()
+
     for result in results:
         merged_result = {
             'node_bindings': {},
             'edge_bindings': {}
         }
 
+        node_binding_seen = set()
+        edge_binding_seen = set()
+
         for node_code, node_bindings in result.node_bindings.items():
             merged_node_bindings = []
             for n_bind in node_bindings:
                 merged_binding = n_bind.dict()
                 merged_binding['id'] = node_id_map[n_bind.id.__root__]
-                merged_node_bindings.append(merged_binding)
+
+                node_binding_hash = frozenset([
+                    (k, tuple(v))
+                    if isinstance(v, list)
+                    else (k, v)
+                    for k, v in merged_binding.items()
+                ])
+                if node_binding_hash in node_binding_seen:
+                    continue
+                else:
+                    node_binding_seen.add(node_binding_hash)
+                    merged_node_bindings.append(merged_binding)
+
             merged_result['node_bindings'][node_code] = merged_node_bindings
 
         for edge_code, edge_bindings in result.edge_bindings.items():
@@ -52,17 +68,29 @@ async def normalize_results(
             for e_bind in edge_bindings:
                 merged_binding = e_bind.dict()
                 merged_binding['id'] = edge_id_map[e_bind.id]
-                merged_edge_bindings.append(merged_binding)
+
+                edge_binding_hash = frozenset([
+                    (k, tuple(v))
+                    if isinstance(v, list)
+                    else (k, v)
+                    for k, v in merged_binding.items()
+                ])
+
+                if edge_binding_hash in edge_binding_seen:
+                    continue
+                else:
+                    edge_binding_seen.add(edge_binding_hash)
+                    merged_edge_bindings.append(merged_binding)
+
             merged_result['edge_bindings'][edge_code] = merged_edge_bindings
 
         try:
-            result_tuple = tuple(
+            hashed_result = frozenset([
                 (k, tuple(v))
                 if isinstance(v, list)
                 else (k,v)
                 for k,v in merged_result.items()
-            )
-            hashed_result = hash(result_tuple)
+            ])
 
         except Exception:  # TODO determine exception(s) to catch
             hashed_result = False
@@ -255,6 +283,7 @@ async def normalize_kgraph(
             primary_object,
             hashed_attributes
         )
+
         if triple in edges_seen:
             edge_id_map[edge_id] = primary_edges[triple]
             continue
@@ -448,7 +477,7 @@ def _hash_attributes(attributes: List[Attribute] = None) -> Union[int, bool]:
         new_attributes.append(new_attribute)
 
     try:
-        return hash(tuple(new_attributes))
-    except Exception:
+        return hash(frozenset(new_attributes))
+    except Exception as exc:
         # TODO figure out what exceptions to catch
         return False
