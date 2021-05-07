@@ -229,12 +229,13 @@ async def normalize_kgraph(
             # since it is coming from a new source
             if 'equivalent_identifiers' in equivalent_curies[node_id]:
                 same_as_attribute = {
-                    'type': 'biolink:same_as',
+                    'attribute_type_id': 'biolink:same_as',
                     'value': [
                         node['identifier']
                         for node in equivalent_curies[node_id]['equivalent_identifiers']
                     ],
-                    'name': 'same_as',
+                    'original_attribute_name': 'equivalent_identifiers',
+                    "value_type_id": "EDAM:data_0006",
 
                     # TODO, should we add the app version as the source
                     # or perhaps the babel/redis cache version
@@ -249,7 +250,10 @@ async def normalize_kgraph(
                     merged_node['attributes'] = [same_as_attribute]
 
             if 'type' in equivalent_curies[node_id]:
-                merged_node['category'] = equivalent_curies[node_id]['type']
+                if type(equivalent_curies[node_id]['type']) is list:
+                    merged_node['category'] = equivalent_curies[node_id]['type']
+                else:
+                    merged_node['category'] = [equivalent_curies[node_id]['type']]
 
             merged_kgraph['nodes'][primary_id] = merged_node
         else:
