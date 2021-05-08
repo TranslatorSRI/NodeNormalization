@@ -25,4 +25,7 @@ RUN pip install -e .
 
 # setup entrypoint
 # gunicorn, hypercorn also options https://fastapi.tiangolo.com/deployment/manually/
-ENTRYPOINT ["python", "-m" , "uvicorn", "node_normalizer.server:app", "--app-dir", "/home/murphy/", "--port", "6380"]
+# ENTRYPOINT ["python", "-m" , "uvicorn", "node_normalizer.server:app", "--app-dir", "/home/murphy/", "--port", "6380"]
+
+ENTRYPOINT ["uvicorn", "--host", "0.0.0.0", "--port", "6380", "--workers", "1", "--app-dir", "/home/murphy/", "node_normalizer.server:app"]
+
