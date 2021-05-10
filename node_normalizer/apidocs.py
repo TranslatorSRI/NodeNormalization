@@ -61,6 +61,8 @@ def construct_open_api_schema(app) -> Dict[str, str]:
         open_api_schema['info']['description'] = api_docs['info']['description']
 
     if 'servers' in api_docs:
+        for s in api_docs['servers']:
+            s['url'] = s['url'] + '/1.1'
         open_api_schema['servers'] = api_docs['servers']
 
     return open_api_schema
