@@ -23,7 +23,7 @@ which lists the number of times each prefix is used for a semantic type.
 For examples of service usage, see the example [notebook](documentation/NodeNormalization.ipynb).
 
 Most users of NodeNormalization can access it via the public
-[service](https://nodenormalization-sri.renci.org/apidocs) but instructions follow
+[service](https://nodenormalization-sri.renci.org/docs) but instructions follow
 for standing up a new instance of the service.
 
 ## Installation
