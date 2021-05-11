@@ -1,6 +1,6 @@
 redis
 fastapi
-git+https://github.com/ranking-agent/reasoner-pydantic#egg=reasoner-pydantic
+reasoner-pydantic==1.0.0
 uvicorn
 jsonschema
 pytest==6.1.2
