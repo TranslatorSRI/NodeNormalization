@@ -61,9 +61,9 @@ Note that the dataset for Node normalization is quite large and 256Gb of memory 
     docker run --name node-norm -p 6379:6379 -d redis redis-server --appendonly yes
 
 ### Configuration
-Insure that the `./config.json` file is created and contains the parameters for node normalization load specific to your environment. 
+Insure that the `./config.json` file is created and contains the parameters for the node normalization load specific to your environment. 
 
-The configuration parameters `compendium_directory` and `data_files` specify the location of the compendis files. An example of the files' contents  
+The configuration parameters `compendium_directory` and `data_files` specify the location of the compendia files. An example of the files' contents  
 are listed below:
 
     {
