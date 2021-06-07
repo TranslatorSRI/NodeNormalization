@@ -503,11 +503,11 @@ def _hash_attributes(attributes: List[Attribute] = None) -> Union[int, bool]:
                         for k, v in attribute.value.items())
 
             new_attribute = (
-                attribute.type.__root__,
+                attribute.attribute_type_id.__root__,
                 hashed_value,
-                attribute.name,
-                attribute.url,
-                attribute.source
+                attribute.original_attribute_name,
+                attribute.value_url,
+                attribute.attribute_source
             )
             new_attributes.append(new_attribute)
 
