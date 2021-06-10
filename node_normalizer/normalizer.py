@@ -66,14 +66,7 @@ async def normalize_results(
                         # the items in list of attributes must be of type Attribute
                         # in order to reuse hash method
                         for attrib in merged_binding['attributes']:
-                            new_attrib: Attribute = Attribute(
-                                attribute_type_id=attrib['attribute_type_id'],
-                                value=attrib['value'],
-                                value_type_id=attrib['value_type_id'],
-                                original_attribute_name=attrib['original_attribute_name'] if 'original_attribute_name' in attrib and attrib['original_attribute_name'] else None,
-                                value_url=attrib['value_url'] if 'value_url' in attrib and attrib['value_url'] else None,
-                                attribute_source=attrib['attribute_source'] if 'attribute_source' in attrib and attrib['attribute_source'] else None,
-                                )
+                            new_attrib = Attribute.parse_obj(attrib)
 
                             # add the new Attribute to the list
                             attribs.append(new_attrib)
