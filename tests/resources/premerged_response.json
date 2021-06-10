@@ -4,30 +4,30 @@
       "nodes": {
         "n1": {
           "id": "HGNC:11603",
-          "category": [
+          "categories": [
             "biolink:Gene"
           ]
         },
         "n2": {
           "id": "NCBIGene:9496",
-          "category": [
+          "categories": [
             "biolink:Gene"
           ]
         },
         "n3": {
           "id": "MONDO:0005002",
-          "category": [
+          "categories": [
             "biolink:Disease"
           ]
         },
         "n4": {
           "id": "DOID:3083",
-          "category": [
+          "categories": [
             "biolink:Disease"
           ]
         },
         "n5": {
-          "category": [
+          "categories": [
             "biolink:Disease"
           ]
         }
@@ -52,31 +52,31 @@
       "nodes": {
         "HGNC:11603": {
           "name": "TBX4",
-          "category": [
+          "categories": [
             "biolink:Gene"
           ]
         },
         "NCBIGene:9496": {
           "name": "T-box transcription factor 4",
-          "category": [
+          "categories": [
             "biolink:Gene"
           ]
         },
         "MONDO:0005002": {
           "name": "chronic obstructive pulmonary disease",
-          "category": [
+          "categories": [
             "biolink:Disease"
           ]
         },
         "DOID:3083": {
           "name": "chronic obstructive pulmonary disease",
-          "category": [
+          "categories": [
             "biolink:Disease"
           ]
         },
         "UMLS:CN202575": {
           "name": "heritable pulmonary arterial hypertension",
-          "category": [
+          "categories": [
             "biolink:Disease"
           ]
         }
@@ -167,5 +167,7 @@
         }
       }
     ]
-  }
+  },
+  "logs": null,
+  "status": null
 }

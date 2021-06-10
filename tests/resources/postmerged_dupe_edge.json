@@ -3,30 +3,33 @@
     "query_graph": {
       "nodes": {
         "n0": {
-          "id": "NODE_1",
-          "category": "biolink:Disease",
-          "is_set": false
+          "ids": ["NODE_1"],
+          "categories": ["biolink:Disease"],
+          "is_set": false,
+          "constraints": null
         },
         "n1": {
-          "id": "NODE_2",
-          "category": "biolink:ChemicalSubstance",
+          "ids": ["NODE_2"],
+          "categories": ["biolink:ChemicalSubstance"],
           "is_set": false,
-          "set": true
+          "set": true,
+          "constraints": null
         }
       },
       "edges": {
         "e01": {
           "subject": "n0",
           "object": "n1",
-          "predicate": "biolink:correlated_with",
-          "relation": null
+          "predicates": ["biolink:correlated_with"],
+          "relation": null,
+          "constraints": null
         }
       }
     },
     "knowledge_graph": {
       "nodes": {
         "NODE_1": {
-          "category": [
+          "categories": [
             "biolink:D",
             "biolink:I",
             "biolink:S",
@@ -39,22 +42,23 @@
           "attributes": null
         },
         "NODE_2": {
-          "category": [
+          "categories": [
             "biolink:ChemicalSubstance"
           ],
           "name": "AvgDailyOzoneExposure,AvgDailyOzoneExposure_StudyAvg,AvgDailyOzoneExposure_StudyMax,MaxDailyOzoneExposure,MaxDailyOzoneExposure_StudyAvg,MaxDailyOzoneExposure_StudyMax,AvgDailyOzoneExposure_qcut,AvgDailyOzoneExposure_StudyAvg_qcut,AvgDailyOzoneExposure_StudyMax_qcut,MaxDailyOzoneExposure_qcut,MaxDailyOzoneExposure_StudyAvg_qcut,MaxDailyOzoneExposure_StudyMax_qcut,MaxDailyOzoneExposure_2,MaxDailyOzoneExposure_2_qcut",
           "attributes": [
             {
-              "type": "EDAM:data_0006",
+              "attribute_type_id": "EDAM:data_0006",
               "value": [
                 "PUBCHEM:24823",
                 "SCTID:40057008",
                 "NODE_2",
                 "ENVO:01000537"
               ],
-              "name": "equivalent_identifiers",
-              "url": null,
-              "source": null
+              "original_attribute_name": "equivalent_identifiers",
+              "value_url": null,
+              "attribute_source": null,
+              "value_type_id": null
             }
           ]
         }
@@ -67,11 +71,12 @@
           "relation": null,
           "attributes": [
             {
-              "type": "MetaInformation",
+              "attribute_type_id": "MetaInformation",
               "value": "https://icees.renci.org:16339/knowledge_graph_one_hop?reasoner=true",
-              "name": "provenance",
-              "url": null,
-              "source": null
+              "original_attribute_name": "provenance",
+              "value_url": null,
+              "attribute_source": null,
+              "value_type_id": null
             }
           ]
         }

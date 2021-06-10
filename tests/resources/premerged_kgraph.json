@@ -8,31 +8,31 @@
     },
     "NCBIGene:9496": {
       "name": "T-box transcription factor 4",
-      "category": [
+      "categories": [
         "biolink:Gene"
       ]
     },
     "MONDO:0005002": {
       "name": "chronic obstructive pulmonary disease",
-      "category": [
+      "categories": [
         "biolink:Disease"
       ]
     },
     "DOID:3083": {
       "name": "chronic obstructive pulmonary disease",
-      "category": [
+      "categories": [
         "biolink:Disease"
       ]
     },
     "OMIM:613355": {
       "name": "CHROMOSOME 17q23.1-q23.2 DELETION SYNDROME",
-      "category": [
+      "categories": [
         "biolink:Disease"
       ]
     },
     "UMLS:CN202575": {
       "name": "heritable pulmonary arterial hypertension",
-      "category": [
+      "categories": [
         "biolink:Disease"
       ]
     }
