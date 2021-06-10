@@ -10,6 +10,7 @@ from reasoner_pydantic import KnowledgeGraph, Message, QueryGraph, Result, CURIE
 
 logger = LoggingUtil.init_logging(__name__, level=logging.INFO, format='medium', logFilePath=os.path.dirname(__file__), logFileLevel=logging.INFO)
 
+
 async def normalize_message(app: FastAPI, message: Message) -> Message:
     """
     Given a TRAPI message, updates the message to include a
@@ -27,6 +28,7 @@ async def normalize_message(app: FastAPI, message: Message) -> Message:
         })
     except Exception as e:
         logger.error(f'Exception: {e}')
+
 
 async def normalize_results(
         results: List[Result],
@@ -56,12 +58,36 @@ async def normalize_results(
                     merged_binding = n_bind.dict()
                     merged_binding['id'] = node_id_map[n_bind.id.__root__]
 
-                    node_binding_hash = frozenset([
-                        (k, tuple(v))
-                        if isinstance(v, list)
-                        else (k, v)
-                        for k, v in merged_binding.items()
-                    ])
+                    # if there are attributes in the node binding
+                    if 'attributes' in merged_binding:
+                        # storage for the pydantic Attributes
+                        attribs = []
+
+                        # the items in list of attributes must be of type Attribute
+                        # in order to reuse hash method
+                        for attrib in merged_binding['attributes']:
+                            new_attrib: Attribute = Attribute(
+                                attribute_type_id=attrib['attribute_type_id'],
+                                value=attrib['value'],
+                                value_type_id=attrib['value_type_id'],
+                                original_attribute_name=attrib['original_attribute_name'] if 'original_attribute_name' in attrib and attrib['original_attribute_name'] else None,
+                                value_url=attrib['value_url'] if 'value_url' in attrib and attrib['value_url'] else None,
+                                attribute_source=attrib['attribute_source'] if 'attribute_source' in attrib and attrib['attribute_source'] else None,
+                                )
+
+                            # add the new Attribute to the list
+                            attribs.append(new_attrib)
+
+                        # call to get the hash
+                        node_binding_hash = _hash_attributes(attribs)
+                    else:
+                        node_binding_hash = frozenset([
+                            (k, tuple(v))
+                            if isinstance(v, list)
+                            else (k, v)
+                            for k, v in merged_binding.items()
+                        ])
+
                     if node_binding_hash in node_binding_seen:
                         continue
                     else:
@@ -507,6 +533,8 @@ def _hash_attributes(attributes: List[Attribute] = None) -> Union[int, bool]:
                 hashed_value,
                 attribute.original_attribute_name,
                 attribute.value_url,
+                attribute.attribute_source,
+                attribute.value_type_id.__root__ if attribute.value_type_id is not None else '',
                 attribute.attribute_source
             )
             new_attributes.append(new_attribute)
