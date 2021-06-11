@@ -6,10 +6,10 @@ import aioredis
 from fastapi import FastAPI, HTTPException, Query
 from reasoner_pydantic import Response
 
-from .loader import NodeLoader
-from .apidocs import get_app_info, construct_open_api_schema
-from .model import SemanticTypes, CuriePivot, CurieList, SemanticTypesInput
-from .normalizer import get_normalized_nodes, get_curie_prefixes, normalize_message
+from loader import NodeLoader
+from apidocs import get_app_info, construct_open_api_schema
+from model import SemanticTypes, CuriePivot, CurieList, SemanticTypesInput
+from normalizer import get_normalized_nodes, get_curie_prefixes, normalize_message
 
 # Some metadata not implemented see
 # https://github.com/tiangolo/fastapi/pull/1812
@@ -97,7 +97,7 @@ async def get_normalized_node_handler(curies: CurieList):
 )
 async def get_semantic_types_handler() -> SemanticTypes:
     # look for all biolink semantic types
-    types = await app.state.redis_connection2.lrange('semantic_types', 0 ,-1, encoding='utf-8')
+    types = await app.state.redis_connection2.lrange('semantic_types', 0, -1, encoding='utf-8')
 
     # did we get any data
     if not types:
@@ -106,7 +106,7 @@ async def get_semantic_types_handler() -> SemanticTypes:
     # get the distinct list of Biolink model types in the correct format
     # https://github.com/TranslatorSRI/NodeNormalization/issues/29
     ret_val = SemanticTypes(
-        semantic_types= {
+        semantic_types={
             'types': types
         }
     )
@@ -127,7 +127,6 @@ async def get_curie_prefixes_handler(
             description="e.g. chemical_substance, anatomical_entity"
         )
 ) -> Dict[str, CuriePivot]:
-
     return await get_curie_prefixes(app, semantic_type)
 
 
@@ -138,8 +137,8 @@ async def get_curie_prefixes_handler(
     description='Returns the curies and their hit count for a semantic type(s).'
 )
 async def get_curie_prefixes_handler(semantic_types: SemanticTypesInput) -> Dict[str, CuriePivot]:
-
     return await get_curie_prefixes(app, semantic_types.semantic_types)
+
 
 # Override open api schema with custom schema
 app.openapi_schema = construct_open_api_schema(app)
