@@ -105,9 +105,10 @@ class TestNormalizer:
         post = {'nodes': nodes, 'edges': edges}
 
         # get the difference
-        difs = find_diffs(post, postmerged_from_file)
+        diffs = find_diffs(post, postmerged_from_file)
 
-        assert difs is None
+        # no diffs, no problem
+        assert diffs is None
 
     def test_hashable_attribute(self):
         # value is a scalar

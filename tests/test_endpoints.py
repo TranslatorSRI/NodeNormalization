@@ -44,9 +44,10 @@ class TestServer:
         postmerged_from_api = json.loads(response.text)
         
         # get the difference
-        difs = find_diffs(postmerged_from_api, postmerged_from_file)
+        diffs = find_diffs(postmerged_from_api, postmerged_from_file)
 
-        assert difs is None
+        # no diffs, no problem
+        assert diffs is None
 
     @patch('node_normalizer.normalizer.get_equivalent_curies', Mock(side_effect=mock_get_equivalent_curies))
     def test_dupe_edge(self):
@@ -63,7 +64,7 @@ class TestServer:
         postmerged_from_api = json.loads(response.text)
 
         # get the difference
-        difs = find_diffs(postmerged_from_api, postmerged_from_file)
+        diffs = find_diffs(postmerged_from_api, postmerged_from_file)
 
-        # dictionary equality might be brittle
-        assert difs is None
+        # no diffs, no problem
+        assert diffs is None
