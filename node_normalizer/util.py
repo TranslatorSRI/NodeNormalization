@@ -6,19 +6,20 @@ from collections import namedtuple
 import copy
 from logging.handlers import RotatingFileHandler
 
-#loggers = {}
+
+# loggers = {}
 class LoggingUtil(object):
     """ Logging utility controlling format and setting initial logging level """
     @staticmethod
-    def init_logging (name, level=logging.INFO, format='short', logFilePath=None, logFileLevel=None):
+    def init_logging(name, level=logging.INFO, format='short', logFilePath=None, logFileLevel=None):
         logger = logging.getLogger(__name__)
         if not logger.parent.name == 'root':
             return logger
 
         FORMAT = {
-            "short" : '%(funcName)s: %(message)s',
-            "medium" : '%(funcName)s: %(asctime)-15s %(message)s',
-            "long"  : '%(asctime)-15s %(filename)s %(funcName)s %(levelname)s: %(message)s'
+            "short": '%(funcName)s: %(message)s',
+            "medium": '%(funcName)s: %(asctime)-15s %(message)s',
+            "long": '%(asctime)-15s %(filename)s %(funcName)s %(levelname)s: %(message)s'
         }[format]
 
         # create a stream handler (default to console)
@@ -60,42 +61,44 @@ class LoggingUtil(object):
         # return to the caller
         return logger
 
+
 class Munge(object):
     @staticmethod
-    def gene (gene):
-        return gene.split ("/")[-1:][0] if gene.startswith ("http://") else gene
+    def gene(gene):
+        return gene.split("/")[-1:][0] if gene.startswith("http://") else gene
     
+
 class Text:
     """ Utilities for processing text. """
 
     @staticmethod
-    def get_curie (text):
-        #Assume it's a string
+    def get_curie(text):
+        # Assume it's a string
         return text.upper().split(':', 1)[0] if ':' in text else None
 
     @staticmethod
-    def un_curie (text):
-        return ':'.join(text.split (':', 1)[1:]) if ':' in text else text
+    def un_curie(text):
+        return ':'.join(text.split(':', 1)[1:]) if ':' in text else text
         
     @staticmethod
-    def short (obj, limit=80):
+    def short(obj, limit=80):
         text = str(obj) if obj else None
-        return (text[:min(len(text),limit)] + ('...' if len(text)>limit else '')) if text else None
+        return (text[:min(len(text), limit)] + ('...' if len(text) > limit else '')) if text else None
 
     @staticmethod
-    def path_last (text):
-        return text.split ('/')[-1:][0] if '/' in text else text
+    def path_last(text):
+        return text.split('/')[-1:][0] if '/' in text else text
 
     @staticmethod
-    def obo_to_curie (text):
-        return ':'.join( text.split('/')[-1].split('_') )
+    def obo_to_curie(text):
+        return ':'.join(text.split('/')[-1].split('_'))
 
     @staticmethod
-    def opt_to_curie (text):
+    def opt_to_curie(text):
         if text is None:
             return None
         if text.startswith('http://purl.obolibrary.org') or text.startswith('http://www.orpha.net'):
-            return ':'.join( text.split('/')[-1].split('_') )
+            return ':'.join(text.split('/')[-1].split('_'))
         if text.startswith('http://linkedlifedata.com/resource/umls'):
             return f'UMLS:{text.split("/")[-1]}'
         if text.startswith('http://identifiers.org/'):
@@ -104,16 +107,15 @@ class Text:
         return text
 
     @staticmethod
-    def curie_to_obo (text):
+    def curie_to_obo(text):
         x = text.split(':')
         return f'<http://purl.obolibrary.org/obo/{x[0]}_{x[1]}>'
 
-
     @staticmethod
     def snakify(text):
-        decomma = '_'.join( text.split(','))
-        dedash = '_'.join( decomma.split('-'))
-        resu =  '_'.join( dedash.split() )
+        decomma = '_'.join(text.split(','))
+        dedash = '_'.join(decomma.split('-'))
+        resu = '_'.join(dedash.split())
         return resu
 
     @staticmethod
@@ -124,36 +126,37 @@ class Text:
         return f'{p[0].upper()}:{p[1]}'
 
 
-
 class Resource:
     @staticmethod
     def get_resource_path(resource_name):
         """ Given a string resolve it to a module relative file path unless it is already an absolute path. """
         resource_path = resource_name
-        if not resource_path.startswith (os.sep):
-            resource_path = os.path.join (os.path.dirname (__file__), resource_path)
+        if not resource_path.startswith(os.sep):
+            resource_path = os.path.join(os.path.dirname(__file__), resource_path)
         return resource_path
+
     @staticmethod
-    def load_json (path):
+    def load_json(path):
         result = None
-        with open (path, 'r') as stream:
-            result = json.loads (stream.read ())
+        with open(path, 'r') as stream:
+            result = json.loads(stream.read())
         return result
 
     @staticmethod
-    def load_yaml (path):
+    def load_yaml(path):
         result = None
-        with open (path, 'r') as stream:
-            result = yaml.load (stream.read ())
+        with open(path, 'r') as stream:
+            result = yaml.load(stream.read())
         return result
-    
-    def get_resource_obj (resource_name, format='json'):
+
+    @staticmethod
+    def get_resource_obj(resource_name, format='json'):
         result = None
-        path = Resource.get_resource_path (resource_name)
-        if os.path.exists (path):
+        path = Resource.get_resource_path(resource_name)
+        if os.path.exists(path):
             m = {
-                'json' : Resource.load_json,
-                'yaml' : Resource.load_yaml
+                'json': Resource.load_json,
+                'yaml': Resource.load_yaml
             }
             if format in m:
                 result = m[format](path)
@@ -162,7 +165,7 @@ class Resource:
     @staticmethod
     # Modified from:
     # Copyright Ferry Boender, released under the MIT license.
-    def deepupdate(target, src, overwrite_keys = []):
+    def deepupdate(target, src, overwrite_keys=[]):
         """Deep update target dict with src
         For each k,v in src: if k doesn't exist in target, it is deep copied from
         src to target. Otherwise, if v is a list, target[k] is extended with
@@ -179,36 +182,36 @@ class Resource:
                 if k in overwrite_keys:
                     target[k] = copy.deepcopy(v)
                 elif type(v) == list:
-                    if not k in target:
+                    if k not in target:
                         target[k] = copy.deepcopy(v)
                     elif type(v[0]) == dict:
-                        Resource.deepupdate(target[k],v,overwrite_keys)
+                        Resource.deepupdate(target[k], v, overwrite_keys)
                     else:
                         target[k].extend(v)
                 elif type(v) == dict:
-                    if not k in target:
+                    if k not in target:
                         target[k] = copy.deepcopy(v)
                     else:
-                        Resource.deepupdate(target[k], v,overwrite_keys)
+                        Resource.deepupdate(target[k], v, overwrite_keys)
                 elif type(v) == set:
-                    if not k in target:
+                    if k not in target:
                         target[k] = v.copy()
                     else:
                         target[k].update(v.copy())
                 else:
                     target[k] = copy.copy(v)
         else:
-            #src is a list of dicts, target is a list of dicts, want to merge by name (yikes)
-            src_elements = { x['name']: x for x in src }
-            target_elements = { x['name']: x for x in target }
+            # src is a list of dicts, target is a list of dicts, want to merge by name (yikes)
+            src_elements = {x['name']: x for x in src}
+            target_elements = {x['name']: x for x in target}
             for name in src_elements:
                 if name in target_elements:
-                    Resource.deepupdate(target_elements[name], src_elements[name],overwrite_keys)
+                    Resource.deepupdate(target_elements[name], src_elements[name], overwrite_keys)
                 else:
-                    target.append( src_elements[name] )
+                    target.append(src_elements[name])
 
 
 class DataStructure:
     @staticmethod
-    def to_named_tuple (type_name, d):
+    def to_named_tuple(type_name, d):
         return namedtuple(type_name, d.keys())(**d)
