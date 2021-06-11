@@ -3,16 +3,17 @@
     "NCBIGene:9496": {
       "attributes": [
         {
-          "type": "biolink:same_as",
-          "source": null,
-          "name": "same_as",
-          "url": null,
+          "attribute_type_id": "biolink:same_as",
+          "attribute_source": null,
+          "original_attribute_name": "equivalent_identifiers",
+          "value_url": null,
           "value": [
             "NCBIGene:9496",
             "ENSEMBL:ENSG00000121075",
             "HGNC:11603",
             "UniProtKB:P57082"
-          ]
+          ],
+          "value_type_id": "EDAM:data_0006"
         }
       ],
       "category": [
@@ -29,10 +30,10 @@
     "MONDO:0005002": {
       "attributes": [
         {
-          "type": "biolink:same_as",
-          "source": null,
-          "name": "same_as",
-          "url": null,
+          "attribute_type_id": "biolink:same_as",
+          "attribute_source": null,
+          "original_attribute_name": "equivalent_identifiers",
+          "value_url": null,
           "value": [
             "MONDO:0005002",
             "DOID:3083",
@@ -42,7 +43,8 @@
             "NCIT:C3199",
             "SNOMEDCT:13645005",
             "HP:0006510"
-          ]
+          ],
+          "value_type_id": "EDAM:data_0006"
         }
       ],
       "category": [
@@ -56,10 +58,10 @@
     "MONDO:0013238": {
       "attributes": [
         {
-          "type": "biolink:same_as",
-          "source": null,
-          "name": "same_as",
-          "url": null,
+          "attribute_type_id": "biolink:same_as",
+          "attribute_source": null,
+          "original_attribute_name": "equivalent_identifiers",
+          "value_url": null,
           "value": [
             "MONDO:0013238",
             "DOID:0060405",
@@ -68,7 +70,8 @@
             "UMLS:C3150607",
             "UMLS:C4304591",
             "SNOMEDCT:719584008"
-          ]
+          ],
+          "value_type_id": "EDAM:data_0006"
         }
       ],
       "category": [
@@ -82,17 +85,18 @@
     "MONDO:0017148": {
       "attributes": [
         {
-          "type": "biolink:same_as",
-          "source": null,
-          "name": "same_as",
-          "url": null,
+          "attribute_type_id": "biolink:same_as",
+          "attribute_source": null,
+          "original_attribute_name": "equivalent_identifiers",
+          "value_url": null,
           "value": [
             "MONDO:0017148",
             "ORPHANET:275777",
             "UMLS:CN202575",
             "NCIT:C121945",
             "SNOMEDCT:697897003"
-          ]
+          ],
+          "value_type_id": "EDAM:data_0006"
         }
       ],
       "category": [

@@ -10,7 +10,6 @@ from logging.handlers import RotatingFileHandler
 # loggers = {}
 class LoggingUtil(object):
     """ Logging utility controlling format and setting initial logging level """
-
     @staticmethod
     def init_logging(name, level=logging.INFO, format='short', logFilePath=None, logFileLevel=None):
         logger = logging.getLogger(__name__)
@@ -67,7 +66,7 @@ class Munge(object):
     @staticmethod
     def gene(gene):
         return gene.split("/")[-1:][0] if gene.startswith("http://") else gene
-
+    
 
 class Text:
     """ Utilities for processing text. """
@@ -80,7 +79,7 @@ class Text:
     @staticmethod
     def un_curie(text):
         return ':'.join(text.split(':', 1)[1:]) if ':' in text else text
-
+        
     @staticmethod
     def short(obj, limit=80):
         text = str(obj) if obj else None
@@ -150,6 +149,7 @@ class Resource:
             result = yaml.load(stream.read())
         return result
 
+    @staticmethod
     def get_resource_obj(resource_name, format='json'):
         result = None
         path = Resource.get_resource_path(resource_name)
@@ -182,19 +182,19 @@ class Resource:
                 if k in overwrite_keys:
                     target[k] = copy.deepcopy(v)
                 elif type(v) == list:
-                    if not k in target:
+                    if k not in target:
                         target[k] = copy.deepcopy(v)
                     elif type(v[0]) == dict:
                         Resource.deepupdate(target[k], v, overwrite_keys)
                     else:
                         target[k].extend(v)
                 elif type(v) == dict:
-                    if not k in target:
+                    if k not in target:
                         target[k] = copy.deepcopy(v)
                     else:
                         Resource.deepupdate(target[k], v, overwrite_keys)
                 elif type(v) == set:
-                    if not k in target:
+                    if k not in target:
                         target[k] = v.copy()
                     else:
                         target[k].update(v.copy())

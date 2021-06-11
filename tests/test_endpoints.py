@@ -4,13 +4,15 @@ from node_normalizer.server import app
 from starlette.testclient import TestClient
 from pathlib import Path
 from unittest.mock import Mock, patch
+from test_normalizer import find_diffs
 
 # Need to add to sources root to avoid linter warnings
-from redis_mocks import mock_get_equivalent_curies
+from helpers.redis_mocks import mock_get_equivalent_curies
 
 
 premerged_response = Path(__file__).parent / 'resources' / 'premerged_response.json'
 postmerged_response = Path(__file__).parent / 'resources' / 'postmerged_response.json'
+
 
 premerged_dupe_edge = Path(__file__).parent / 'resources' / 'premerged_dupe_edge.json'
 postmerged_dupe_edge = Path(__file__).parent / 'resources' / 'postmerged_dupe_edge.json'
@@ -41,8 +43,11 @@ class TestServer:
         response = self.test_client.post('/response', json=premerged_data)
         postmerged_from_api = json.loads(response.text)
         
-        # dictionary equality might be brittle
-        assert postmerged_from_api == postmerged_from_file
+        # get the difference
+        diffs = find_diffs(postmerged_from_api, postmerged_from_file)
+
+        # no diffs, no problem
+        assert diffs is None
 
     @patch('node_normalizer.normalizer.get_equivalent_curies', Mock(side_effect=mock_get_equivalent_curies))
     def test_dupe_edge(self):
@@ -58,5 +63,8 @@ class TestServer:
         response = self.test_client.post('/response', json=premerged_data)
         postmerged_from_api = json.loads(response.text)
 
-        # dictionary equality might be brittle
-        assert postmerged_from_api == postmerged_from_file
+        # get the difference
+        diffs = find_diffs(postmerged_from_api, postmerged_from_file)
+
+        # no diffs, no problem
+        assert diffs is None

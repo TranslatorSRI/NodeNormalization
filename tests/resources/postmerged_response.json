@@ -3,59 +3,67 @@
     "query_graph": {
       "nodes": {
         "n1": {
-          "id": "NCBIGene:9496",
-          "category": [
+          "ids": ["HGNC:11603"],
+          "categories": [
             "biolink:Gene"
           ],
-          "is_set": false
+          "is_set": false,
+          "constraints": null
         },
         "n2": {
-          "id": "NCBIGene:9496",
-          "category": [
+          "ids": ["NCBIGene:9496"],
+          "categories": [
             "biolink:Gene"
           ],
-          "is_set": false
+          "is_set": false,
+          "constraints": null
         },
         "n3": {
-          "id": "MONDO:0005002",
-          "category": [
+          "ids": ["MONDO:0005002"],
+          "categories": [
             "biolink:Disease"
           ],
-          "is_set": false
+          "is_set": false,
+          "constraints": null
         },
         "n4": {
-          "id": "MONDO:0005002",
-          "category": [
+          "ids": ["DOID:3083"],
+          "categories": [
             "biolink:Disease"
           ],
-          "is_set": false
+          "is_set": false,
+          "constraints": null
         },
         "n5": {
-          "category": [
+          "categories": [
             "biolink:Disease"
           ],
-          "id": null,
-          "is_set": false
+          "ids": null,
+          "is_set": false,
+          "constraints": null
         }
       },
       "edges": {
         "e1": {
           "subject": "n1",
           "object": "n3",
-          "predicate": null,
-          "relation": null
+          "predicates": null,
+          "relation": null,
+          "constraints": null
         },
         "e2": {
           "subject": "n2",
           "object": "n4",
-          "predicate": "biolink:related_to",
-          "relation": null
+          "predicates": ["biolink:related_to"],
+          "relation": null,
+          "constraints": null
         },
         "e3": {
           "subject": "n1",
           "object": "n5",
-          "predicate": null,
-          "relation": null
+          "predicates": null,
+          "relation": null,
+          "constraints": null
         }
       }
     },
@@ -64,19 +72,20 @@
         "NCBIGene:9496": {
           "attributes": [
             {
-              "type": "biolink:same_as",
-              "source": null,
-              "name": "same_as",
-              "url": null,
+              "attribute_type_id": "biolink:same_as",
+              "attribute_source": null,
+              "original_attribute_name": "equivalent_identifiers",
+              "value_url": null,
               "value": [
                 "NCBIGene:9496",
                 "ENSEMBL:ENSG00000121075",
                 "HGNC:11603",
                 "UniProtKB:P57082"
-              ]
+              ],
+              "value_type_id": "EDAM:data_0006"
             }
           ],
-          "category": [
+          "categories": [
             "biolink:Gene",
             "biolink:NamedThing",
             "biolink:BiologicalEntity",
@@ -90,10 +99,10 @@
         "MONDO:0005002": {
           "attributes": [
             {
-              "type": "biolink:same_as",
-              "source": null,
-              "name": "same_as",
-              "url": null,
+              "attribute_type_id": "biolink:same_as",
+              "attribute_source": null,
+              "original_attribute_name": "equivalent_identifiers",
+              "value_url": null,
               "value": [
                 "MONDO:0005002",
                 "DOID:3083",
@@ -103,10 +112,11 @@
                 "NCIT:C3199",
                 "SNOMEDCT:13645005",
                 "HP:0006510"
-              ]
+              ],
+              "value_type_id": "EDAM:data_0006"
             }
           ],
-          "category": [
+          "categories": [
             "biolink:Disease",
             "biolink:NamedThing",
             "biolink:BiologicalEntity",
@@ -117,20 +127,21 @@
         "MONDO:0017148": {
           "attributes": [
             {
-              "type": "biolink:same_as",
-              "source": null,
-              "name": "same_as",
-              "url": null,
+              "attribute_type_id": "biolink:same_as",
+              "attribute_source": null,
+              "original_attribute_name": "equivalent_identifiers",
+              "value_url": null,
               "value": [
                 "MONDO:0017148",
                 "ORPHANET:275777",
                 "UMLS:CN202575",
                 "NCIT:C121945",
                 "SNOMEDCT:697897003"
-              ]
+              ],
+              "value_type_id": "EDAM:data_0006"
             }
           ],
-          "category": [
+          "categories": [
             "biolink:Disease",
             "biolink:DiseaseOrPhenotypicFeature",
             "biolink:BiologicalEntity",

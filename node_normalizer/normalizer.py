@@ -1,10 +1,10 @@
-import os
 import json
 from typing import List, Dict, Optional, Any, Set, Tuple, Union
 import uuid
 from uuid import UUID
-from node_normalizer.util import LoggingUtil
+from .util import LoggingUtil
 import logging
+import os
 from fastapi import FastAPI
 from reasoner_pydantic import KnowledgeGraph, Message, QueryGraph, Result, CURIE, Attribute
 
@@ -29,6 +29,7 @@ async def normalize_message(app: FastAPI, message: Message) -> Message:
     except Exception as e:
         logger.error(f'Exception: {e}')
 
+
 async def normalize_results(
         results: List[Result],
         node_id_map: Dict[str, str],
@@ -37,6 +38,7 @@ async def normalize_results(
     """
     Given a TRAPI result creates a normalized result object
     """
+
     merged_results: List[Result] = []
     result_seen = set()
 
@@ -56,12 +58,29 @@ async def normalize_results(
                     merged_binding = n_bind.dict()
                     merged_binding['id'] = node_id_map[n_bind.id.__root__]
 
-                    node_binding_hash = frozenset([
-                        (k, tuple(v))
-                        if isinstance(v, list)
-                        else (k, v)
-                        for k, v in merged_binding.items()
-                    ])
+                    # if there are attributes in the node binding
+                    if 'attributes' in merged_binding:
+                        # storage for the pydantic Attributes
+                        attribs = []
+
+                        # the items in list of attributes must be of type Attribute
+                        # in order to reuse hash method
+                        for attrib in merged_binding['attributes']:
+                            new_attrib = Attribute.parse_obj(attrib)
+
+                            # add the new Attribute to the list
+                            attribs.append(new_attrib)
+
+                        # call to get the hash
+                        node_binding_hash = _hash_attributes(attribs)
+                    else:
+                        node_binding_hash = frozenset([
+                            (k, tuple(v))
+                            if isinstance(v, list)
+                            else (k, v)
+                            for k, v in merged_binding.items()
+                        ])
+
                     if node_binding_hash in node_binding_seen:
                         continue
                     else:
@@ -99,7 +118,8 @@ async def normalize_results(
                     for k, v in merged_result.items()
                 ])
 
-            except Exception:  # TODO determine exception(s) to catch
+            except Exception as e:  # TODO determine exception(s) to catch
+                logger.error(f'Exception: {e}')
                 hashed_result = False
 
             if hashed_result is not False:
@@ -109,7 +129,6 @@ async def normalize_results(
                     result_seen.add(hashed_result)
 
             merged_results.append(Result.parse_obj(merged_result))
-
         except Exception as e:
             logger.error(f'Exception: {e}')
 
@@ -178,13 +197,16 @@ async def normalize_kgraph(
         'edges': {}
     }
 
-    # Map for each node id (curie) and its primary id
     node_id_map: Dict[str, str] = {}
-
-    # Map for each edge id and its primary id
     edge_id_map: Dict[str, str] = {}
 
     try:
+        # Map for each node id (curie) and its primary id
+        node_id_map: Dict[str, str] = {}
+
+        # Map for each edge id and its primary id
+        edge_id_map: Dict[str, str] = {}
+
         # Map for each edge to its s,p,r,o signature
         primary_edges: Dict[Tuple[str, str, Optional[str], str, Union[UUID, int]], str] = {}
 
@@ -242,12 +264,13 @@ async def normalize_kgraph(
                 # since it is coming from a new source
                 if 'equivalent_identifiers' in equivalent_curies[node_id]:
                     same_as_attribute = {
-                        'type': 'biolink:same_as',
+                        'attribute_type_id': 'biolink:same_as',
                         'value': [
                             node['identifier']
                             for node in equivalent_curies[node_id]['equivalent_identifiers']
                         ],
-                        'name': 'same_as',
+                        'original_attribute_name': 'equivalent_identifiers',
+                        "value_type_id": "EDAM:data_0006",
 
                         # TODO, should we add the app version as the source
                         # or perhaps the babel/redis cache version
@@ -262,7 +285,10 @@ async def normalize_kgraph(
                         merged_node['attributes'] = [same_as_attribute]
 
                 if 'type' in equivalent_curies[node_id]:
-                    merged_node['category'] = equivalent_curies[node_id]['type']
+                    if type(equivalent_curies[node_id]['type']) is list:
+                        merged_node['category'] = equivalent_curies[node_id]['type']
+                    else:
+                        merged_node['category'] = [equivalent_curies[node_id]['type']]
 
                 merged_kgraph['nodes'][primary_id] = merged_node
             else:
@@ -331,16 +357,22 @@ async def get_equivalent_curies(
         'type': ['named_thing']
     }
     """
+
     value = None
 
     try:
         if isinstance(curie, CURIE):
             curie = curie.__root__
+
         default_return = {curie: None}
+
         # Get the equivalent list primary key identifier
+
         reference = await app.state.redis_connection0.get(curie, encoding='utf-8')
+
         if reference is None:
             return default_return
+
         value = await app.state.redis_connection1.get(reference, encoding='utf-8')
     except Exception as e:
         logger.error(f'Exception: {e}')
@@ -360,7 +392,6 @@ async def get_normalized_nodes(
         curie.__root__ if isinstance(curie, CURIE) else curie
         for curie in curies
     ]
-
     normal_nodes = {}
 
     try:
@@ -433,6 +464,7 @@ def _merge_node_attributes(node_a: Dict, node_b, merged_count: int) -> Dict:
     :param node_b: the node to be merged
     :param merged_count: the number of nodes merged into node_a **upon entering this fx**
     """
+
     try:
         if not ('attributes' in node_b and node_b['attributes']):
             return node_a
@@ -460,7 +492,7 @@ def _merge_node_attributes(node_a: Dict, node_b, merged_count: int) -> Dict:
 
             node_a['attributes'] = node_a['attributes'] + new_attribute_list
     except Exception as e:
-        logger.error(f'Exception: {e}')
+        logger.error(f'Exception {e}')
 
     return node_a
 
@@ -486,26 +518,24 @@ def _hash_attributes(attributes: List[Attribute] = None) -> Union[int, bool]:
         for attribute in attributes:
             hashed_value = attribute.value
             if attribute.value:
-                try:
-                    if isinstance(attribute.value, list):
-                        # TODO list of lists?
-                        hashed_value = tuple(attribute.value)
-                    elif isinstance(attribute.value, dict):
-                        hashed_value = tuple(
-                            (k, tuple(v))
-                            if isinstance(v, list)
-                            else (k, v)
-                            for k, v in attribute.value.items())
-                except Exception as e:
-                    # TODO figure out what exceptions to catch
-                    return False
+                if isinstance(attribute.value, list):
+                    # TODO list of lists?
+                    hashed_value = tuple(attribute.value)
+                elif isinstance(attribute.value, dict):
+                    hashed_value = tuple(
+                        (k, tuple(v))
+                        if isinstance(v, list)
+                        else (k, v)
+                        for k, v in attribute.value.items())
 
             new_attribute = (
-                attribute.type.__root__,
+                attribute.attribute_type_id.__root__,
                 hashed_value,
-                attribute.name,
-                attribute.url,
-                attribute.source
+                attribute.original_attribute_name,
+                attribute.value_url,
+                attribute.attribute_source,
+                attribute.value_type_id.__root__ if attribute.value_type_id is not None else '',
+                attribute.attribute_source
             )
             new_attributes.append(new_attribute)
 

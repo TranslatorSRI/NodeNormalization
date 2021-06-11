@@ -26,7 +26,7 @@
     "knowledge_graph": {
       "nodes": {
         "NODE_1": {
-          "category": [
+          "categories": [
             "biolink:D",
             "biolink:I",
             "biolink:S",
@@ -37,14 +37,14 @@
           ]
         },
         "NODE_2": {
-          "category": [
+          "categories": [
             "biolink:ChemicalSubstance"
           ],
           "name": "AvgDailyOzoneExposure,AvgDailyOzoneExposure_StudyAvg,AvgDailyOzoneExposure_StudyMax,MaxDailyOzoneExposure,MaxDailyOzoneExposure_StudyAvg,MaxDailyOzoneExposure_StudyMax,AvgDailyOzoneExposure_qcut,AvgDailyOzoneExposure_StudyAvg_qcut,AvgDailyOzoneExposure_StudyMax_qcut,MaxDailyOzoneExposure_qcut,MaxDailyOzoneExposure_StudyAvg_qcut,MaxDailyOzoneExposure_StudyMax_qcut,MaxDailyOzoneExposure_2,MaxDailyOzoneExposure_2_qcut",
           "attributes": [
             {
-              "name": "equivalent_identifiers",
-              "type": "EDAM:data_0006",
+              "original_attribute_name": "equivalent_identifiers",
+              "attribute_type_id": "EDAM:data_0006",
               "value": [
                 "PUBCHEM:24823",
                 "SCTID:40057008",
@@ -62,8 +62,8 @@
           "predicate": "biolink:correlated_with",
           "attributes": [
             {
-              "name": "provenance",
-              "type": "MetaInformation",
+              "original_attribute_name": "provenance",
+              "attribute_type_id": "MetaInformation",
               "value": "https://icees.renci.org:16339/knowledge_graph_one_hop?reasoner=true"
             }
           ]
@@ -74,8 +74,8 @@
           "predicate": "biolink:correlated_with",
           "attributes": [
             {
-              "name": "provenance",
-              "type": "MetaInformation",
+              "original_attribute_name": "provenance",
+              "attribute_type_id": "MetaInformation",
               "value": "https://icees.renci.org:16339/knowledge_graph_one_hop?reasoner=true"
             }
           ]
