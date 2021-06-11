@@ -118,7 +118,8 @@ async def normalize_results(
                     for k, v in merged_result.items()
                 ])
 
-            except Exception:  # TODO determine exception(s) to catch
+            except Exception as e:  # TODO determine exception(s) to catch
+                logger.error(f'Exception: {e}')
                 hashed_result = False
 
             if hashed_result is not False:
@@ -195,6 +196,9 @@ async def normalize_kgraph(
         'nodes': {},
         'edges': {}
     }
+
+    node_id_map: Dict[str, str] = {}
+    edge_id_map: Dict[str, str] = {}
 
     try:
         # Map for each node id (curie) and its primary id
@@ -353,6 +357,9 @@ async def get_equivalent_curies(
         'type': ['named_thing']
     }
     """
+
+    value = None
+
     try:
         if isinstance(curie, CURIE):
             curie = curie.__root__
