@@ -3,13 +3,14 @@ import json
 import pytest
 
 from copy import deepcopy
-from reasoner_pydantic import KnowledgeGraph, Attribute, CURIE, Message
+from reasoner_pydantic import KnowledgeGraph, Attribute, CURIE
 from pathlib import Path
 from unittest.mock import Mock, patch
 
 # Need to add to sources root to avoid linter warnings
 from helpers.redis_mocks import mock_get_equivalent_curies
 from node_normalizer.normalizer import normalize_kgraph, _hash_attributes, _merge_node_attributes
+
 
 def find_diffs(x, y, parent_key=None, exclude_keys=[], epsilon_keys=[]):
     """
@@ -22,7 +23,7 @@ def find_diffs(x, y, parent_key=None, exclude_keys=[], epsilon_keys=[]):
         return None
 
     if parent_key in epsilon_keys:
-        xfl, yfl = float_or_None(x), float_or_None(y)
+        xfl, yfl = float_or_none(x), float_or_none(y)
         if xfl and yfl and xfl * yfl >= 0 and rho * xfl <= yfl and rho * yfl <= xfl:
             return None
 
@@ -66,12 +67,14 @@ def find_diffs(x, y, parent_key=None, exclude_keys=[], epsilon_keys=[]):
 
     return None if all(map(lambda x: x is None, d)) else d
 
+
 # We need this helper function as well:
-def float_or_None(x):
+def float_or_none(x):
     try:
         return float(x)
     except ValueError:
         return None
+
 
 premerged_graph = Path(__file__).parent / 'resources' / 'premerged_kgraph.json'
 postmerged_graph = Path(__file__).parent / 'resources' / 'postmerged_kgraph.json'
@@ -87,7 +90,7 @@ class TestNormalizer:
             premerged_data = KnowledgeGraph.parse_obj(json.load(pre))
 
         with open(postmerged_graph, 'r') as post:
-            postmerged_from_file =json.load(post)
+            postmerged_from_file = json.load(post)
 
         postmerged_from_api, nmap, emap = await normalize_kgraph(app, premerged_data)
 
@@ -135,7 +138,7 @@ class TestNormalizer:
         # value is a list
         hashable_attribute = Attribute(
             attribute_type_id=CURIE.parse_obj("foo:bar"),
-            value=[1,2,3],
+            value=[1, 2, 3],
             original_attribute_name='test',
             attribute_source='test_source'
         )
@@ -145,7 +148,7 @@ class TestNormalizer:
         # value is a dict of scalars/lists
         hashable_attribute = Attribute(
             attribute_type_id=CURIE.parse_obj("foo:bar"),
-            value={1:2, 3:[4,5]},
+            value={1: 2, 3: [4, 5]},
             original_attribute_name='test',
             attribute_source='test_source'
         )
@@ -167,7 +170,7 @@ class TestNormalizer:
         # value is a nested dict
         hashable_attribute = Attribute(
             attribute_type_id=CURIE.parse_obj("foo:bar"),
-            value={1:{2:3}},
+            value={1: {2: 3}},
             original_attribute_name='test',
             attribute_source='test_source'
         )
