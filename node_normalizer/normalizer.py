@@ -2,7 +2,7 @@ import json
 from typing import List, Dict, Optional, Any, Set, Tuple, Union
 import uuid
 from uuid import UUID
-from node_normalizer.util import LoggingUtil
+from .util import LoggingUtil
 import logging
 import os
 from fastapi import FastAPI
