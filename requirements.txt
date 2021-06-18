@@ -10,3 +10,4 @@ aioredis
 pyyaml
 requests
 starlette==0.14.2
+redis-py-cluster==2.1.3

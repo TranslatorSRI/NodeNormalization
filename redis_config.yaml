@@ -1,0 +1,20 @@
+"eq_id_to_id_db" :
+  "is_cluster": true
+  "hosts":
+    # list of cluster member ips and ports
+    - "host_name": ""
+      "port": "6379"
+  "password": ""
+"id_to_data_db":
+  "is_cluster": true
+  "hosts":
+    - "host_name": ""
+      "port": "6379"
+  "password": ""
+"curie_to_bl_type_db":
+  "is_cluster": false
+  "db": 1
+  "host":
+    "host_name": ""
+    "port": "6379"
+  "password": ""

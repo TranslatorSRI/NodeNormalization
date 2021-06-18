@@ -1,12 +1,13 @@
 from node_normalizer.loader import NodeLoader
+import asyncio
 
 
-def load_redis():
+async def load_redis():
     # instantiate the class that does all the work
     loader = NodeLoader()
 
     # call to load redis instances with normalized node data
-    success: bool = loader.load(500000)
+    success: bool = await loader.load(500000)
 
     # check the return
     if not success:
@@ -16,4 +17,4 @@ def load_redis():
 
 
 if __name__ == '__main__':
-    load_redis()
+    asyncio.run(load_redis())
