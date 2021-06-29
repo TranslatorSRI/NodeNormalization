@@ -1,6 +1,6 @@
 redis
 fastapi==0.65.2
-reasoner-pydantic==1.1.1
+reasoner-pydantic==1.1.2.1
 uvicorn==0.14.0
 jsonschema
 pytest==6.2.4
