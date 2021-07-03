@@ -18,7 +18,7 @@
         "e01": {
           "subject": "n0",
           "object": "n1",
-          "predicate": "biolink:correlated_with",
+          "predicates": ["biolink:correlated_with"],
           "relation": null
         }
       }
