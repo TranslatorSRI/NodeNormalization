@@ -2,7 +2,7 @@
   "nodes": {
     "HGNC:11603": {
       "name": "TBX4",
-      "category": [
+      "categories": [
         "biolink:Gene"
       ]
     },

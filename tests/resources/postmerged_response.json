@@ -82,6 +82,7 @@
                 "HGNC:11603",
                 "UniProtKB:P57082"
               ],
+              "description": null,
               "value_type_id": "EDAM:data_0006"
             }
           ],
@@ -113,6 +114,7 @@
                 "SNOMEDCT:13645005",
                 "HP:0006510"
               ],
+              "description": null,
               "value_type_id": "EDAM:data_0006"
             }
           ],
@@ -138,6 +140,7 @@
                 "NCIT:C121945",
                 "SNOMEDCT:697897003"
               ],
+              "description": null,
               "value_type_id": "EDAM:data_0006"
             }
           ],
@@ -187,7 +190,8 @@
               "id": "a8575c4e-61a6-428a-bf09-fcb3e8d1644d"
             }
           ]
-        }
+        },
+        "score": null
       },
       {
         "node_bindings": {
@@ -208,7 +212,8 @@
               "id": "a8575c4e-61a6-428a-bf09-fcb3e8d1644d"
             }
           ]
-        }
+        },
+        "score": null
       },
       {
         "node_bindings": {
@@ -229,7 +234,8 @@
               "id": "044a7916-fba9-4b4f-ae48-f0815b0b222d"
             }
           ]
-        }
+        },
+        "score": null
       }
     ]
   },

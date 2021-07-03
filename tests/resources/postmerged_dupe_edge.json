@@ -55,6 +55,7 @@
                 "NODE_2",
                 "ENVO:01000537"
               ],
+              "description": null,
               "original_attribute_name": "equivalent_identifiers",
               "value_url": null,
               "attribute_source": null,
@@ -75,6 +76,7 @@
               "value": "https://icees.renci.org:16339/knowledge_graph_one_hop?reasoner=true",
               "original_attribute_name": "provenance",
               "value_url": null,
+              "description": null,
               "attribute_source": null,
               "value_type_id": null
             }
@@ -106,10 +108,13 @@
         "edge_bindings": {
           "e01": [
             {
-              "id": "EDGE_1"
+              "id": "EDGE_1",
+              "a_key": ["a_value"],
+              "predicate": "same_predicate"
             }
           ]
-        }
+        },
+        "score": null
       }
     ]
   },

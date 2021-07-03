@@ -3,25 +3,25 @@
     "query_graph": {
       "nodes": {
         "n1": {
-          "id": "HGNC:11603",
+          "ids": ["HGNC:11603"],
           "categories": [
             "biolink:Gene"
           ]
         },
         "n2": {
-          "id": "NCBIGene:9496",
+          "ids": ["NCBIGene:9496"],
           "categories": [
             "biolink:Gene"
           ]
         },
         "n3": {
-          "id": "MONDO:0005002",
+          "ids": ["MONDO:0005002"],
           "categories": [
             "biolink:Disease"
           ]
         },
         "n4": {
-          "id": "DOID:3083",
+          "ids": ["DOID:3083"],
           "categories": [
             "biolink:Disease"
           ]
@@ -40,7 +40,7 @@
         "e2": {
           "subject": "n2",
           "object": "n4",
-          "predicate": "biolink:related_to"
+          "predicates": ["biolink:related_to"]
         },
         "e3": {
           "subject": "n1",
