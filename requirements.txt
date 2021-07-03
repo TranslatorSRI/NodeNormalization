@@ -15,7 +15,6 @@ pandas~=1.2.2
 SPARQLWrapper~=1.8.5
 httpx~=0.16.1
 pydantic~=1.8.2
-reasoner~=0.1.0.dev0
 setuptools~=57.0.0
 argparse~=1.4.0
 jsonasobj~=1.2.1
