@@ -108,7 +108,9 @@
         "edge_bindings": {
           "e01": [
             {
-              "id": "EDGE_1"
+              "id": "EDGE_1",
+              "a_key": ["a_value"],
+              "predicate": "same_predicate"
             }
           ]
         },
