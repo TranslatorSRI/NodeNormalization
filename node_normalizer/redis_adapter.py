@@ -13,6 +13,7 @@ class Resource:
 
 @dataclass
 class RedisInstance:
+    ssl_enabled: bool = False
     password: str = ''
     is_cluster: bool = True
     hosts: List[Resource] = field(default_factory=list)
@@ -61,14 +62,16 @@ class RedisConnection:
             hosts = [{"host": host.host_name, "port": host.port} for host in redis_instance.hosts]
             redis_connector = RedisCluster(startup_nodes=hosts,
                                            decode_responses=True,
-                                           ssl=True,
+                                           ssl=redis_instance.ssl_enabled,
                                            ssl_cert_reqs=False,
                                            skip_full_coverage_check=True,
                                            password=redis_instance.password)
         else:
             host: Resource = redis_instance.host
             redis_connector = await aioredis.create_redis_pool(f'redis://{host.host_name}:{host.port}',
-                                                               db=redis_instance.db)
+                                                               db=redis_instance.db,
+                                                               ssl=redis_instance.ssl_enabled,
+                                                               password=redis_instance.password)
         self.connector = redis_connector
         return self
 
