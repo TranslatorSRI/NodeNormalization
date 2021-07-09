@@ -60,12 +60,14 @@ class RedisConnection:
         if redis_instance.is_cluster:
             host: Resource
             hosts = [{"host": host.host_name, "port": host.port} for host in redis_instance.hosts]
+            other_params = {}
+            if redis_instance.ssl_enabled:
+                other_params['ssl'] = redis_instance.ssl_enabled
+                other_params['ssl_cert_reqs'] = False
             redis_connector = RedisCluster(startup_nodes=hosts,
                                            decode_responses=True,
-                                           ssl=redis_instance.ssl_enabled,
-                                           ssl_cert_reqs=False,
                                            skip_full_coverage_check=True,
-                                           password=redis_instance.password)
+                                           password=redis_instance.password, **other_params)
         else:
             host: Resource = redis_instance.host
             if redis_instance.password:
