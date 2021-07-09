@@ -2,6 +2,7 @@
 from dataclasses import dataclass, field
 from rediscluster import RedisCluster
 import aioredis
+from typing import List, Dict
 
 
 @dataclass
@@ -14,7 +15,7 @@ class Resource:
 class RedisInstance:
     password: str = ''
     is_cluster: bool = True
-    hosts: list[Resource] = field(default_factory=list)
+    hosts: List[Resource] = field(default_factory=list)
     host: Resource = None  # Use if is_cluster == False
     db: int = None  # if instance is not a cluster it supports multiple dbs
 
@@ -60,6 +61,9 @@ class RedisConnection:
             hosts = [{"host": host.host_name, "port": host.port} for host in redis_instance.hosts]
             redis_connector = RedisCluster(startup_nodes=hosts,
                                            decode_responses=True,
+                                           ssl=True,
+                                           ssl_cert_reqs=False,
+                                           skip_full_coverage_check=True,
                                            password=redis_instance.password)
         else:
             host: Resource = redis_instance.host
@@ -127,7 +131,7 @@ class RedisConnectionFactory:
     """
     Class to create three redis connections based on config
     """
-    connections: dict[str, RedisConnection] = {}
+    connections: Dict[str, RedisConnection] = {}
 
     ID_TO_ID_DB_CONNECTION_NAME = 'id_to_id'
     ID_TO_NODE_DATA_DB_CONNECTION_NAME = 'id_to_node'

@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 from itertools import islice
 from datetime import datetime
@@ -209,7 +210,7 @@ class NodeLoader:
                     vals = await vals
                 types_prefixes_pipeline = types_prefixes_redis.pipeline()
                 # get the values and insure they are strings
-                current_types: set = set(x.decode("utf-8") for x in vals[0])
+                current_types: set = set(x.decode("utf-8") if not isinstance(x,str) else x for x in vals[0])
 
                 # remove any dupes
                 self.semantic_types = self.semantic_types.difference(current_types)
@@ -231,6 +232,7 @@ class NodeLoader:
                 self.print_debug_msg(f'Error: 1 or more data files were incorrect', True)
                 ret_val = False
         except Exception as e:
+            raise e
             self.print_debug_msg(f'Exception thrown in load(): {e}', True)
             ret_val = False
 
