@@ -57,28 +57,29 @@ class RedisConnection:
         Create redis connection.
         """
         self = RedisConnection()
+        other_params = {}
+        if redis_instance.password:
+            other_params['password'] = redis_instance.password
+        if redis_instance.ssl_enabled:
+            other_params['ssl'] = redis_instance.ssl_enabled
+
         if redis_instance.is_cluster:
             host: Resource
             hosts = [{"host": host.host_name, "port": host.port} for host in redis_instance.hosts]
             other_params = {}
             if redis_instance.ssl_enabled:
-                other_params['ssl'] = redis_instance.ssl_enabled
                 other_params['ssl_cert_reqs'] = False
+
             redis_connector = RedisCluster(startup_nodes=hosts,
                                            decode_responses=True,
                                            skip_full_coverage_check=True,
                                            password=redis_instance.password, **other_params)
         else:
             host: Resource = redis_instance.host
-            if redis_instance.password:
-                redis_connector = await aioredis.create_redis_pool(f'redis://{host.host_name}:{host.port}',
-                                                                   db=redis_instance.db,
-                                                                   ssl=redis_instance.ssl_enabled,
-                                                                   password=redis_instance.password)
-            else:
-                redis_connector = await aioredis.create_redis_pool(f'redis://{host.host_name}:{host.port}',
-                                                                   db=redis_instance.db,
-                                                                   ssl=redis_instance.ssl_enabled)
+            redis_connector = await aioredis.create_redis_pool(f'redis://{host.host_name}:{host.port}',
+                                                               db=redis_instance.db,
+                                                               **other_params)
+
         self.connector = redis_connector
         return self
 
