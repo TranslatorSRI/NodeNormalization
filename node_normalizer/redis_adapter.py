@@ -68,10 +68,15 @@ class RedisConnection:
                                            password=redis_instance.password)
         else:
             host: Resource = redis_instance.host
-            redis_connector = await aioredis.create_redis_pool(f'redis://{host.host_name}:{host.port}',
-                                                               db=redis_instance.db,
-                                                               ssl=redis_instance.ssl_enabled,
-                                                               password=redis_instance.password)
+            if redis_instance.password:
+                redis_connector = await aioredis.create_redis_pool(f'redis://{host.host_name}:{host.port}',
+                                                                   db=redis_instance.db,
+                                                                   ssl=redis_instance.ssl_enabled,
+                                                                   password=redis_instance.password)
+            else:
+                redis_connector = await aioredis.create_redis_pool(f'redis://{host.host_name}:{host.port}',
+                                                                   db=redis_instance.db,
+                                                                   ssl=redis_instance.ssl_enabled)
         self.connector = redis_connector
         return self
 
