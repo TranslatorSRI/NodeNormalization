@@ -13,10 +13,11 @@
             "HGNC:11603",
             "UniProtKB:P57082"
           ],
+          "description": null,
           "value_type_id": "EDAM:data_0006"
         }
       ],
-      "category": [
+      "categories": [
         "biolink:Gene",
         "biolink:NamedThing",
         "biolink:BiologicalEntity",
@@ -44,10 +45,11 @@
             "SNOMEDCT:13645005",
             "HP:0006510"
           ],
+          "description": null,
           "value_type_id": "EDAM:data_0006"
         }
       ],
-      "category": [
+      "categories": [
         "biolink:Disease",
         "biolink:NamedThing",
         "biolink:BiologicalEntity",
@@ -71,10 +73,11 @@
             "UMLS:C4304591",
             "SNOMEDCT:719584008"
           ],
+          "description": null,
           "value_type_id": "EDAM:data_0006"
         }
       ],
-      "category": [
+      "categories": [
         "biolink:Disease",
         "biolink:NamedThing",
         "biolink:BiologicalEntity",
@@ -96,10 +99,11 @@
             "NCIT:C121945",
             "SNOMEDCT:697897003"
           ],
+          "description": null,
           "value_type_id": "EDAM:data_0006"
         }
       ],
-      "category": [
+      "categories": [
         "biolink:Disease",
         "biolink:DiseaseOrPhenotypicFeature",
         "biolink:BiologicalEntity",

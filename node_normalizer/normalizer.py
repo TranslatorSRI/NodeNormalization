@@ -149,13 +149,13 @@ async def normalize_qgraph(app: FastAPI, qgraph: QueryGraph) -> QueryGraph:
             merged_nodes[node_code] = node.dict()
 
             # node.id can be none, a string, or a list
-            if not node.id:
+            if not node.ids:
                 # do nothing
                 continue
-            elif isinstance(node.id, list):
-                equivalent_curies = await get_normalized_nodes(app, node.id)
+            elif isinstance(node.ids, list):
+                equivalent_curies = await get_normalized_nodes(app, node.ids)
                 primary_ids = set()
-                for nid in node.id:
+                for nid in node.ids:
                     if equivalent_curies[nid.__root__]:
                         primary_ids.add(equivalent_curies[nid.__root__]['id']['identifier'])
                     else:
@@ -163,9 +163,9 @@ async def normalize_qgraph(app: FastAPI, qgraph: QueryGraph) -> QueryGraph:
                 merged_nodes[node_code]['id'] = list(primary_ids)
                 node_code_map[node_code] = list(primary_ids)
             else:
-                equivalent_curies = await get_equivalent_curies(app, node.id)
-                if equivalent_curies[node.id.__root__]:
-                    primary_id = equivalent_curies[node.id.__root__]['id']['identifier']
+                equivalent_curies = await get_equivalent_curies(app, node.ids)
+                if equivalent_curies[node.ids.__root__]:
+                    primary_id = equivalent_curies[node.ids.__root__]['id']['identifier']
                     merged_nodes[node_code]['id'] = primary_id
                     node_code_map[node_code] = primary_id
         except Exception as e:
@@ -286,9 +286,9 @@ async def normalize_kgraph(
 
                 if 'type' in equivalent_curies[node_id]:
                     if type(equivalent_curies[node_id]['type']) is list:
-                        merged_node['category'] = equivalent_curies[node_id]['type']
+                        merged_node['categories'] = equivalent_curies[node_id]['type']
                     else:
-                        merged_node['category'] = [equivalent_curies[node_id]['type']]
+                        merged_node['categories'] = [equivalent_curies[node_id]['type']]
 
                 merged_kgraph['nodes'][primary_id] = merged_node
             else:
