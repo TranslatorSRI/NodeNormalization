@@ -66,14 +66,13 @@ class RedisConnection:
         if redis_instance.is_cluster:
             host: Resource
             hosts = [{"host": host.host_name, "port": host.port} for host in redis_instance.hosts]
-            other_params = {}
             if redis_instance.ssl_enabled:
                 other_params['ssl_cert_reqs'] = False
 
             redis_connector = RedisCluster(startup_nodes=hosts,
                                            decode_responses=True,
                                            skip_full_coverage_check=True,
-                                           password=redis_instance.password, **other_params)
+                                           **other_params)
         else:
             host: Resource = redis_instance.host
             redis_connector = await aioredis.create_redis_pool(f'redis://{host.host_name}:{host.port}',
