@@ -53,7 +53,7 @@ async def shutdown_event():
 
 
 @app.post(
-    f'/{TRAPI_VERSION}/response',
+    f'/response',
     summary='Normalizes a TRAPI response object',
     description='Returns the response object with a merged '
                 'knowledge graph and query graph bindings'
