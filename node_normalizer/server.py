@@ -19,7 +19,7 @@ loader = NodeLoader()
 
 redis_host = os.environ.get('REDIS_HOST', loader.get_config()['redis_host'])
 redis_port = os.environ.get('REDIS_PORT', loader.get_config()['redis_port'])
-
+TRAPI_VERSION = os.environ.get('TRAPI_VERSION', '1.1')
 
 @app.on_event('startup')
 async def startup_event():
@@ -53,7 +53,7 @@ async def shutdown_event():
 
 
 @app.post(
-    '/response',
+    f'/{TRAPI_VERSION}/response',
     summary='Normalizes a TRAPI response object',
     description='Returns the response object with a merged '
                 'knowledge graph and query graph bindings'

@@ -68,7 +68,7 @@ def construct_open_api_schema(app) -> Dict[str, str]:
     if 'servers' in api_docs:
         for s in api_docs['servers']:
             # override if servver root env var is provided
-            s['url'] = server_root + '1.1' if server_root != '/' else s['url']
+            s['url'] = server_root if server_root != '/' else s['url']
         open_api_schema['servers'] = api_docs['servers']
 
     return open_api_schema
