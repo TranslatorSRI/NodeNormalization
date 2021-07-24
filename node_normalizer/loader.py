@@ -9,6 +9,10 @@ from itertools import combinations
 import jsonschema
 import os
 from node_normalizer.redis_adapter import RedisConnectionFactory, RedisConnection
+import tracemalloc
+
+tracemalloc.start()
+
 
 
 class NodeLoader:
@@ -295,7 +299,6 @@ class NodeLoader:
 
         # init a line counter
         line_counter: int = 0
-
         try:
             term2id_redis: RedisConnection = await self.get_redis(0)
             id2instance_redis: RedisConnection = await self.get_redis(1)
@@ -346,10 +349,21 @@ class NodeLoader:
 
                         id2instance_pipeline.set(identifier, line)
 
+
                     if self._test_mode != 1 and line_counter % block_size == 0:
                         term2id_pipeline.execute()
                         id2instance_pipeline.execute()
                         self.print_debug_msg(f'{line_counter} {compendium_filename} lines processed.', True)
+                    elif line_counter % block_size == 0:
+                        if tracemalloc.is_tracing():
+                            snapshot = tracemalloc.take_snapshot()
+                            top_stats = snapshot.statistics('lineno')
+                            print(f"""{line_counter} -------------------""")
+                            print( [str(x) for x in top_stats[:10]])
+                            print('------------------------------------')
+                        from node_normalizer.redis_adapter import RedisConnection
+                        RedisConnection.reset_pipeline(term2id_pipeline)
+                        RedisConnection.reset_pipeline(id2instance_pipeline)
 
                 if self._test_mode != 1:
                     term2id_pipeline.execute()

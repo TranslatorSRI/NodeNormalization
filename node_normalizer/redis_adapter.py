@@ -1,6 +1,7 @@
 
 from dataclasses import dataclass, field
 from rediscluster import RedisCluster
+import rediscluster
 import aioredis
 from typing import List, Dict
 
@@ -135,6 +136,15 @@ class RedisConnection:
 
     def pipeline(self):
         return self.connector.pipeline()
+
+    @staticmethod
+    def reset_pipeline(pipeline):
+        if isinstance(pipeline, aioredis.commands.transaction.Pipeline):
+            pipeline: aioredis.commands.transaction.Pipeline
+            pipeline._pipeline = []
+        elif isinstance(pipeline, rediscluster.pipeline.ClusterPipeline):
+            pipeline: rediscluster.pipeline.ClusterPipeline
+            pipeline.reset()
 
 
 class RedisConnectionFactory:
