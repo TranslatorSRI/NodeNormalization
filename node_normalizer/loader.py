@@ -348,6 +348,9 @@ class NodeLoader:
                     if self._test_mode != 1 and line_counter % block_size == 0:
                         await RedisConnection.execute_pipeline(term2id_pipeline)
                         await RedisConnection.execute_pipeline(id2instance_pipeline)
+                        # Pipeline executed create a new one error 
+                        term2id_pipeline = term2id_redis.pipeline()
+                        id2instance_pipeline = id2instance_redis.pipeline()
                         self.print_debug_msg(f'{line_counter} {compendium_filename} lines processed.', True)
 
                 if self._test_mode != 1:
