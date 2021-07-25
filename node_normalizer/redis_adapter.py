@@ -146,6 +146,15 @@ class RedisConnection:
             pipeline: rediscluster.pipeline.ClusterPipeline
             pipeline.reset()
 
+    @staticmethod
+    async def execute_pipeline(pipeline):
+        if isinstance(pipeline, aioredis.commands.transaction.Pipeline):
+            pipeline: aioredis.commands.transaction.Pipeline
+            return await pipeline.execute()
+        elif isinstance(pipeline, rediscluster.pipeline.ClusterPipeline):
+            pipeline: rediscluster.pipeline.ClusterPipeline
+            return pipeline.execute()
+
 
 class RedisConnectionFactory:
     """

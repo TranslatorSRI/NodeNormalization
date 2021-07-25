@@ -9,10 +9,6 @@ from itertools import combinations
 import jsonschema
 import os
 from node_normalizer.redis_adapter import RedisConnectionFactory, RedisConnection
-import tracemalloc
-
-tracemalloc.start()
-
 
 
 class NodeLoader:
@@ -229,7 +225,7 @@ class NodeLoader:
 
                 if self._test_mode != 1:
                     # add the data to redis
-                    response = types_prefixes_pipeline.execute()
+                    response = RedisConnection.execute_pipeline(types_prefixes_pipeline)
                     if asyncio.coroutines.iscoroutine(response):
                         await response
             else:
@@ -349,25 +345,14 @@ class NodeLoader:
 
                         id2instance_pipeline.set(identifier, line)
 
-
                     if self._test_mode != 1 and line_counter % block_size == 0:
-                        term2id_pipeline.execute()
-                        id2instance_pipeline.execute()
+                        RedisConnection.execute_pipeline(term2id_pipeline)
+                        RedisConnection.execute_pipeline(id2instance_pipeline)
                         self.print_debug_msg(f'{line_counter} {compendium_filename} lines processed.', True)
-                    elif line_counter % block_size == 0:
-                        if tracemalloc.is_tracing():
-                            snapshot = tracemalloc.take_snapshot()
-                            top_stats = snapshot.statistics('lineno')
-                            print(f"""{line_counter} -------------------""")
-                            print( [str(x) for x in top_stats[:10]])
-                            print('------------------------------------')
-                        from node_normalizer.redis_adapter import RedisConnection
-                        RedisConnection.reset_pipeline(term2id_pipeline)
-                        RedisConnection.reset_pipeline(id2instance_pipeline)
 
                 if self._test_mode != 1:
-                    term2id_pipeline.execute()
-                    id2instance_pipeline.execute()
+                    RedisConnection.execute_pipeline(term2id_pipeline)
+                    RedisConnection.execute_pipeline(id2instance_pipeline)
                     self.print_debug_msg(f'{line_counter} {compendium_filename} total lines processed.', True)
 
                 print(f'Done loading {compendium_filename}...')
