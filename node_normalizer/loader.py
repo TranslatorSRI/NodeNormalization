@@ -225,7 +225,7 @@ class NodeLoader:
 
                 if self._test_mode != 1:
                     # add the data to redis
-                    response = RedisConnection.execute_pipeline(types_prefixes_pipeline)
+                    response = await RedisConnection.execute_pipeline(types_prefixes_pipeline)
                     if asyncio.coroutines.iscoroutine(response):
                         await response
             else:
@@ -346,13 +346,13 @@ class NodeLoader:
                         id2instance_pipeline.set(identifier, line)
 
                     if self._test_mode != 1 and line_counter % block_size == 0:
-                        RedisConnection.execute_pipeline(term2id_pipeline)
-                        RedisConnection.execute_pipeline(id2instance_pipeline)
+                        await RedisConnection.execute_pipeline(term2id_pipeline)
+                        await RedisConnection.execute_pipeline(id2instance_pipeline)
                         self.print_debug_msg(f'{line_counter} {compendium_filename} lines processed.', True)
 
                 if self._test_mode != 1:
-                    RedisConnection.execute_pipeline(term2id_pipeline)
-                    RedisConnection.execute_pipeline(id2instance_pipeline)
+                    await RedisConnection.execute_pipeline(term2id_pipeline)
+                    await RedisConnection.execute_pipeline(id2instance_pipeline)
                     self.print_debug_msg(f'{line_counter} {compendium_filename} total lines processed.', True)
 
                 print(f'Done loading {compendium_filename}...')
