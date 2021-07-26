@@ -3,7 +3,7 @@
     "query_graph": {
       "nodes": {
         "n1": {
-          "ids": ["HGNC:11603"],
+          "ids": ["NCBIGene:9496"],
           "categories": [
             "biolink:Gene"
           ],
@@ -27,7 +27,7 @@
           "constraints": null
         },
         "n4": {
-          "ids": ["DOID:3083"],
+          "ids": ["MONDO:0005002"],
           "categories": [
             "biolink:Disease"
           ],
