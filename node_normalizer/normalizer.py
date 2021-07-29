@@ -58,6 +58,12 @@ async def normalize_results(
                     merged_binding = n_bind.dict()
                     merged_binding['id'] = node_id_map[n_bind.id.__root__]
 
+                    node_binding_information = [
+                            "atts" if k == 'attributes'
+                            else (k, tuple(v)) if isinstance(v, list)
+                            else (k, v)
+                            for k, v in merged_binding.items()
+                        ]
                     # if there are attributes in the node binding
                     if 'attributes' in merged_binding:
                         # storage for the pydantic Attributes
@@ -72,14 +78,9 @@ async def normalize_results(
                             attribs.append(new_attrib)
 
                         # call to get the hash
-                        node_binding_hash = _hash_attributes(attribs)
-                    else:
-                        node_binding_hash = frozenset([
-                            (k, tuple(v))
-                            if isinstance(v, list)
-                            else (k, v)
-                            for k, v in merged_binding.items()
-                        ])
+                        atty_hash = _hash_attributes(attribs)
+                        node_binding_information.append(atty_hash)
+                    node_binding_hash = frozenset(node_binding_information)
 
                     if node_binding_hash in node_binding_seen:
                         continue
@@ -111,12 +112,9 @@ async def normalize_results(
                 merged_result['edge_bindings'][edge_code] = merged_edge_bindings
 
             try:
-                hashed_result = frozenset([
-                    (k, tuple(v))
-                    if isinstance(v, list)
-                    else (k, v)
-                    for k, v in merged_result.items()
-                ])
+                #This used to have some list comprehension based on types.  But in TRAPI 1.1 the list/dicts get pretty deep.
+                #This is simpler, and the sort_keys argument makes sure we get a constant result.
+                hashed_result = json.dumps(merged_result, sort_keys=True)
 
             except Exception as e:  # TODO determine exception(s) to catch
                 logger.error(f'normalize_results Exception: {e}')
@@ -148,26 +146,24 @@ async def normalize_qgraph(app: FastAPI, qgraph: QueryGraph) -> QueryGraph:
         try:
             merged_nodes[node_code] = node.dict()
 
+            # as of TRAPI 1.1, node.id must be none or a list.
             # node.id can be none, a string, or a list
             if not node.ids:
                 # do nothing
                 continue
-            elif isinstance(node.ids, list):
-                equivalent_curies = await get_normalized_nodes(app, node.ids)
+            else:
+                if not isinstance(node.ids, list):
+                    raise Exception("node.ids must be a list")
                 primary_ids = set()
                 for nid in node.ids:
-                    if equivalent_curies[nid.__root__]:
-                        primary_ids.add(equivalent_curies[nid.__root__]['id']['identifier'])
+                    nr = nid.__root__
+                    equivalent_curies = await get_equivalent_curies(app,nid)
+                    if equivalent_curies[nr]:
+                        primary_ids.add(equivalent_curies[nr]['id']['identifier'])
                     else:
-                        primary_ids.add(nid)
-                merged_nodes[node_code]['id'] = list(primary_ids)
+                        primary_ids.add(nr)
+                merged_nodes[node_code]['ids'] = list(primary_ids)
                 node_code_map[node_code] = list(primary_ids)
-            else:
-                equivalent_curies = await get_equivalent_curies(app, node.ids)
-                if equivalent_curies[node.ids.__root__]:
-                    primary_id = equivalent_curies[node.ids.__root__]['id']['identifier']
-                    merged_nodes[node_code]['id'] = primary_id
-                    node_code_map[node_code] = primary_id
         except Exception as e:
             logger.error(f'normalize_qgraph Exception: {e}')
 

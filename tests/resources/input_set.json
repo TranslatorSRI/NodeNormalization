@@ -1,0 +1,67 @@
+{
+  "message":
+  {
+    "query_graph":
+    {
+      "nodes":
+      {
+        "disease": {
+          "ids": ["MONDO:0005002"]
+        },
+        "drug": {
+          "categories": ["biolink:ChemicalSubstance"],
+          "set": "true"
+        }
+      },
+      "edges":
+      {
+        "treats":
+        {
+          "subject": "disease",
+          "object": "drug",
+          "predicates": ["biolink:treats"]
+        }
+      }
+    },
+    "knowledge_graph":
+    {
+      "nodes":
+      {
+        "MONDO:0005002": {"categories": ["biolink:Disease"]},
+        "PUBCHEM.COMPOUND:2468": {"categories":  ["biolink:ChemicalSubstance"]},
+        "PUBCHEM.COMPOUND:3488": {"categories":  ["biolink:ChemicalSubstance"]}
+      },
+      "edges":
+      {
+        "edge1": {"subject": "MONDO:0005002", "object":  "PUBCHEM.COMPOUND:2468", "predicate": "biolink:treats"},
+        "edge2": {"subject": "MONDO:0005002", "object":  "PUBCHEM.COMPOUND:3488", "predicate": "biolink:treats"}
+      }
+    },
+    "results":
+    [
+      {
+        "node_bindings": {
+          "disease": [{"id":"MONDO:0005002"}],
+          "drug": [{"id":"PUBCHEM.COMPOUND:2468",
+            "attributes": [
+              {"original_attribute_name": "coalescence_method", "attribute_type_id": "biolink:has_attribute", "value": "property_enrichment", "value_type_id": "EDAM:operation_0004"},
+              {"original_attribute_name": "p_value", "attribute_type_id": "biolink:has_numeric_value", "value": [1.025238759711833e-07, 8.462894040203764e-07, 6.741080520186477e-06], "value_type_id": "EDAM:data_1669"},
+              {"original_attribute_name": "properties", "attribute_type_id": "biolink:has_attribute", "value": ["Drugs Used in Diabetes", "hypoglycemic_agent", "Alimentary Tract and Metabolism"], "value_type_id": "EDAM:data_0006"}
+            ]
+          },
+            {"id":"PUBCHEM.COMPOUND:3488",
+             "attributes": [
+              {"original_attribute_name": "coalescence_method", "attribute_type_id": "biolink:has_attribute", "value": "property_enrichment", "value_type_id": "EDAM:operation_0004"},
+              {"original_attribute_name": "p_value", "attribute_type_id": "biolink:has_numeric_value", "value": [1.025238759711833e-07, 8.462894040203764e-07, 6.741080520186477e-06], "value_type_id": "EDAM:data_1669"},
+              {"original_attribute_name": "properties", "attribute_type_id": "biolink:has_attribute", "value": ["Drugs Used in Diabetes", "hypoglycemic_agent", "Alimentary Tract and Metabolism"], "value_type_id": "EDAM:data_0006"}
+            ]
+          }
+        ]},
+        "edge_bindings":
+        {
+          "treats": [{"id":"edge1"},{ "id":"edge2"}]
+        }
+      }
+    ]
+  }
+}
