@@ -1,7 +1,7 @@
 """FastAPI server."""
 import os
-import aioredis
 
+from pathlib import Path
 from typing import List, Optional, Dict
 from fastapi import FastAPI, HTTPException, Query
 from reasoner_pydantic import Response
@@ -9,6 +9,7 @@ from .loader import NodeLoader
 from .apidocs import get_app_info, construct_open_api_schema
 from .model import SemanticTypes, CuriePivot, CurieList, SemanticTypesInput
 from .normalizer import get_normalized_nodes, get_curie_prefixes, normalize_message
+from .redis_adapter import RedisConnectionFactory
 
 # Some metadata not implemented see
 # https://github.com/tiangolo/fastapi/pull/1812
@@ -18,19 +19,24 @@ loader = NodeLoader()
 
 redis_host = os.environ.get('REDIS_HOST', loader.get_config()['redis_host'])
 redis_port = os.environ.get('REDIS_PORT', loader.get_config()['redis_port'])
-
+TRAPI_VERSION = os.environ.get('TRAPI_VERSION', '1.1')
 
 @app.on_event('startup')
 async def startup_event():
     """
     Start up Redis connection
     """
-    app.state.redis_connection0 = await aioredis.create_redis_pool(
-        f'redis://{redis_host}:{redis_port}', db=0)
-    app.state.redis_connection1 = await aioredis.create_redis_pool(
-        f'redis://{redis_host}:{redis_port}', db=1)
-    app.state.redis_connection2 = await aioredis.create_redis_pool(
-        f'redis://{redis_host}:{redis_port}', db=2)
+    redis_config_file = Path(__file__).parent.parent / "redis_config.yaml"
+    connection_factory = await RedisConnectionFactory.create_connection_pool(redis_config_file)
+    app.state.redis_connection0 = connection_factory.get_connection(
+        connection_id=connection_factory.ID_TO_ID_DB_CONNECTION_NAME
+    )
+    app.state.redis_connection1 = connection_factory.get_connection(
+        connection_id=connection_factory.ID_TO_NODE_DATA_DB_CONNECTION_NAME
+    )
+    app.state.redis_connection2 = connection_factory.get_connection(
+        connection_id=connection_factory.CURIE_PREFIX_TO_BL_TYPE_DB_CONNECTION_NAME
+    )
 
 
 @app.on_event("shutdown")
@@ -47,7 +53,7 @@ async def shutdown_event():
 
 
 @app.post(
-    '/response',
+    f'/response',
     summary='Normalizes a TRAPI response object',
     description='Returns the response object with a merged '
                 'knowledge graph and query graph bindings'

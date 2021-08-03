@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 from itertools import islice
 from datetime import datetime
@@ -7,7 +8,7 @@ import hashlib
 from itertools import combinations
 import jsonschema
 import os
-import redis
+from node_normalizer.redis_adapter import RedisConnectionFactory, RedisConnection
 
 
 class NodeLoader:
@@ -21,9 +22,6 @@ class NodeLoader:
         self._config = self.get_config()
 
         self._compendium_directory: Path = Path(self._config['compendium_directory'])
-        self._redis_host: str = self._config['redis_host']
-        self._redis_password: str = self._config['redis_password']
-        self._redis_port: int = self._config['redis_port']
         self._test_mode: int = self._config['test_mode']
         self._data_files: list = self._config['data_files'].split(',')
 
@@ -168,7 +166,7 @@ class NodeLoader:
         # return to the caller
         return ret_val
 
-    def load(self, block_size) -> bool:
+    async def load(self, block_size) -> bool:
         """
         Given a compendia directory, load every file there into a running
         redis instance so that it can be read by R3
@@ -191,7 +189,8 @@ class NodeLoader:
                     # check the validity of the file
                     if self.validate_compendia(comp):
                         # try to load the file
-                        if not self.load_compendium(comp, block_size):
+                        loaded = await self.load_compendium(comp, block_size)
+                        if not loaded:
                             self.print_debug_msg(f'Compendia file {comp} did not load.', True)
                             continue
                     else:
@@ -199,7 +198,7 @@ class NodeLoader:
                         continue
 
                 # get the connection and pipeline to the database
-                types_prefixes_redis: redis.Redis = self.get_redis(2)
+                types_prefixes_redis: RedisConnection = await self.get_redis(2)
                 types_prefixes_pipeline = types_prefixes_redis.pipeline()
 
                 # create a command to get the current semantic types
@@ -207,9 +206,11 @@ class NodeLoader:
 
                 # get the current list of semantic types
                 vals = types_prefixes_pipeline.execute()
-
+                if asyncio.coroutines.iscoroutine(vals):
+                    vals = await vals
+                types_prefixes_pipeline = types_prefixes_redis.pipeline()
                 # get the values and insure they are strings
-                current_types: set = set(x.decode("utf-8") for x in vals[0])
+                current_types: set = set(x.decode("utf-8") if not isinstance(x,str) else x for x in vals[0])
 
                 # remove any dupes
                 self.semantic_types = self.semantic_types.difference(current_types)
@@ -224,11 +225,14 @@ class NodeLoader:
 
                 if self._test_mode != 1:
                     # add the data to redis
-                    types_prefixes_pipeline.execute()
+                    response = await RedisConnection.execute_pipeline(types_prefixes_pipeline)
+                    if asyncio.coroutines.iscoroutine(response):
+                        await response
             else:
                 self.print_debug_msg(f'Error: 1 or more data files were incorrect', True)
                 ret_val = False
         except Exception as e:
+            raise e
             self.print_debug_msg(f'Exception thrown in load(): {e}', True)
             ret_val = False
 
@@ -268,13 +272,21 @@ class NodeLoader:
 
         return file_list
 
-    def get_redis(self, dbid):
+    async def get_redis(self, dbid):
         """
         Return a redis instance
         """
-        return redis.StrictRedis(host=self._redis_host, port=self._redis_port, db=dbid, password=self._redis_password)
+        db_id_mapping = {
+            0: RedisConnectionFactory.ID_TO_ID_DB_CONNECTION_NAME,
+            1: RedisConnectionFactory.ID_TO_NODE_DATA_DB_CONNECTION_NAME,
+            2: RedisConnectionFactory.CURIE_PREFIX_TO_BL_TYPE_DB_CONNECTION_NAME
+        }
+        redis_config_path = Path(__file__).parent.parent / 'redis_config.yaml'
+        connection_factory: RedisConnectionFactory = await RedisConnectionFactory.create_connection_pool(redis_config_path)
+        connection = connection_factory.get_connection(db_id_mapping[dbid])
+        return connection
 
-    def load_compendium(self, compendium_filename: str, block_size: int) -> bool:
+    async def load_compendium(self, compendium_filename: str, block_size: int) -> bool:
         """
         Given the full path to a compendium, load it into redis so that it can
         be read by R3.  We also load extra keys, which are the upper-cased
@@ -283,10 +295,9 @@ class NodeLoader:
 
         # init a line counter
         line_counter: int = 0
-
         try:
-            term2id_redis = self.get_redis(0)
-            id2instance_redis = self.get_redis(1)
+            term2id_redis: RedisConnection = await self.get_redis(0)
+            id2instance_redis: RedisConnection = await self.get_redis(1)
 
             term2id_pipeline = term2id_redis.pipeline()
             id2instance_pipeline = id2instance_redis.pipeline()
@@ -335,13 +346,16 @@ class NodeLoader:
                         id2instance_pipeline.set(identifier, line)
 
                     if self._test_mode != 1 and line_counter % block_size == 0:
-                        term2id_pipeline.execute()
-                        id2instance_pipeline.execute()
+                        await RedisConnection.execute_pipeline(term2id_pipeline)
+                        await RedisConnection.execute_pipeline(id2instance_pipeline)
+                        # Pipeline executed create a new one error 
+                        term2id_pipeline = term2id_redis.pipeline()
+                        id2instance_pipeline = id2instance_redis.pipeline()
                         self.print_debug_msg(f'{line_counter} {compendium_filename} lines processed.', True)
 
                 if self._test_mode != 1:
-                    term2id_pipeline.execute()
-                    id2instance_pipeline.execute()
+                    await RedisConnection.execute_pipeline(term2id_pipeline)
+                    await RedisConnection.execute_pipeline(id2instance_pipeline)
                     self.print_debug_msg(f'{line_counter} {compendium_filename} total lines processed.', True)
 
                 print(f'Done loading {compendium_filename}...')

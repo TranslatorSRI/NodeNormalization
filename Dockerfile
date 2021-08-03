@@ -20,6 +20,8 @@ ADD ./swagger_ui /home/murphy/swagger_ui
 ADD ./setup.py /home/murphy/setup.py
 ADD ./node_normalizer /home/murphy/node_normalizer
 ADD ./config.json /home/murphy/config.json
+ADD ./redis_config.yaml /home/murphy/redis_config.yaml
+ADD ./load.py /home/murphy/load.py
 
 RUN pip install -e .
 
