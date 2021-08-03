@@ -9,6 +9,7 @@ from typing import Dict
 
 from yaml import load, SafeLoader
 from fastapi.openapi.utils import get_openapi
+import os
 
 
 def get_app_info() -> Dict[str, str]:
@@ -60,9 +61,14 @@ def construct_open_api_schema(app) -> Dict[str, str]:
     if 'description' in api_docs['info']:
         open_api_schema['info']['description'] = api_docs['info']['description']
 
+    # adds support to override server root path
+    server_root = os.environ.get('SERVER_ROOT', '/')
+    # make sure not to add double slash at the end.
+    server_root = server_root.rstrip('/') + '/'
     if 'servers' in api_docs:
         for s in api_docs['servers']:
-            s['url'] = s['url'] + '1.1'
+            # override if server root env var is provided
+            s['url'] = server_root + '1.1' if server_root != '/' else s['url']
         open_api_schema['servers'] = api_docs['servers']
 
     return open_api_schema
