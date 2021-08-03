@@ -1,0 +1,54 @@
+{
+  "PUBCHEM.COMPOUND:2468": {
+    "id": {
+      "identifier": "PUBCHEM.COMPOUND:2468",
+      "label": "Buformin"
+    },
+    "equivalent_identifiers": [
+      {
+        "identifier": "PUBCHEM.COMPOUND:2468",
+        "label": "Buformin"
+      },
+      {
+        "identifier": "CHEMBL.COMPOUND:CHEMBL39736",
+        "label": "BUFORMIN"
+      },
+      {
+        "identifier": "UNII:W2115E9C7B",
+        "label": "BUFORMIN"
+      },
+      {
+        "identifier": "CHEBI:3209",
+        "label": "Buformin"
+      },
+      {
+        "identifier": "DRUGBANK:DB04830"
+      },
+      {
+        "identifier": "MESH:D002026",
+        "label": "Buformin"
+      },
+      {
+        "identifier": "CAS:692-13-7"
+      },
+      {
+        "identifier": "DrugCentral:423",
+        "label": "buformin"
+      },
+      {
+        "identifier": "KEGG.COMPOUND:C07674",
+        "label": "Buformin"
+      },
+      {
+        "identifier": "INCHIKEY:XSEUMFJMFFMCIU-UHFFFAOYSA-N"
+      }
+    ],
+    "type": [
+      "biolink:ChemicalSubstance",
+      "biolink:MolecularEntity",
+      "biolink:BiologicalEntity",
+      "biolink:NamedThing",
+      "biolink:Entity"
+    ]
+  }
+}

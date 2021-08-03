@@ -1,0 +1,62 @@
+{
+  "PUBCHEM.COMPOUND:3488": {
+    "id": {
+      "identifier": "PUBCHEM.COMPOUND:3488",
+      "label": "Glyburide"
+    },
+    "equivalent_identifiers": [
+      {
+        "identifier": "PUBCHEM.COMPOUND:3488",
+        "label": "Glyburide"
+      },
+      {
+        "identifier": "CHEMBL.COMPOUND:CHEMBL472",
+        "label": "GLYBURIDE"
+      },
+      {
+        "identifier": "UNII:SX6K58TVWC",
+        "label": "GLYBURIDE"
+      },
+      {
+        "identifier": "CHEBI:5441",
+        "label": "glyburide"
+      },
+      {
+        "identifier": "DRUGBANK:DB01016"
+      },
+      {
+        "identifier": "MESH:D005905",
+        "label": "Glyburide"
+      },
+      {
+        "identifier": "CAS:10238-21-8"
+      },
+      {
+        "identifier": "DrugCentral:1314",
+        "label": "glibenclamide"
+      },
+      {
+        "identifier": "GTOPDB:2414",
+        "label": "glibenclamide"
+      },
+      {
+        "identifier": "HMDB:HMDB0015151",
+        "label": "Glyburide"
+      },
+      {
+        "identifier": "KEGG.COMPOUND:C07022",
+        "label": "Glyburide"
+      },
+      {
+        "identifier": "INCHIKEY:ZNNLBTZKUZBEKO-UHFFFAOYSA-N"
+      }
+    ],
+    "type": [
+      "biolink:ChemicalSubstance",
+      "biolink:MolecularEntity",
+      "biolink:BiologicalEntity",
+      "biolink:NamedThing",
+      "biolink:Entity"
+    ]
+  }
+}
