@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import List, Optional, Dict
 from fastapi import FastAPI, HTTPException, Query
 from reasoner_pydantic import Response
+from bmt import Toolkit
 from .loader import NodeLoader
 from .apidocs import get_app_info, construct_open_api_schema
 from .model import SemanticTypes, CuriePivot, CurieList, SemanticTypesInput
@@ -21,6 +22,8 @@ redis_host = os.environ.get('REDIS_HOST', loader.get_config()['redis_host'])
 redis_port = os.environ.get('REDIS_PORT', loader.get_config()['redis_port'])
 TRAPI_VERSION = os.environ.get('TRAPI_VERSION', '1.1')
 
+
+
 @app.on_event('startup')
 async def startup_event():
     """
@@ -32,11 +35,16 @@ async def startup_event():
         connection_id=connection_factory.ID_TO_ID_DB_CONNECTION_NAME
     )
     app.state.redis_connection1 = connection_factory.get_connection(
-        connection_id=connection_factory.ID_TO_NODE_DATA_DB_CONNECTION_NAME
+        connection_id=connection_factory.ID_TO_IDENTIFIERS_CONNECTION_NAME
     )
     app.state.redis_connection2 = connection_factory.get_connection(
+        connection_id=connection_factory.ID_TO_TYPE_CONNECTION_NAME
+    )
+    app.state.redis_connection3 = connection_factory.get_connection(
         connection_id=connection_factory.CURIE_PREFIX_TO_BL_TYPE_DB_CONNECTION_NAME
     )
+    app.state.toolkit = Toolkit('https://raw.githubusercontent.com/biolink/biolink-model/2.1.0/biolink-model.yaml')
+    app.state.ancestor_map = {}
 
 
 @app.on_event("shutdown")
@@ -50,6 +58,8 @@ async def shutdown_event():
     await app.state.redis_connection1.wait_closed()
     app.state.redis_connection2.close()
     await app.state.redis_connection2.wait_closed()
+    app.state.redis_connection3.close()
+    await app.state.redis_connection3.wait_closed()
 
 
 @app.post(
@@ -102,7 +112,7 @@ async def get_normalized_node_handler(curies: CurieList):
 )
 async def get_semantic_types_handler() -> SemanticTypes:
     # look for all biolink semantic types
-    types = await app.state.redis_connection2.lrange('semantic_types', 0, -1, encoding='utf-8')
+    types = await app.state.redis_connection3.lrange('semantic_types', 0, -1, encoding='utf-8')
 
     # did we get any data
     if not types:

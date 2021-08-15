@@ -10,6 +10,15 @@ from reasoner_pydantic import KnowledgeGraph, Message, QueryGraph, Result, CURIE
 
 logger = LoggingUtil.init_logging(__name__, level=logging.INFO, format='medium', logFilePath=os.path.dirname(__file__), logFileLevel=logging.INFO)
 
+def get_ancestors(app, input_type):
+    if input_type in app.state.ancestor_map:
+        return app.state.ancestor_map[input_type]
+    a = app.state.toolkit.get_ancestors(input_type)
+    ancs = [app.state.toolkit.get_element(ai)['class_uri'] for ai in a]
+    if input_type not in ancs:
+        ancs = [input_type] + ancs
+    app.state.ancestor_map[input_type] = ancs
+    return ancs
 
 async def normalize_message(app: FastAPI, message: Message) -> Message:
     """
@@ -28,7 +37,6 @@ async def normalize_message(app: FastAPI, message: Message) -> Message:
         })
     except Exception as e:
         logger.error(f'Exception: {e}')
-
 
 async def normalize_results(
         results: List[Result],
@@ -390,24 +398,51 @@ async def get_normalized_nodes(
     ]
     normal_nodes = {}
 
+    upper_curies = [c.uppercase() for c in curies]
     try:
-        references = await app.state.redis_connection0.mget(*curies, encoding='utf-8')
-        references_nonan = [reference for reference in references if reference is not None]
-        if references_nonan:
-            values = await app.state.redis_connection1.mget(*references_nonan, encoding='utf-8')
-            values = [json.loads(value) if value is not None else None for value in values]
-            dereference = dict(zip(references_nonan, values))
+        canonical_ids = await app.state.redis_connection0.mget(*upper_curies, encoding='utf-8')
+        canonical_nonan = [canonical_id for canonical_id in canonical_ids if canonical_id is not None]
+        #Get the equivalent_ids and types
+        if canonical_nonan:
+            eqids = await app.state.redis_connection1.mget(*canonical_nonan, encoding='utf-8')
+            eqids = [json.loads(value) if value is not None else None for value in eqids]
+            dereference_ids = dict(zip(canonical_nonan, eqids))
+            types =  await app.state.redis_connection2.mget(*canonical_nonan, encoding='utf-8')
+            types = [json.loads(value) if value is not None else None for value in types]
+            dereference_types = dict(zip(canonical_nonan, types))
         else:
-            dereference = dict()
+            dereference_ids = dict()
+            dereference_types = dict()
         normal_nodes = {
-            key: dereference.get(reference, None)
-            for key, reference in zip(curies, references)
+            input_curie: create_node(app, canonical_id,dereference_ids,dereference_types)
+            for input_curie, canonical_id in zip(curies, canonical_ids)
         }
     except Exception as e:
         logger.error(f'Exception: {e}')
 
     return normal_nodes
 
+async def create_node(app, canonical_id, equivalent_ids, types):
+    """Construct the output format given the compressed redis data"""
+    # It's possible that we didn't find a canonical_id
+    if canonical_id is None:
+        return None
+    #OK, now we should have id's in the format [ {"i": "MONDO:12312", "l": "Scrofula"}, {},...]
+    eids = equivalent_ids[canonical_id]
+    #First, we need to create the "id" node.  The identifier is our input canonical id, but we have to get a label
+    labels = list(filter(lambda x: len(x) > 0, [l['l'] for l in eids[canonical_id] if 'l' in l]))
+    if len(labels) > 0:
+        node = { "id" : {"identifier": canonical_id, "label": labels[0]}}
+    else:
+        #Sometimes, nothing has a label :(
+        node = { "id" : {"identifier": canonical_id}}
+    #now need to reformat the identifier keys.  It could be cleaner but we have to worry about if there is a label
+    node['equivalent_identifiers'] = [ {"identifier":eqid["i"], "label":eqid["l"]} if "l" in eqid
+                                       else {"identifier":eqid["i"]} for eqid in eids]
+    #and construct the type.  We are only keeping the leaf type, so we need to look up the ancestors and create the
+    # list
+    node['type'] = get_ancestors(app, types[canonical_id])
+    return node
 
 async def get_curie_prefixes(
         app: FastAPI,

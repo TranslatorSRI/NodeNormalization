@@ -30,16 +30,21 @@ class RedisInstance:
 
 @dataclass
 class ConnectionConfig:
+    #TODO, make all this dynamic based off of the config.  There's a config, but then every time you change the config
+    # you also gotta follow that around to class after class updating things.
     eq_id_to_id_db: RedisInstance
-    id_to_data_db: RedisInstance
+    id_to_eqids_db: RedisInstance
+    id_to_type_db: RedisInstance
     curie_to_bl_type_db: RedisInstance
 
     def __post_init__(self):
         # Converts inner data dicts to dataclasses
         if isinstance(self.curie_to_bl_type_db, dict):
             self.curie_to_bl_type_db = RedisInstance(**self.curie_to_bl_type_db)
-        if isinstance(self.id_to_data_db, dict):
-            self.id_to_data_db = RedisInstance(**self.id_to_data_db)
+        if isinstance(self.id_to_eqids_db, dict):
+            self.id_to_eqids_db = RedisInstance(**self.id_to_eqids_db)
+        if isinstance(self.id_to_type_db, dict):
+            self.id_to_type_db = RedisInstance(**self.id_to_type_db)
         if isinstance(self.eq_id_to_id_db, dict):
             self.eq_id_to_id_db = RedisInstance(**self.eq_id_to_id_db)
 
@@ -75,7 +80,7 @@ class RedisConnection:
                                            skip_full_coverage_check=True,
                                            **other_params)
         else:
-            host: Resource = redis_instance.host
+            host: Resource = redis_instance.hosts[0]
             redis_connector = await aioredis.create_redis_pool(f'redis://{host.host_name}:{host.port}',
                                                                db=redis_instance.db,
                                                                **other_params)
@@ -163,7 +168,8 @@ class RedisConnectionFactory:
     connections: Dict[str, RedisConnection] = {}
 
     ID_TO_ID_DB_CONNECTION_NAME = 'id_to_id'
-    ID_TO_NODE_DATA_DB_CONNECTION_NAME = 'id_to_node'
+    ID_TO_IDENTIFIERS_CONNECTION_NAME = 'id_to_eqids'
+    ID_TO_TYPE_CONNECTION_NAME = 'id_to_type'
     CURIE_PREFIX_TO_BL_TYPE_DB_CONNECTION_NAME = 'curie_to_bl'
 
     def __init__(self):
@@ -183,7 +189,8 @@ class RedisConnectionFactory:
         if not RedisConnectionFactory.connections:
             RedisConnectionFactory.connections = {
                 RedisConnectionFactory.ID_TO_ID_DB_CONNECTION_NAME: await RedisConnection.create(config.eq_id_to_id_db),
-                RedisConnectionFactory.ID_TO_NODE_DATA_DB_CONNECTION_NAME: await RedisConnection.create(config.id_to_data_db),
+                RedisConnectionFactory.ID_TO_IDENTIFIERS_CONNECTION_NAME: await RedisConnection.create(config.id_to_eqids_db),
+                RedisConnectionFactory.ID_TO_TYPE_CONNECTION_NAME: await RedisConnection.create(config.id_to_type_db),
                 RedisConnectionFactory.CURIE_PREFIX_TO_BL_TYPE_DB_CONNECTION_NAME: await RedisConnection.create(config.curie_to_bl_type_db)
             }
         return self
