@@ -116,7 +116,7 @@ async def get_normalized_node_handler(curies: CurieList):
     """
     Get value(s) for key(s) using redis MGET
     """
-    normalized_nodes = await get_normalized_nodes(app, curies.curies, True)
+    normalized_nodes = await get_normalized_nodes(app, curies.curies, curies.conflate)
 
     return normalized_nodes
 
