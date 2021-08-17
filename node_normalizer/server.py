@@ -8,7 +8,7 @@ from reasoner_pydantic import Response
 from bmt import Toolkit
 from .loader import NodeLoader
 from .apidocs import get_app_info, construct_open_api_schema
-from .model import SemanticTypes, CuriePivot, CurieList, SemanticTypesInput
+from .model import SemanticTypes, CuriePivot, CurieList, SemanticTypesInput, ConflationList
 from .normalizer import get_normalized_nodes, get_curie_prefixes, normalize_message
 from .redis_adapter import RedisConnectionFactory
 
@@ -43,6 +43,9 @@ async def startup_event():
     app.state.redis_connection3 = connection_factory.get_connection(
         connection_id=connection_factory.CURIE_PREFIX_TO_BL_TYPE_DB_CONNECTION_NAME
     )
+    app.state.redis_connection4 = connection_factory.get_connection(
+        connection_id=connection_factory.GENE_PROTEIN_CONFLATION_DB_CONNECTION_NAME
+    )
     app.state.toolkit = Toolkit('https://raw.githubusercontent.com/biolink/biolink-model/2.1.0/biolink-model.yaml')
     app.state.ancestor_map = {}
 
@@ -75,6 +78,19 @@ async def normalize_response(response: Response) -> Response:
     response.message = await normalize_message(app, response.message)
     return response
 
+@app.get(
+    '/get_allowed_conflations',
+    summary='Get the available conflations',
+    description='The returned strings can be included in an option to /get_normalized_nodes'
+)
+async def get_conflations() -> ConflationList:
+    """
+    Get implemented conflations
+    """
+    #TODO: build from config instead of hard-coding.
+    conflations = ConflationList(conflations= ['GeneProtein'])
+
+    return conflations
 
 @app.get(
     '/get_normalized_nodes',
@@ -85,6 +101,7 @@ async def get_normalized_node_handler(curie: List[str] = Query([], example=['MES
     """
     Get value(s) for key(s) using redis MGET
     """
+    #no_conflate = request.args.get('dontconflate',['GeneProtein'])
     normalized_nodes = await get_normalized_nodes(app, curie)
 
     return normalized_nodes

@@ -1,6 +1,7 @@
 "eq_id_to_id_db" :
   "ssl_enabled": false
   "is_cluster": false
+  "db": 0
   "hosts":
     # list of cluster member ips and ports
     - "host_name": "127.0.0.1"
@@ -9,6 +10,7 @@
 "id_to_eqids_db":
   "ssl_enabled": false
   "is_cluster": false
+  "db": 1
   "hosts":
     - "host_name": "127.0.0.1"
       "port": "6379"
@@ -16,6 +18,7 @@
 "id_to_type_db":
   "ssl_enabled": false
   "is_cluster": false
+  "db": 2
   "hosts":
     - "host_name": "127.0.0.1"
       "port": "6379"
@@ -23,7 +26,15 @@
 "curie_to_bl_type_db":
   "ssl_enabled": false
   "is_cluster": false
-  "db": 1
+  "db": 3
+  "hosts":
+    - "host_name": "127.0.0.1"
+      "port": "6379"
+  "password": ""
+"gene_protein_db":
+  "ssl_enabled": false
+  "is_cluster": false
+  "db": 4
   "hosts":
     - "host_name": "127.0.0.1"
       "port": "6379"

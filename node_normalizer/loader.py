@@ -23,8 +23,10 @@ class NodeLoader:
         self._config = self.get_config()
 
         self._compendium_directory: Path = Path(self._config['compendium_directory'])
+        self._conflation_directory: Path = Path(self._config['conflation_directory'])
         self._test_mode: int = self._config['test_mode']
-        self._data_files: list = self._config['data_files'].split(',')
+        self._data_files: list = self._config['data_files']
+        self._conflations: list = self._config['conflations']
 
         json_schema = Path(__file__).parent / 'resources' / 'valid_data_format.json'
 
@@ -226,6 +228,11 @@ class NodeLoader:
                     else:
                         self.print_debug_msg(f'Compendia file {comp} is invalid.', True)
                         continue
+                for conf in self._conflations:
+                    loaded = await self.load_conflation(conf, block_size)
+                    if not loaded:
+                        self.print_debug_msg(f'Conflation file {conf} did not load.', True)
+                        continue
 
                 # get the connection and pipeline to the database
                 types_prefixes_redis: RedisConnection = await self.get_redis(3)
@@ -312,12 +319,60 @@ class NodeLoader:
             0: RedisConnectionFactory.ID_TO_ID_DB_CONNECTION_NAME,
             1: RedisConnectionFactory.ID_TO_IDENTIFIERS_CONNECTION_NAME,
             2: RedisConnectionFactory.ID_TO_TYPE_CONNECTION_NAME,
-            3: RedisConnectionFactory.CURIE_PREFIX_TO_BL_TYPE_DB_CONNECTION_NAME
+            3: RedisConnectionFactory.CURIE_PREFIX_TO_BL_TYPE_DB_CONNECTION_NAME,
+            4: RedisConnectionFactory.GENE_PROTEIN_CONFLATION_DB_CONNECTION_NAME
         }
         redis_config_path = Path(__file__).parent.parent / 'redis_config.yaml'
         connection_factory: RedisConnectionFactory = await RedisConnectionFactory.create_connection_pool(redis_config_path)
         connection = connection_factory.get_connection(db_id_mapping[dbid])
         return connection
+
+    async def load_conflation(self, conflation: dict, block_size: int) -> bool:
+        """
+        Given a conflation, load it into a redis so that it can
+        be read by R3.
+        """
+
+        conflation_file = conflation['file']
+        conflation_redis_num = conflation['redis_db']
+        # init a line counter
+        line_counter: int = 0
+        try:
+            conflation_redis: RedisConnection = await self.get_redis(conflation_redis_num)
+            conflation_pipeline = conflation_redis.pipeline()
+
+            with open(f'{self._conflation_directory}/{conflation_file}', 'r', encoding="utf-8") as cfile:
+                self.print_debug_msg(f'Processing {conflation_file}...', True)
+
+                # for each line in the file
+                for line in cfile:
+                    line_counter = line_counter + 1
+
+                    # load the line into memory
+                    instance: dict = json.loads(line)
+
+                    for identifier in instance:
+                        #We need to include the identifier in the list of identifiers so that we know its position
+                        conflation_pipeline.set(identifier, line)
+
+                    if self._test_mode != 1 and line_counter % block_size == 0:
+                        await RedisConnection.execute_pipeline(conflation_pipeline)
+                        # Pipeline executed create a new one error
+                        conflation_pipeline =  conflation_redis.pipeline()
+                        self.print_debug_msg(f'{line_counter} {conflation_file} lines processed.', True)
+
+                if self._test_mode != 1:
+                    await RedisConnection.execute_pipeline(conflation_pipeline)
+                    self.print_debug_msg(f'{line_counter} {conflation_file} total lines processed.', True)
+
+                print(f'Done loading {conflation_file}...')
+        except Exception as e:
+            self.print_debug_msg(f'Exception thrown in load_conflation({conflation_file}), line {line_counter}: {e}', True)
+            return False
+
+        # return to the caller
+        return True
+
 
     async def load_compendium(self, compendium_filename: str, block_size: int) -> bool:
         """
@@ -356,7 +411,7 @@ class NodeLoader:
                     # list on output.
                     semantic_types = self.get_ancestors(instance['type'])
                     # for each semantic type in the list
-                    for semantic_type in instance['type']:
+                    for semantic_type in semantic_types:
                         # save the semantic type in a set to avoid duplicates
                         self.semantic_types.add(semantic_type)
 
@@ -380,7 +435,7 @@ class NodeLoader:
                             # equivalent_id might be an array, where the first element is
                             # the identifier, or it might just be a string. not worrying about that case yet.
                             equivalent_id = equivalent_id['i']
-                            term2id_pipeline.set(equivalent_id, identifier)
+                            #term2id_pipeline.set(equivalent_id, identifier)
                             term2id_pipeline.set(equivalent_id.upper(), identifier)
 
                         id2eqids_pipeline.set(identifier, json.dumps(instance['identifiers']))

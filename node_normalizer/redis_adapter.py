@@ -36,6 +36,7 @@ class ConnectionConfig:
     id_to_eqids_db: RedisInstance
     id_to_type_db: RedisInstance
     curie_to_bl_type_db: RedisInstance
+    gene_protein_db: RedisInstance
 
     def __post_init__(self):
         # Converts inner data dicts to dataclasses
@@ -47,6 +48,8 @@ class ConnectionConfig:
             self.id_to_type_db = RedisInstance(**self.id_to_type_db)
         if isinstance(self.eq_id_to_id_db, dict):
             self.eq_id_to_id_db = RedisInstance(**self.eq_id_to_id_db)
+        if isinstance(self.gene_protein_db, dict):
+            self.gene_protein_db = RedisInstance(**self.gene_protein_db)
 
 
 class RedisConnection:
@@ -171,6 +174,7 @@ class RedisConnectionFactory:
     ID_TO_IDENTIFIERS_CONNECTION_NAME = 'id_to_eqids'
     ID_TO_TYPE_CONNECTION_NAME = 'id_to_type'
     CURIE_PREFIX_TO_BL_TYPE_DB_CONNECTION_NAME = 'curie_to_bl'
+    GENE_PROTEIN_CONFLATION_DB_CONNECTION_NAME = 'gene_protein'
 
     def __init__(self):
         pass
@@ -191,7 +195,8 @@ class RedisConnectionFactory:
                 RedisConnectionFactory.ID_TO_ID_DB_CONNECTION_NAME: await RedisConnection.create(config.eq_id_to_id_db),
                 RedisConnectionFactory.ID_TO_IDENTIFIERS_CONNECTION_NAME: await RedisConnection.create(config.id_to_eqids_db),
                 RedisConnectionFactory.ID_TO_TYPE_CONNECTION_NAME: await RedisConnection.create(config.id_to_type_db),
-                RedisConnectionFactory.CURIE_PREFIX_TO_BL_TYPE_DB_CONNECTION_NAME: await RedisConnection.create(config.curie_to_bl_type_db)
+                RedisConnectionFactory.CURIE_PREFIX_TO_BL_TYPE_DB_CONNECTION_NAME: await RedisConnection.create(config.curie_to_bl_type_db),
+                RedisConnectionFactory.GENE_PROTEIN_CONFLATION_DB_CONNECTION_NAME: await RedisConnection.create(config.gene_protein_db)
             }
         return self
 
