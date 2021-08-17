@@ -386,6 +386,8 @@ async def get_equivalent_curies(
 async def get_eqids_and_types(
         app: FastAPI,
         canonical_nonan: List ) -> (List,List):
+    if len(canonical_nonan) == 0:
+        return [],[]
     eqids = await app.state.redis_connection1.mget(*canonical_nonan, encoding='utf-8')
     eqids = [json.loads(value) if value is not None else None for value in eqids]
     types = await app.state.redis_connection2.mget(*canonical_nonan, encoding='utf-8')
@@ -394,7 +396,8 @@ async def get_eqids_and_types(
 
 async def get_normalized_nodes(
         app: FastAPI,
-        curies: List[Union[CURIE, str]]
+        curies: List[Union[CURIE, str]],
+        conflate: bool
 ) -> Dict[str, Optional[str]]:
     """
     Get value(s) for key(s) using redis MGET
@@ -419,31 +422,35 @@ async def get_normalized_nodes(
         #Get the equivalent_ids and types
         if canonical_nonan:
             eqids, types = await get_eqids_and_types(app,canonical_nonan)
-            #TODO: filter to just types that have Gene or Protein?  I'm not sure it's worth it when we have pipelining
-            other_ids = await app.state.redis_connection4.mget(*canonical_nonan, encoding='utf8')
-            #if there are other ids, then we want to rebuild eqids and types.  That's because even though we have them,
-            # they're not necessarily first.  For instance if what came in and got canonicalized was a protein id
-            # and we want gene first, then we're relying on the order of the other_ids to put it back in the right place.
-            other_ids = [ json.loads(oids) if other_ids is not None else [] for oids in other_ids ]
-            dereference_others = dict(zip(canonical_nonan,other_ids))
-            all_other_ids = sum(other_ids,[])
-            eqids2, types2 = await get_eqids_and_types(app,all_other_ids)
-            final_eqids = []
-            final_types = []
-            deref_others_eqs = dict(zip(all_other_ids,eqids2))
-            deref_others_typ = dict(zip(all_other_ids,types2))
-            for canonical_id,e,t in zip(canonical_nonan,eqids,types):
-                #here's where we replace the eqids, types
-                if len(dereference_others[canonical_id]) > 0:
-                    e = []
-                    t = []
-                for other in dereference_others[canonical_id]:
-                    e += deref_others_eqs[other]
-                    t += deref_others_typ[other]
-                final_eqids.append(e)
-                final_types.append(list(set(t)))
-            dereference_ids   = dict(zip(canonical_nonan, final_eqids))
-            dereference_types = dict(zip(canonical_nonan, final_types))
+            if conflate:
+                #TODO: filter to just types that have Gene or Protein?  I'm not sure it's worth it when we have pipelining
+                other_ids = await app.state.redis_connection4.mget(*canonical_nonan, encoding='utf8')
+                #if there are other ids, then we want to rebuild eqids and types.  That's because even though we have them,
+                # they're not necessarily first.  For instance if what came in and got canonicalized was a protein id
+                # and we want gene first, then we're relying on the order of the other_ids to put it back in the right place.
+                other_ids = [ json.loads(oids) if oids is not None else [] for oids in other_ids ]
+                dereference_others = dict(zip(canonical_nonan,other_ids))
+                all_other_ids = sum(other_ids,[])
+                eqids2, types2 = await get_eqids_and_types(app,all_other_ids)
+                final_eqids = []
+                final_types = []
+                deref_others_eqs = dict(zip(all_other_ids,eqids2))
+                deref_others_typ = dict(zip(all_other_ids,types2))
+                for canonical_id,e,t in zip(canonical_nonan,eqids,types):
+                    #here's where we replace the eqids, types
+                    if len(dereference_others[canonical_id]) > 0:
+                        e = []
+                        t = []
+                    for other in dereference_others[canonical_id]:
+                        e += deref_others_eqs[other]
+                        t += deref_others_typ[other]
+                    final_eqids.append(e)
+                    final_types.append(list(set(t)))
+                dereference_ids   = dict(zip(canonical_nonan, final_eqids))
+                dereference_types = dict(zip(canonical_nonan, final_types))
+            else:
+                dereference_ids = dict(zip(canonical_nonan, eqids))
+                dereference_types = dict(zip(canonical_nonan, types))
         else:
             dereference_ids   = dict()
             dereference_types = dict()
