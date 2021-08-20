@@ -27,7 +27,7 @@ async def normalize_message(app: FastAPI, message: Message) -> Message:
             'results': merged_results
         })
     except Exception as e:
-        logger.error(f'Exception: {e}')
+        logger.error(f'normalize_message Exception: {e}')
 
 
 async def normalize_results(
@@ -117,7 +117,7 @@ async def normalize_results(
                 hashed_result = json.dumps(merged_result, sort_keys=True)
 
             except Exception as e:  # TODO determine exception(s) to catch
-                logger.error(f'Exception: {e}')
+                logger.error(f'normalize_results Exception: {e}')
                 hashed_result = False
 
             if hashed_result is not False:
@@ -128,7 +128,7 @@ async def normalize_results(
 
             merged_results.append(Result.parse_obj(merged_result))
         except Exception as e:
-            logger.error(f'Exception: {e}')
+            logger.error(f'normalize_results Exception: {e}')
 
     return merged_results
 
@@ -165,7 +165,7 @@ async def normalize_qgraph(app: FastAPI, qgraph: QueryGraph) -> QueryGraph:
                 merged_nodes[node_code]['ids'] = list(primary_ids)
                 node_code_map[node_code] = list(primary_ids)
         except Exception as e:
-            logger.error(f'Exception: {e}')
+            logger.error(f'normalize_qgraph Exception: {e}')
 
     return QueryGraph.parse_obj({
         'nodes': merged_nodes,
@@ -333,7 +333,7 @@ async def normalize_kgraph(
             merged_edge['object'] = primary_object
             merged_kgraph['edges'][edge_id] = merged_edge
     except Exception as e:
-        logger.error(f'Exception: {e}')
+        logger.error(f'normalize_kgraph Exception: {e}')
 
     return KnowledgeGraph.parse_obj(merged_kgraph), node_id_map, edge_id_map
 
@@ -371,7 +371,7 @@ async def get_equivalent_curies(
 
         value = await app.state.redis_connection1.get(reference, encoding='utf-8')
     except Exception as e:
-        logger.error(f'Exception: {e}')
+        logger.error(f'get_equivalent_curies Exception: {e}')
 
     return {curie: json.loads(value) if value is not None else None}
 
@@ -449,7 +449,7 @@ async def get_curie_prefixes(
                 # set the return data
                 ret_val[item] = {'curie_prefix': curies}
     except Exception as e:
-        logger.error(f'Exception: {e}')
+        logger.error(f'get_curie_prefixes Exception: {e}')
 
     return ret_val
 
@@ -488,7 +488,7 @@ def _merge_node_attributes(node_a: Dict, node_b, merged_count: int) -> Dict:
 
             node_a['attributes'] = node_a['attributes'] + new_attribute_list
     except Exception as e:
-        logger.error(f'Exception {e}')
+        logger.error(f'_merge_node_attributes Exception {e}')
 
     return node_a
 
@@ -537,5 +537,5 @@ def _hash_attributes(attributes: List[Attribute] = None) -> Union[int, bool]:
 
         return hash(frozenset(new_attributes))
     except Exception as e:
-        logger.error(f'Exception: {e}')
+        logger.error(f'_hash_attributes Exception: {e}')
         return False
