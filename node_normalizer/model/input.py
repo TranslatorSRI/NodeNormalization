@@ -15,6 +15,11 @@ class CurieList(BaseModel):
         title='list of nodes formatted as curies'
     )
 
+    conflate:bool = Field (
+        True,
+        title="Whether to apply conflation"
+    )
+
     class Config:
         schema_extra = {
             "example": {

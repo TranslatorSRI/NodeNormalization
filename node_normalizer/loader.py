@@ -9,6 +9,7 @@ from itertools import combinations
 import jsonschema
 import os
 from node_normalizer.redis_adapter import RedisConnectionFactory, RedisConnection
+from bmt import Toolkit
 
 
 class NodeLoader:
@@ -22,8 +23,10 @@ class NodeLoader:
         self._config = self.get_config()
 
         self._compendium_directory: Path = Path(self._config['compendium_directory'])
+        self._conflation_directory: Path = Path(self._config['conflation_directory'])
         self._test_mode: int = self._config['test_mode']
-        self._data_files: list = self._config['data_files'].split(',')
+        self._data_files: list = self._config['data_files']
+        self._conflations: list = self._config['conflations']
 
         json_schema = Path(__file__).parent / 'resources' / 'valid_data_format.json'
 
@@ -33,6 +36,19 @@ class NodeLoader:
         # Initialize storage instance vars for the semantic types and source prefixes
         self.semantic_types: set = set()
         self.source_prefixes: Dict = {}
+
+        self.toolkit = Toolkit('https://raw.githubusercontent.com/biolink/biolink-model/2.1.0/biolink-model.yaml')
+        self.ancestor_map = {}
+
+    def get_ancestors(self, input_type):
+        if input_type in self.ancestor_map:
+            return self.ancestor_map[input_type]
+        a = self.toolkit.get_ancestors(input_type)
+        ancs = [self.toolkit.get_element(ai)['class_uri'] for ai in a]
+        if input_type not in ancs:
+            ancs = [input_type] + ancs
+        self.ancestor_map[input_type] = ancs
+        return ancs
 
     @staticmethod
     def get_config() -> Dict[str, Any]:
@@ -171,6 +187,22 @@ class NodeLoader:
         Given a compendia directory, load every file there into a running
         redis instance so that it can be read by R3
         """
+        #The new style compendia files look like:
+        #{"type": "biolink:Disease", "identifiers": [{"i": "UMLS:C4331330", "l": "Stage III Oropharyngeal (p16-Negative) Carcinoma AJCC v8"}, {"i": "NCIT:C132998", "l": "Stage III Oropharyngeal (p16-Negative) Carcinoma AJCC v8"}]}
+        #{"type": "biolink:Disease", "identifiers": [{"i": "UMLS:C1274244", "l": "Dermatosis in a child"}, {"i": "SNOMEDCT:402803008"}]}
+        # Type is now a single biolink type so that we can save space rather than the gigantic array
+        # identifiers replaces equivalent identifiers, and the keys are "i" and "l" rather than 'identifer" and "label".
+        # the identifiers are ordered, such that the first identifier is the best identifier.
+        # We are going to put these different parts into a few different redis tables, and reassemble and nicify on
+        # output.  This will be a touch slower, but it will save a lot of space, and make conflation easier as well.
+
+        # We will have the following redis databases:
+        # 0: contains identifier.upper() -> canonical_id
+        # 1: canonical_id -> equivalent_identifiers
+        # 2: canonical_id -> biolink type
+        # 3: types -> prefix counts
+        # 4-X: conflation databases consisting of canonical_id -> (list of conflated canonical_ids)
+        #      Each of these databases corresponds to a particular conflation e.g. gene/protein or chemical/drug
 
         # init the return value
         ret_val = True
@@ -196,9 +228,14 @@ class NodeLoader:
                     else:
                         self.print_debug_msg(f'Compendia file {comp} is invalid.', True)
                         continue
+                for conf in self._conflations:
+                    loaded = await self.load_conflation(conf, block_size)
+                    if not loaded:
+                        self.print_debug_msg(f'Conflation file {conf} did not load.', True)
+                        continue
 
                 # get the connection and pipeline to the database
-                types_prefixes_redis: RedisConnection = await self.get_redis(2)
+                types_prefixes_redis: RedisConnection = await self.get_redis(3)
                 types_prefixes_pipeline = types_prefixes_redis.pipeline()
 
                 # create a command to get the current semantic types
@@ -272,19 +309,70 @@ class NodeLoader:
 
         return file_list
 
+    #TODO: this strikes me as backwards.  Caller has to know and look up by index.  So the info about what index
+    # does what is scattered.  Instead this should look up by what kind of redis you want and map to dbid for you.
     async def get_redis(self, dbid):
         """
         Return a redis instance
         """
         db_id_mapping = {
             0: RedisConnectionFactory.ID_TO_ID_DB_CONNECTION_NAME,
-            1: RedisConnectionFactory.ID_TO_NODE_DATA_DB_CONNECTION_NAME,
-            2: RedisConnectionFactory.CURIE_PREFIX_TO_BL_TYPE_DB_CONNECTION_NAME
+            1: RedisConnectionFactory.ID_TO_IDENTIFIERS_CONNECTION_NAME,
+            2: RedisConnectionFactory.ID_TO_TYPE_CONNECTION_NAME,
+            3: RedisConnectionFactory.CURIE_PREFIX_TO_BL_TYPE_DB_CONNECTION_NAME,
+            4: RedisConnectionFactory.GENE_PROTEIN_CONFLATION_DB_CONNECTION_NAME
         }
         redis_config_path = Path(__file__).parent.parent / 'redis_config.yaml'
         connection_factory: RedisConnectionFactory = await RedisConnectionFactory.create_connection_pool(redis_config_path)
         connection = connection_factory.get_connection(db_id_mapping[dbid])
         return connection
+
+    async def load_conflation(self, conflation: dict, block_size: int) -> bool:
+        """
+        Given a conflation, load it into a redis so that it can
+        be read by R3.
+        """
+
+        conflation_file = conflation['file']
+        conflation_redis_num = conflation['redis_db']
+        # init a line counter
+        line_counter: int = 0
+        try:
+            conflation_redis: RedisConnection = await self.get_redis(conflation_redis_num)
+            conflation_pipeline = conflation_redis.pipeline()
+
+            with open(f'{self._conflation_directory}/{conflation_file}', 'r', encoding="utf-8") as cfile:
+                self.print_debug_msg(f'Processing {conflation_file}...', True)
+
+                # for each line in the file
+                for line in cfile:
+                    line_counter = line_counter + 1
+
+                    # load the line into memory
+                    instance: dict = json.loads(line)
+
+                    for identifier in instance:
+                        #We need to include the identifier in the list of identifiers so that we know its position
+                        conflation_pipeline.set(identifier, line)
+
+                    if self._test_mode != 1 and line_counter % block_size == 0:
+                        await RedisConnection.execute_pipeline(conflation_pipeline)
+                        # Pipeline executed create a new one error
+                        conflation_pipeline =  conflation_redis.pipeline()
+                        self.print_debug_msg(f'{line_counter} {conflation_file} lines processed.', True)
+
+                if self._test_mode != 1:
+                    await RedisConnection.execute_pipeline(conflation_pipeline)
+                    self.print_debug_msg(f'{line_counter} {conflation_file} total lines processed.', True)
+
+                print(f'Done loading {conflation_file}...')
+        except Exception as e:
+            self.print_debug_msg(f'Exception thrown in load_conflation({conflation_file}), line {line_counter}: {e}', True)
+            return False
+
+        # return to the caller
+        return True
+
 
     async def load_compendium(self, compendium_filename: str, block_size: int) -> bool:
         """
@@ -297,10 +385,12 @@ class NodeLoader:
         line_counter: int = 0
         try:
             term2id_redis: RedisConnection = await self.get_redis(0)
-            id2instance_redis: RedisConnection = await self.get_redis(1)
+            id2eqids_redis: RedisConnection = await self.get_redis(1)
+            id2type_redis: RedisConnection = await self.get_redis(2)
 
             term2id_pipeline = term2id_redis.pipeline()
-            id2instance_pipeline = id2instance_redis.pipeline()
+            id2eqids_pipeline = id2eqids_redis.pipeline()
+            id2type_pipeline = id2type_redis.pipeline()
 
             with open(compendium_filename, 'r', encoding="utf-8") as compendium:
                 self.print_debug_msg(f'Processing {compendium_filename}...', True)
@@ -313,10 +403,15 @@ class NodeLoader:
                     instance: dict = json.loads(line)
 
                     # save the identifier
-                    identifier: str = instance['id']['identifier']
+                    # "The" identifier is the first one in the presorted identifiers list
+                    identifier: str = instance['identifiers'][0]['i']
 
+                    # We want to accumulate statistics for each implied type as well, though we are only keeping the
+                    # leaf type in the file (and redis).  so now is the time to expand.  We'll regenerate the same
+                    # list on output.
+                    semantic_types = self.get_ancestors(instance['type'])
                     # for each semantic type in the list
-                    for semantic_type in instance['type']:
+                    for semantic_type in semantic_types:
                         # save the semantic type in a set to avoid duplicates
                         self.semantic_types.add(semantic_type)
 
@@ -326,9 +421,9 @@ class NodeLoader:
 
                         # go through each equivalent identifier in the data row
                         # each will be assigned the semantic type information
-                        for equivalent_id in instance['equivalent_identifiers']:
+                        for equivalent_id in instance['identifiers']:
                             # split the identifier to just get the data source out of the curie
-                            source_prefix: str = equivalent_id['identifier'].split(':')[0]
+                            source_prefix: str = equivalent_id['i'].split(':')[0]
 
                             # save the source prefix if no already there
                             if self.source_prefixes[semantic_type].get(source_prefix) is None:
@@ -339,23 +434,27 @@ class NodeLoader:
 
                             # equivalent_id might be an array, where the first element is
                             # the identifier, or it might just be a string. not worrying about that case yet.
-                            equivalent_id = equivalent_id['identifier']
-                            term2id_pipeline.set(equivalent_id, identifier)
+                            equivalent_id = equivalent_id['i']
+                            #term2id_pipeline.set(equivalent_id, identifier)
                             term2id_pipeline.set(equivalent_id.upper(), identifier)
 
-                        id2instance_pipeline.set(identifier, line)
+                        id2eqids_pipeline.set(identifier, json.dumps(instance['identifiers']))
+                        id2type_pipeline.set(identifier, instance['type'])
 
                     if self._test_mode != 1 and line_counter % block_size == 0:
                         await RedisConnection.execute_pipeline(term2id_pipeline)
-                        await RedisConnection.execute_pipeline(id2instance_pipeline)
-                        # Pipeline executed create a new one error 
+                        await RedisConnection.execute_pipeline(id2eqids_pipeline)
+                        await RedisConnection.execute_pipeline(id2type_pipeline)
+                        # Pipeline executed create a new one error
                         term2id_pipeline = term2id_redis.pipeline()
-                        id2instance_pipeline = id2instance_redis.pipeline()
+                        id2eqids_pipeline = id2eqids_redis.pipeline()
+                        id2type_pipeline = id2type_redis.pipeline()
                         self.print_debug_msg(f'{line_counter} {compendium_filename} lines processed.', True)
 
                 if self._test_mode != 1:
                     await RedisConnection.execute_pipeline(term2id_pipeline)
-                    await RedisConnection.execute_pipeline(id2instance_pipeline)
+                    await RedisConnection.execute_pipeline(id2eqids_pipeline)
+                    await RedisConnection.execute_pipeline(id2type_pipeline)
                     self.print_debug_msg(f'{line_counter} {compendium_filename} total lines processed.', True)
 
                 print(f'Done loading {compendium_filename}...')

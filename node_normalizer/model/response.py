@@ -26,3 +26,6 @@ class SemanticTypes(BaseModel):
 
 class CuriePivot(BaseModel):
     curie_prefix: Dict[str, str]
+
+class ConflationList(BaseModel):
+    conflations: List
