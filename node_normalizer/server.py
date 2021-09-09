@@ -55,8 +55,14 @@ async def shutdown_event():
     """
     Shut down Redis connection
     """
-    for connection_name, connection in app.state.redis_connctions.items():
-        await connection.close()
+    app.state.redis_connection0.close()
+    await app.state.redis_connection0.wait_closed()
+    app.state.redis_connection1.close()
+    await app.state.redis_connection1.wait_closed()
+    app.state.redis_connection2.close()
+    await app.state.redis_connection2.wait_closed()
+    app.state.redis_connection3.close()
+    await app.state.redis_connection3.wait_closed()
 
 @app.post(
     f'/response',
