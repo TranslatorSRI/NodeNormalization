@@ -28,7 +28,7 @@ servers:
   - description: Default server
     url: https://nodenormalization-sri.renci.org/
   - description: Local
-    url: http://0.0.0.0:8000/
+    url: http://localhost:5000/
 tags:
   - name: translator
   - name: Interfaces
