@@ -235,7 +235,7 @@ class NodeLoader:
                         continue
 
                 # get the connection and pipeline to the database
-                types_prefixes_redis: RedisConnection = await self.get_redis(3)
+                types_prefixes_redis: RedisConnection = await self.get_redis("curie_to_bl_type_db")
                 types_prefixes_pipeline = types_prefixes_redis.pipeline()
 
                 # create a command to get the current semantic types
@@ -311,20 +311,13 @@ class NodeLoader:
 
     #TODO: this strikes me as backwards.  Caller has to know and look up by index.  So the info about what index
     # does what is scattered.  Instead this should look up by what kind of redis you want and map to dbid for you.
-    async def get_redis(self, dbid):
+    async def get_redis(self, db_name):
         """
         Return a redis instance
         """
-        db_id_mapping = {
-            0: RedisConnectionFactory.ID_TO_ID_DB_CONNECTION_NAME,
-            1: RedisConnectionFactory.ID_TO_IDENTIFIERS_CONNECTION_NAME,
-            2: RedisConnectionFactory.ID_TO_TYPE_CONNECTION_NAME,
-            3: RedisConnectionFactory.CURIE_PREFIX_TO_BL_TYPE_DB_CONNECTION_NAME,
-            4: RedisConnectionFactory.GENE_PROTEIN_CONFLATION_DB_CONNECTION_NAME
-        }
         redis_config_path = Path(__file__).parent.parent / 'redis_config.yaml'
         connection_factory: RedisConnectionFactory = await RedisConnectionFactory.create_connection_pool(redis_config_path)
-        connection = connection_factory.get_connection(db_id_mapping[dbid])
+        connection = connection_factory.get_connection(db_name)
         return connection
 
     async def load_conflation(self, conflation: dict, block_size: int) -> bool:
@@ -334,11 +327,11 @@ class NodeLoader:
         """
 
         conflation_file = conflation['file']
-        conflation_redis_num = conflation['redis_db']
+        conflation_redis_connection_name = conflation['redis_db']
         # init a line counter
         line_counter: int = 0
         try:
-            conflation_redis: RedisConnection = await self.get_redis(conflation_redis_num)
+            conflation_redis: RedisConnection = await self.get_redis(conflation_redis_connection_name)
             conflation_pipeline = conflation_redis.pipeline()
 
             with open(f'{self._conflation_directory}/{conflation_file}', 'r', encoding="utf-8") as cfile:
@@ -373,7 +366,6 @@ class NodeLoader:
         # return to the caller
         return True
 
-
     async def load_compendium(self, compendium_filename: str, block_size: int) -> bool:
         """
         Given the full path to a compendium, load it into redis so that it can
@@ -384,9 +376,9 @@ class NodeLoader:
         # init a line counter
         line_counter: int = 0
         try:
-            term2id_redis: RedisConnection = await self.get_redis(0)
-            id2eqids_redis: RedisConnection = await self.get_redis(1)
-            id2type_redis: RedisConnection = await self.get_redis(2)
+            term2id_redis: RedisConnection = await self.get_redis("eq_id_to_id_db")
+            id2eqids_redis: RedisConnection = await self.get_redis("id_to_eqids_db")
+            id2type_redis: RedisConnection = await self.get_redis("id_to_type_db")
 
             term2id_pipeline = term2id_redis.pipeline()
             id2eqids_pipeline = id2eqids_redis.pipeline()

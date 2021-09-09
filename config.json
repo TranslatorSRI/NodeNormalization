@@ -11,7 +11,7 @@
         {
             "types": ["biolink:Gene", "biolink:Protein"],
             "file": "GeneProtein.txt",
-            "redis_db": 4
+            "redis_db": "gene_protein_db"
         }
     ]
 }

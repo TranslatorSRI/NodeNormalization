@@ -1,7 +1,7 @@
 
 from dataclasses import dataclass, field
-from rediscluster import RedisCluster
 import rediscluster
+from rediscluster import RedisCluster
 import aioredis
 from typing import List, Dict
 
@@ -28,28 +28,17 @@ class RedisInstance:
             self.host = Resource(**self.host)
 
 
-@dataclass
 class ConnectionConfig:
-    #TODO, make all this dynamic based off of the config.  There's a config, but then every time you change the config
-    # you also gotta follow that around to class after class updating things.
-    eq_id_to_id_db: RedisInstance
-    id_to_eqids_db: RedisInstance
-    id_to_type_db: RedisInstance
-    curie_to_bl_type_db: RedisInstance
-    gene_protein_db: RedisInstance
+    def __init__(self, config_dict):
+        self.connection_confg = {}
+        for k in config_dict:
+            self.connection_confg[k] = RedisInstance(**config_dict[k])
 
-    def __post_init__(self):
-        # Converts inner data dicts to dataclasses
-        if isinstance(self.curie_to_bl_type_db, dict):
-            self.curie_to_bl_type_db = RedisInstance(**self.curie_to_bl_type_db)
-        if isinstance(self.id_to_eqids_db, dict):
-            self.id_to_eqids_db = RedisInstance(**self.id_to_eqids_db)
-        if isinstance(self.id_to_type_db, dict):
-            self.id_to_type_db = RedisInstance(**self.id_to_type_db)
-        if isinstance(self.eq_id_to_id_db, dict):
-            self.eq_id_to_id_db = RedisInstance(**self.eq_id_to_id_db)
-        if isinstance(self.gene_protein_db, dict):
-            self.gene_protein_db = RedisInstance(**self.gene_protein_db)
+    def __getattr__(self, item):
+        return self.connection_confg[item]
+
+    def get_connection_names(self):
+        return list(self.connection_confg.keys())
 
 
 class RedisConnection:
@@ -170,12 +159,6 @@ class RedisConnectionFactory:
     """
     connections: Dict[str, RedisConnection] = {}
 
-    ID_TO_ID_DB_CONNECTION_NAME = 'id_to_id'
-    ID_TO_IDENTIFIERS_CONNECTION_NAME = 'id_to_eqids'
-    ID_TO_TYPE_CONNECTION_NAME = 'id_to_type'
-    CURIE_PREFIX_TO_BL_TYPE_DB_CONNECTION_NAME = 'curie_to_bl'
-    GENE_PROTEIN_CONFLATION_DB_CONNECTION_NAME = 'gene_protein'
-
     def __init__(self):
         pass
 
@@ -183,7 +166,7 @@ class RedisConnectionFactory:
     def get_config(file_name) -> ConnectionConfig:
         import yaml
         with open(file_name) as f:
-            config = ConnectionConfig(**yaml.load(f, yaml.FullLoader))
+            config = ConnectionConfig(yaml.load(f, yaml.FullLoader))
         return config
 
     @classmethod
@@ -192,11 +175,8 @@ class RedisConnectionFactory:
         self = RedisConnectionFactory()
         if not RedisConnectionFactory.connections:
             RedisConnectionFactory.connections = {
-                RedisConnectionFactory.ID_TO_ID_DB_CONNECTION_NAME: await RedisConnection.create(config.eq_id_to_id_db),
-                RedisConnectionFactory.ID_TO_IDENTIFIERS_CONNECTION_NAME: await RedisConnection.create(config.id_to_eqids_db),
-                RedisConnectionFactory.ID_TO_TYPE_CONNECTION_NAME: await RedisConnection.create(config.id_to_type_db),
-                RedisConnectionFactory.CURIE_PREFIX_TO_BL_TYPE_DB_CONNECTION_NAME: await RedisConnection.create(config.curie_to_bl_type_db),
-                RedisConnectionFactory.GENE_PROTEIN_CONFLATION_DB_CONNECTION_NAME: await RedisConnection.create(config.gene_protein_db)
+                connection_name: await RedisConnection.create(config.__getattr__(connection_name))
+                for connection_name in config.get_connection_names()
             }
         return self
 
@@ -204,24 +184,6 @@ class RedisConnectionFactory:
     def get_connection(connection_id):
         return RedisConnectionFactory.connections[connection_id]
 
-
-if __name__== '__main__':
-    ips = ["10.233.91.90","10.233.73.195","10.233.80.110"]
-    startup = [
-        {"host": "127.0.0.1", "port": "6379"},
-        {"host": "127.0.0.1", "port": "6380"},
-        {"host": "127.0.0.1", "port": "6381"},
-    ]
-    host_port_remap = [
-    {'from_host': ips[0], 'from_port': 6379, 'to_host': '127.0.0.1', 'to_port': 6379},
-    {'from_host': ips[1], 'from_port': 6379, 'to_host': '127.0.0.1', 'to_port': 6380},
-    {'from_host': ips[2], 'from_port': 6379, 'to_host': '127.0.0.1', 'to_port': 6381}
-        ]
-    rc = RedisCluster(
-        startup_nodes=startup,
-        host_port_remap=host_port_remap,
-        decode_responses=True)
-    print(rc.connection_pool.nodes.nodes)
-    print(rc.ping())
-    print(rc.set('foo', 'bar'))
-    print(rc.get('foo'))
+    @staticmethod
+    def get_all_connections():
+        return RedisConnectionFactory.connections

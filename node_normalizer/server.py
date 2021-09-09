@@ -32,19 +32,19 @@ async def startup_event():
     redis_config_file = Path(__file__).parent.parent / "redis_config.yaml"
     connection_factory = await RedisConnectionFactory.create_connection_pool(redis_config_file)
     app.state.redis_connection0 = connection_factory.get_connection(
-        connection_id=connection_factory.ID_TO_ID_DB_CONNECTION_NAME
+        connection_id='eq_id_to_id_db'
     )
     app.state.redis_connection1 = connection_factory.get_connection(
-        connection_id=connection_factory.ID_TO_IDENTIFIERS_CONNECTION_NAME
+        connection_id='id_to_eqids_db'
     )
     app.state.redis_connection2 = connection_factory.get_connection(
-        connection_id=connection_factory.ID_TO_TYPE_CONNECTION_NAME
+        connection_id='id_to_type_db'
     )
     app.state.redis_connection3 = connection_factory.get_connection(
-        connection_id=connection_factory.CURIE_PREFIX_TO_BL_TYPE_DB_CONNECTION_NAME
+        connection_id='curie_to_bl_type_db'
     )
     app.state.redis_connection4 = connection_factory.get_connection(
-        connection_id=connection_factory.GENE_PROTEIN_CONFLATION_DB_CONNECTION_NAME
+        connection_id='gene_protein_db'
     )
     app.state.toolkit = Toolkit('https://raw.githubusercontent.com/biolink/biolink-model/2.1.0/biolink-model.yaml')
     app.state.ancestor_map = {}
@@ -63,7 +63,6 @@ async def shutdown_event():
     await app.state.redis_connection2.wait_closed()
     app.state.redis_connection3.close()
     await app.state.redis_connection3.wait_closed()
-
 
 @app.post(
     f'/response',
