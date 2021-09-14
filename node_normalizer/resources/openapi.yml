@@ -27,6 +27,8 @@ info:
 servers:
   - description: Default server
     url: https://nodenormalization-sri.renci.org/
+  - description: Local
+    url: http://localhost:5000/
 tags:
   - name: translator
   - name: Interfaces
@@ -153,5 +155,22 @@ paths:
           description: Results
       summary: Return a list of BioLink semantic types for which normalization has
         been attempted.
+      tags:
+      - Interfaces
+  /get_allowed_conflations:
+    get:
+      description: Returns a list of allowed conflation options
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                example:
+                  conflations:
+                    - GeneProtein
+                    - DrugChemical
+                type: object
+          description: Results
+      summary: Return a list of named conflations.
       tags:
       - Interfaces

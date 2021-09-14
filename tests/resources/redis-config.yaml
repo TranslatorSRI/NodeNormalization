@@ -17,22 +17,31 @@
   "password": ""
 "id_to_type_db":
   "ssl_enabled": false
-  "is_cluster": false
+  "is_cluster": true
   "db": 2
   "hosts":
     - "host_name": "127.0.0.1"
       "port": "6379"
   "password": ""
 "curie_to_bl_type_db":
-  "ssl_enabled": false
-  "is_cluster": false
+  "ssl_enabled": true
+  "is_cluster": true
   "db": 3
   "hosts":
     - "host_name": "127.0.0.1"
       "port": "6379"
   "password": ""
 "gene_protein_db":
-  "ssl_enabled": false
+  "ssl_enabled": true
+  "is_cluster": false
+  "db": 4
+  "hosts":
+    - "host_name": "127.0.0.1"
+      "port": "6379"
+  "password": ""
+
+"another_conflation_db":
+  "ssl_enabled": true
   "is_cluster": false
   "db": 4
   "hosts":
