@@ -24,11 +24,20 @@ info:
     component: Utility
     team:
       - Standards Reference Implementation Team
+  x-trapi:
+    version: 1.2.0
+    operations:
+      - Post trapi response
+      - Get allowed conflations
+      - Get/Post normalized nodes
+      - Get semantic types
+      - Get/Post curie prefixes
+
 servers:
   - description: Default server
     url: https://nodenormalization-sri.renci.org/
-  - description: Local
-    url: http://localhost:5000/
+#  - description: Local
+#    url: http://localhost:5000/
 tags:
   - name: translator
   - name: Interfaces
