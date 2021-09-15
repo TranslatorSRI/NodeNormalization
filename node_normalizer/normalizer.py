@@ -322,7 +322,6 @@ async def normalize_kgraph(
             triple = (
                 primary_subject,
                 edge.predicate.__root__,
-                edge.relation,
                 primary_object,
                 hashed_attributes
             )
