@@ -2,7 +2,7 @@ import json
 from typing import List, Dict, Optional, Any, Set, Tuple, Union
 import uuid
 from uuid import UUID
-from .util import LoggingUtil
+from .util import LoggingUtil, uniquify_list
 import logging
 import os
 from fastapi import FastAPI
@@ -444,7 +444,7 @@ async def get_normalized_nodes(
                         e += deref_others_eqs[other]
                         t += deref_others_typ[other]
                     final_eqids.append(e)
-                    final_types.append(list(set(t)))
+                    final_types.append(uniquify_list(t))
                 dereference_ids   = dict(zip(canonical_nonan, final_eqids))
                 dereference_types = dict(zip(canonical_nonan, final_types))
             else:
