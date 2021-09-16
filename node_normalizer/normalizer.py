@@ -361,26 +361,31 @@ async def get_equivalent_curies(
     }
     """
 
+    # init the return
     value = None
 
     try:
+        # insure this is a legit curie
         if isinstance(curie, CURIE):
             curie = curie.__root__
 
+        # set default return in case curie not found
         default_return = {curie: None}
 
         # Get the equivalent list primary key identifier
+        value = await get_normalized_nodes(app, [curie], True)
 
-        reference = await app.state.redis_connection0.get(curie, encoding='utf-8')
-
-        if reference is None:
+        # did we get a valid response
+        if value is None:
+            # no, so return the default
             return default_return
 
-        value = await app.state.redis_connection1.get(reference, encoding='utf-8')
     except Exception as e:
         logger.error(f'get_equivalent_curies Exception: {e}')
+        return default_return
 
-    return {curie: json.loads(value) if value is not None else None}
+    # return the curie normalization data
+    return value
 
 async def get_eqids_and_types(
         app: FastAPI,
