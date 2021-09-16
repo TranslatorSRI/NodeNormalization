@@ -32,6 +32,7 @@ servers:
 tags:
   - name: translator
   - name: Interfaces
+  - name: trapi
 paths:
   /get_curie_prefixes:
     get:
