@@ -52,6 +52,9 @@ def construct_open_api_schema(app) -> Dict[str, str]:
     if 'x-translator' in api_docs['info']:
         open_api_schema['info']['x-translator'] = api_docs['info']['x-translator']
 
+    if 'x-trapi' in api_docs['info']:
+        open_api_schema['info']['x-trapi'] = api_docs['info']['x-trapi']
+
     if 'contact' in api_docs['info']:
         open_api_schema['info']['contact'] = api_docs['info']['contact']
 
@@ -68,7 +71,7 @@ def construct_open_api_schema(app) -> Dict[str, str]:
     if 'servers' in api_docs:
         for s in api_docs['servers']:
             # override if server root env var is provided
-            s['url'] = server_root + '1.1' if server_root != '/' else s['url']
+            s['url'] = server_root + '1.2' if server_root != '/' else s['url']
         open_api_schema['servers'] = api_docs['servers']
 
     return open_api_schema

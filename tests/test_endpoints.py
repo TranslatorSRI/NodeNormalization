@@ -51,6 +51,15 @@ class TestServer:
         # no diffs, no problem
         assert diffs is None
 
+    def test_real_result(self):
+        with open('resources/ac_out_attributes.json', 'r') as pre:
+            premerged_data = json.load(pre)
+
+        response = self.test_client.post('/response', json=premerged_data)
+        postmerged_from_api = json.loads(response.text)
+
+        assert len(postmerged_from_api['message']['results']) == len(premerged_data['message']['results'])
+
     @patch('node_normalizer.normalizer.get_equivalent_curies', Mock(side_effect=mock_get_equivalent_curies))
     def test_dupe_edge(self):
         """
