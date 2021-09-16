@@ -7,35 +7,40 @@
     - "host_name": "127.0.0.1"
       "port": "6379"
   "password": ""
+
 "id_to_eqids_db":
   "ssl_enabled": false
   "is_cluster": false
-  "db": 1
+  "db": 0
   "hosts":
     - "host_name": "127.0.0.1"
       "port": "6379"
   "password": ""
+
 "id_to_type_db":
   "ssl_enabled": false
   "is_cluster": false
-  "db": 2
+  "db": 0
   "hosts":
     - "host_name": "127.0.0.1"
       "port": "6379"
   "password": ""
+
 "curie_to_bl_type_db":
   "ssl_enabled": false
   "is_cluster": false
-  "db": 3
+  "db": 0
   "hosts":
     - "host_name": "127.0.0.1"
       "port": "6379"
   "password": ""
+
 "gene_protein_db":
   "ssl_enabled": false
   "is_cluster": false
-  "db": 4
+  "db": 0
   "hosts":
     - "host_name": "127.0.0.1"
       "port": "6379"
   "password": ""
+

@@ -215,3 +215,9 @@ class DataStructure:
     @staticmethod
     def to_named_tuple(type_name, d):
         return namedtuple(type_name, d.keys())(**d)
+
+
+def uniquify_list(seq):
+    seen = set()
+    seen_add = seen.add
+    return [x for x in seq if not (x in seen or seen_add(x))]
