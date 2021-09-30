@@ -89,13 +89,16 @@ class NodeLoader:
 
                     # for each file validate and process
                     for comp in compendia:
+                        # get the true path to the file
+                        comp = os.path.join(self._compendium_directory, comp)
+
                         # check the validity of the file
                         if self.validate_compendia(comp):
                             with open(comp, 'r', encoding="utf-8") as compendium:
                                 self.print_debug_msg(f'Processing {comp}...', True)
 
                                 # get the name of the source
-                                source = comp.parts[-1]
+                                source = os.path.split(comp)[-1]
 
                                 # for each line in the file
                                 for line in compendium:
@@ -109,17 +112,18 @@ class NodeLoader:
                                     instance: dict = json.loads(line)
 
                                     # all ids (even the root one) are in the equivalent identifiers
-                                    if len(instance['equivalent_identifiers']) > 0:
+                                    if len(instance['identifiers']) > 0:
                                         # loop through each identifier and create a node
-                                        for equiv_id in instance['equivalent_identifiers']:
+                                        for equiv_id in instance['identifiers']:
                                             # check to see if there is a label. if there is use it
-                                            if 'label' in equiv_id:
-                                                name = equiv_id['label']
+                                            if 'l' in equiv_id:
+                                                name = equiv_id['l']
                                             else:
                                                 name = ''
 
                                             # add the node to the ones in this pass
-                                            pass_nodes.append({'id': equiv_id['identifier'], 'name': name, 'category': instance['type'], 'equivalent_identifiers': [x['identifier'] for x in instance['equivalent_identifiers']]})
+                                            pass_nodes.append({'id': equiv_id['i'], 'name': name, 'category': instance['type'],
+                                                               'equivalent_identifiers': list(x['i'] for x in instance['identifiers'])})
 
                                         # get the combinations of the nodes in this pass
                                         combos = combinations(pass_nodes, 2)
@@ -127,10 +131,11 @@ class NodeLoader:
                                         # for all the node combinations create an edge between them
                                         for c in combos:
                                             # create a unique id
-                                            record_id: str = c[0]['id'] + 'biolink:same_as' + c[1]['id'] + f'NodeNormalizer:{comp}'
+                                            record_id: str = c[0]['id'] + c[1]['id'] + f'{comp}'
 
                                             # save the edge
-                                            edges.append({'id': f'{hashlib.md5(record_id.encode("utf-8")).hexdigest()}', 'subject': c[0]['id'], 'predicate': 'biolink:same_as', 'object': c[1]['id'], 'source_database': f'NodeNormalizer:{source}'})
+                                            edges.append({'id': f'{hashlib.md5(record_id.encode("utf-8")).hexdigest()}', 'subject': c[0]['id'],
+                                                          'predicate': 'biolink:same_as', 'object': c[1]['id']})
 
                                     # save the nodes in this pass to the big list
                                     nodes.extend(pass_nodes)
