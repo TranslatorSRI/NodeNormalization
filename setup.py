@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='NodeNormalization',
-    version='2.0.1',
+    version='2.0.2',
     author='Patrick Wang',
     author_email='patrick@covar.com',
     url='https://github.com/patrickkwang/r3',
