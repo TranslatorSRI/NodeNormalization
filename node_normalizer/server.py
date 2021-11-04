@@ -46,6 +46,9 @@ async def startup_event():
     app.state.redis_connection4 = connection_factory.get_connection(
         connection_id='gene_protein_db'
     )
+    app.state.redis_connection5 = connection_factory.get_connection(
+        connection_id='info_content_db'
+    )
     app.state.toolkit = Toolkit('https://raw.githubusercontent.com/biolink/biolink-model/2.1.0/biolink-model.yaml')
     app.state.ancestor_map = {}
 
@@ -63,6 +66,10 @@ async def shutdown_event():
     await app.state.redis_connection2.wait_closed()
     app.state.redis_connection3.close()
     await app.state.redis_connection3.wait_closed()
+    app.state.redis_connection4.close()
+    await app.state.redis_connection4.wait_closed()
+    app.state.redis_connection5.close()
+    await app.state.redis_connection5.wait_closed()
 
 @app.post(
     f'/response',
