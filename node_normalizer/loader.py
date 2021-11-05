@@ -98,7 +98,7 @@ class NodeLoader:
                                 self.print_debug_msg(f'Processing {comp}...', True)
 
                                 # get the name of the source
-                                source = os.path.split(comp)[-1]
+                                # source = os.path.split(comp)[-1]
 
                                 # for each line in the file
                                 for line in compendium:
@@ -192,11 +192,18 @@ class NodeLoader:
         Given a compendia directory, load every file there into a running
         redis instance so that it can be read by R3
         """
-        #The new style compendia files look like:
-        #{"type": "biolink:Disease", "identifiers": [{"i": "UMLS:C4331330", "l": "Stage III Oropharyngeal (p16-Negative) Carcinoma AJCC v8"}, {"i": "NCIT:C132998", "l": "Stage III Oropharyngeal (p16-Negative) Carcinoma AJCC v8"}]}
-        #{"type": "biolink:Disease", "identifiers": [{"i": "UMLS:C1274244", "l": "Dermatosis in a child"}, {"i": "SNOMEDCT:402803008"}]}
+        # The new style compendia files look like:
+        # {"type": "biolink:Disease", "identifiers": [{"i": "UMLS:C4331330", "l": "Stage III Oropharyngeal (p16-Negative) Carcinoma AJCC v8"}, {"i": "NCIT:C132998", "l": "Stage III Oropharyngeal (p16-Negative) Carcinoma AJCC v8"}]}
+        # {"type": "biolink:Disease", "identifiers": [{"i": "UMLS:C1274244", "l": "Dermatosis in a child"}, {"i": "SNOMEDCT:402803008"}]}
+
+        # Update 11/4/2021: The files now look like:
+        # {"type": "biolink:Disease", "ic": "100", "identifiers": [{"i": "UMLS:C4331330", "l": "Stage III Oropharyngeal (p16-Negative) Carcinoma AJCC v8"}, {"i": "NCIT:C132998", "l": "Stage III Oropharyngeal (p16-Negative) Carcinoma AJCC v8"}]}
+        # {"type": "biolink:Disease", "identifiers": [{"i": "UMLS:C1274244", "l": "Dermatosis in a child"}, {"i": "SNOMEDCT:402803008"}]}
+
+        # Update 11/4/2021: a new key of 'ic' (information content) is now incorporated for enhanced filtering of results.
         # Type is now a single biolink type so that we can save space rather than the gigantic array
-        # identifiers replaces equivalent identifiers, and the keys are "i" and "l" rather than 'identifer" and "label".
+        # identifiers replaces equivalent identifiers, and the keys are "i" and "l" rather than 'identifier" and "label".
+
         # the identifiers are ordered, such that the first identifier is the best identifier.
         # We are going to put these different parts into a few different redis tables, and reassemble and nicify on
         # output.  This will be a touch slower, but it will save a lot of space, and make conflation easier as well.
@@ -206,7 +213,8 @@ class NodeLoader:
         # 1: canonical_id -> equivalent_identifiers
         # 2: canonical_id -> biolink type
         # 3: types -> prefix counts
-        # 4-X: conflation databases consisting of canonical_id -> (list of conflated canonical_ids)
+        # Update 11/4/2021: 4: info_content -> filtering value
+        # 5-X: conflation databases consisting of canonical_id -> (list of conflated canonical_ids)
         #      Each of these databases corresponds to a particular conflation e.g. gene/protein or chemical/drug
 
         # init the return value
@@ -251,8 +259,9 @@ class NodeLoader:
                 if asyncio.coroutines.iscoroutine(vals):
                     vals = await vals
                 types_prefixes_pipeline = types_prefixes_redis.pipeline()
+
                 # get the values and insure they are strings
-                current_types: set = set(x.decode("utf-8") if not isinstance(x,str) else x for x in vals[0])
+                current_types: set = set(x.decode("utf-8") if not isinstance(x, str) else x for x in vals[0])
 
                 # remove any dupes
                 self.semantic_types = self.semantic_types.difference(current_types)
@@ -274,9 +283,8 @@ class NodeLoader:
                 self.print_debug_msg(f'Error: 1 or more data files were incorrect', True)
                 ret_val = False
         except Exception as e:
-            raise e
             self.print_debug_msg(f'Exception thrown in load(): {e}', True)
-            ret_val = False
+            raise e
 
         # return to the caller
         return ret_val
@@ -314,9 +322,10 @@ class NodeLoader:
 
         return file_list
 
-    #TODO: this strikes me as backwards.  Caller has to know and look up by index.  So the info about what index
+    # TODO: this strikes me as backwards.  Caller has to know and look up by index.  So the info about what index
     # does what is scattered.  Instead this should look up by what kind of redis you want and map to dbid for you.
-    async def get_redis(self, db_name):
+    @staticmethod
+    async def get_redis(db_name):
         """
         Return a redis instance
         """
@@ -350,13 +359,13 @@ class NodeLoader:
                     instance: dict = json.loads(line)
 
                     for identifier in instance:
-                        #We need to include the identifier in the list of identifiers so that we know its position
+                        # We need to include the identifier in the list of identifiers so that we know its position
                         conflation_pipeline.set(identifier, line)
 
                     if self._test_mode != 1 and line_counter % block_size == 0:
                         await RedisConnection.execute_pipeline(conflation_pipeline)
                         # Pipeline executed create a new one error
-                        conflation_pipeline =  conflation_redis.pipeline()
+                        conflation_pipeline = conflation_redis.pipeline()
                         self.print_debug_msg(f'{line_counter} {conflation_file} lines processed.', True)
 
                 if self._test_mode != 1:
@@ -384,10 +393,12 @@ class NodeLoader:
             term2id_redis: RedisConnection = await self.get_redis("eq_id_to_id_db")
             id2eqids_redis: RedisConnection = await self.get_redis("id_to_eqids_db")
             id2type_redis: RedisConnection = await self.get_redis("id_to_type_db")
+            info_content_redis: RedisConnection = await self.get_redis("info_content_db")
 
             term2id_pipeline = term2id_redis.pipeline()
             id2eqids_pipeline = id2eqids_redis.pipeline()
             id2type_pipeline = id2type_redis.pipeline()
+            info_content_pipeline = info_content_redis.pipeline()
 
             with open(compendium_filename, 'r', encoding="utf-8") as compendium:
                 self.print_debug_msg(f'Processing {compendium_filename}...', True)
@@ -407,6 +418,7 @@ class NodeLoader:
                     # leaf type in the file (and redis).  so now is the time to expand.  We'll regenerate the same
                     # list on output.
                     semantic_types = self.get_ancestors(instance['type'])
+
                     # for each semantic type in the list
                     for semantic_type in semantic_types:
                         # save the semantic type in a set to avoid duplicates
@@ -432,26 +444,36 @@ class NodeLoader:
                             # equivalent_id might be an array, where the first element is
                             # the identifier, or it might just be a string. not worrying about that case yet.
                             equivalent_id = equivalent_id['i']
-                            #term2id_pipeline.set(equivalent_id, identifier)
                             term2id_pipeline.set(equivalent_id.upper(), identifier)
+                            # term2id_pipeline.set(equivalent_id, identifier)
 
                         id2eqids_pipeline.set(identifier, json.dumps(instance['identifiers']))
                         id2type_pipeline.set(identifier, instance['type'])
+
+                        # if there is information content add it to the cache
+                        if 'ic' in instance:
+                            info_content_pipeline.set(identifier, instance['ic'])
 
                     if self._test_mode != 1 and line_counter % block_size == 0:
                         await RedisConnection.execute_pipeline(term2id_pipeline)
                         await RedisConnection.execute_pipeline(id2eqids_pipeline)
                         await RedisConnection.execute_pipeline(id2type_pipeline)
+                        await RedisConnection.execute_pipeline(info_content_pipeline)
+
                         # Pipeline executed create a new one error
                         term2id_pipeline = term2id_redis.pipeline()
                         id2eqids_pipeline = id2eqids_redis.pipeline()
                         id2type_pipeline = id2type_redis.pipeline()
+                        info_content_pipeline = info_content_redis.pipeline()
+
                         self.print_debug_msg(f'{line_counter} {compendium_filename} lines processed.', True)
 
                 if self._test_mode != 1:
                     await RedisConnection.execute_pipeline(term2id_pipeline)
                     await RedisConnection.execute_pipeline(id2eqids_pipeline)
                     await RedisConnection.execute_pipeline(id2type_pipeline)
+                    await RedisConnection.execute_pipeline(info_content_pipeline)
+
                     self.print_debug_msg(f'{line_counter} {compendium_filename} total lines processed.', True)
 
                 print(f'Done loading {compendium_filename}...')
