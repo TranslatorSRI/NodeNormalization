@@ -416,8 +416,8 @@ async def get_normalized_nodes(
     #TODO: Add an option that lets one choose which conflations to do, and get the details of those conflations
     # from the configs.
 
-    conflation_types = set(["biolink:Gene","biolink:Protein"])
-    conflation_redis = 4
+    conflation_types = set(["biolink:Gene", "biolink:Protein"])
+    conflation_redis = 5
 
     upper_curies = [c.upper() for c in curies]
     try:
@@ -428,8 +428,8 @@ async def get_normalized_nodes(
             eqids, types = await get_eqids_and_types(app,canonical_nonan)
             if conflate:
                 #TODO: filter to just types that have Gene or Protein?  I'm not sure it's worth it when we have pipelining
-                other_ids = await app.state.redis_connection4.mget(*canonical_nonan, encoding='utf8')
-                #if there are other ids, then we want to rebuild eqids and types.  That's because even though we have them,
+                other_ids = await app.state.redis_connection5.mget(*canonical_nonan, encoding='utf8')
+                # if there are other ids, then we want to rebuild eqids and types.  That's because even though we have them,
                 # they're not necessarily first.  For instance if what came in and got canonicalized was a protein id
                 # and we want gene first, then we're relying on the order of the other_ids to put it back in the right place.
                 other_ids = [ json.loads(oids) if oids is not None else [] for oids in other_ids ]
