@@ -2,13 +2,14 @@ import json
 from typing import List, Dict, Optional, Any, Set, Tuple, Union
 import uuid
 from uuid import UUID
-from .util import LoggingUtil, uniquify_list
+from util import LoggingUtil, uniquify_list
 import logging
 import os
 from fastapi import FastAPI
 from reasoner_pydantic import KnowledgeGraph, Message, QueryGraph, Result, CURIE, Attribute
 
 logger = LoggingUtil.init_logging(__name__, level=logging.INFO, format='medium', logFilePath=os.path.dirname(__file__), logFileLevel=logging.INFO)
+
 
 def get_ancestors(app, input_type):
     if input_type in app.state.ancestor_map:
@@ -19,6 +20,7 @@ def get_ancestors(app, input_type):
         ancs = [input_type] + ancs
     app.state.ancestor_map[input_type] = ancs
     return ancs
+
 
 async def normalize_message(app: FastAPI, message: Message) -> Message:
     """
@@ -37,6 +39,7 @@ async def normalize_message(app: FastAPI, message: Message) -> Message:
         })
     except Exception as e:
         logger.error(f'normalize_message Exception: {e}')
+
 
 async def normalize_results(
         results: List[Result],
@@ -67,11 +70,11 @@ async def normalize_results(
                     merged_binding['id'] = node_id_map[n_bind.id.__root__]
 
                     node_binding_information = [
-                            "atts" if k == 'attributes'
-                            else (k, tuple(v)) if isinstance(v, list)
-                            else (k, v)
-                            for k, v in merged_binding.items()
-                        ]
+                        "atts" if k == 'attributes'
+                        else (k, tuple(v)) if isinstance(v, list)
+                        else (k, v)
+                        for k, v in merged_binding.items()
+                    ]
                     # if there are attributes in the node binding
                     if 'attributes' in merged_binding:
                         # storage for the pydantic Attributes
@@ -120,8 +123,8 @@ async def normalize_results(
                 merged_result['edge_bindings'][edge_code] = merged_edge_bindings
 
             try:
-                #This used to have some list comprehension based on types.  But in TRAPI 1.1 the list/dicts get pretty deep.
-                #This is simpler, and the sort_keys argument makes sure we get a constant result.
+                # This used to have some list comprehension based on types.  But in TRAPI 1.1 the list/dicts get pretty deep.
+                # This is simpler, and the sort_keys argument makes sure we get a constant result.
                 hashed_result = json.dumps(merged_result, sort_keys=True)
 
             except Exception as e:  # TODO determine exception(s) to catch
@@ -165,7 +168,7 @@ async def normalize_qgraph(app: FastAPI, qgraph: QueryGraph) -> QueryGraph:
                 primary_ids = set()
                 for nid in node.ids:
                     nr = nid.__root__
-                    equivalent_curies = await get_equivalent_curies(app,nid)
+                    equivalent_curies = await get_equivalent_curies(app, nid)
                     if equivalent_curies[nr]:
                         primary_ids.add(equivalent_curies[nr]['id']['identifier'])
                     else:
@@ -362,15 +365,15 @@ async def get_equivalent_curies(
     """
 
     # init the return
-    value = None
+    # value = None
+
+    # set default return in case curie not found
+    default_return = {curie: None}
 
     try:
         # insure this is a legit curie
         if isinstance(curie, CURIE):
             curie = curie.__root__
-
-        # set default return in case curie not found
-        default_return = {curie: None}
 
         # Get the equivalent list primary key identifier
         value = await get_normalized_nodes(app, [curie], True)
@@ -387,16 +390,18 @@ async def get_equivalent_curies(
     # return the curie normalization data
     return value
 
+
 async def get_eqids_and_types(
         app: FastAPI,
-        canonical_nonan: List ) -> (List,List):
+        canonical_nonan: List) -> (List, List):
     if len(canonical_nonan) == 0:
-        return [],[]
+        return [], []
     eqids = await app.state.redis_connection1.mget(*canonical_nonan, encoding='utf-8')
     eqids = [json.loads(value) if value is not None else None for value in eqids]
     types = await app.state.redis_connection2.mget(*canonical_nonan, encoding='utf-8')
     types = [get_ancestors(app, t) for t in types]
     return eqids, types
+
 
 async def get_normalized_nodes(
         app: FastAPI,
@@ -413,35 +418,37 @@ async def get_normalized_nodes(
     ]
     normal_nodes = {}
 
-    #TODO: Add an option that lets one choose which conflations to do, and get the details of those conflations
+    # TODO: Add an option that lets one choose which conflations to do, and get the details of those conflations
     # from the configs.
 
-    conflation_types = set(["biolink:Gene", "biolink:Protein"])
-    conflation_redis = 5
+    # conflation_types = {"biolink:Gene", "biolink:Protein"}
+    # conflation_redis = 5
 
     upper_curies = [c.upper() for c in curies]
     try:
         canonical_ids = await app.state.redis_connection0.mget(*upper_curies, encoding='utf-8')
         canonical_nonan = [canonical_id for canonical_id in canonical_ids if canonical_id is not None]
-        #Get the equivalent_ids and types
+
+        # Get the equivalent_ids and types
         if canonical_nonan:
-            eqids, types = await get_eqids_and_types(app,canonical_nonan)
+            eqids, types = await get_eqids_and_types(app, canonical_nonan)
             if conflate:
-                #TODO: filter to just types that have Gene or Protein?  I'm not sure it's worth it when we have pipelining
+                # TODO: filter to just types that have Gene or Protein?  I'm not sure it's worth it when we have pipelining
                 other_ids = await app.state.redis_connection5.mget(*canonical_nonan, encoding='utf8')
+
                 # if there are other ids, then we want to rebuild eqids and types.  That's because even though we have them,
                 # they're not necessarily first.  For instance if what came in and got canonicalized was a protein id
                 # and we want gene first, then we're relying on the order of the other_ids to put it back in the right place.
-                other_ids = [ json.loads(oids) if oids is not None else [] for oids in other_ids ]
-                dereference_others = dict(zip(canonical_nonan,other_ids))
-                all_other_ids = sum(other_ids,[])
-                eqids2, types2 = await get_eqids_and_types(app,all_other_ids)
+                other_ids = [json.loads(oids) if oids is not None else [] for oids in other_ids]
+                dereference_others = dict(zip(canonical_nonan, other_ids))
+                all_other_ids = sum(other_ids, [])
+                eqids2, types2 = await get_eqids_and_types(app, all_other_ids)
                 final_eqids = []
                 final_types = []
-                deref_others_eqs = dict(zip(all_other_ids,eqids2))
-                deref_others_typ = dict(zip(all_other_ids,types2))
-                for canonical_id,e,t in zip(canonical_nonan,eqids,types):
-                    #here's where we replace the eqids, types
+                deref_others_eqs = dict(zip(all_other_ids, eqids2))
+                deref_others_typ = dict(zip(all_other_ids, types2))
+                for canonical_id, e, t in zip(canonical_nonan, eqids, types):
+                    # here's where we replace the eqids, types
                     if len(dereference_others[canonical_id]) > 0:
                         e = []
                         t = []
@@ -450,16 +457,16 @@ async def get_normalized_nodes(
                         t += deref_others_typ[other]
                     final_eqids.append(e)
                     final_types.append(uniquify_list(t))
-                dereference_ids   = dict(zip(canonical_nonan, final_eqids))
+                dereference_ids = dict(zip(canonical_nonan, final_eqids))
                 dereference_types = dict(zip(canonical_nonan, final_types))
             else:
                 dereference_ids = dict(zip(canonical_nonan, eqids))
                 dereference_types = dict(zip(canonical_nonan, types))
         else:
-            dereference_ids   = dict()
+            dereference_ids = dict()
             dereference_types = dict()
         normal_nodes = {
-            input_curie: await create_node(canonical_id,dereference_ids,dereference_types)
+            input_curie: await create_node(canonical_id, dereference_ids, dereference_types)
             for input_curie, canonical_id in zip(curies, canonical_ids)
         }
 
@@ -468,26 +475,31 @@ async def get_normalized_nodes(
 
     return normal_nodes
 
+
 async def create_node(canonical_id, equivalent_ids, types):
     """Construct the output format given the compressed redis data"""
     # It's possible that we didn't find a canonical_id
     if canonical_id is None:
         return None
-    #OK, now we should have id's in the format [ {"i": "MONDO:12312", "l": "Scrofula"}, {},...]
+
+    # OK, now we should have id's in the format [ {"i": "MONDO:12312", "l": "Scrofula"}, {},...]
     eids = equivalent_ids[canonical_id]
-    #First, we need to create the "id" node.  The identifier is our input canonical id, but we have to get a label
-    labels = list(filter(lambda x: len(x) > 0, [l['l'] for l in eids if 'l' in l]))
-    #Note that the id will be from the equivalent ids, not the canonical_id.  This is to handle conflation
+
+    # First, we need to create the "id" node.  The identifier is our input canonical id, but we have to get a label
+    labels = list(filter(lambda x: len(x) > 0, [eid['l'] for eid in eids if 'l' in eid]))
+
+    # Note that the id will be from the equivalent ids, not the canonical_id.  This is to handle conflation
     if len(labels) > 0:
-        node = { "id" : {"identifier": eids[0]['i'], "label": labels[0]}}
+        node = {"id": {"identifier": eids[0]['i'], "label": labels[0]}}
     else:
-        #Sometimes, nothing has a label :(
-        node = { "id" : {"identifier": eids[0]['i']}}
-    #now need to reformat the identifier keys.  It could be cleaner but we have to worry about if there is a label
-    node['equivalent_identifiers'] = [ {"identifier":eqid["i"], "label":eqid["l"]} if "l" in eqid
-                                       else {"identifier":eqid["i"]} for eqid in eids]
+        # Sometimes, nothing has a label :(
+        node = {"id": {"identifier": eids[0]['i']}}
+    # now need to reformat the identifier keys.  It could be cleaner but we have to worry about if there is a label
+    node['equivalent_identifiers'] = [{"identifier": eqid["i"], "label": eqid["l"]} if "l" in eqid
+                                      else {"identifier": eqid["i"]} for eqid in eids]
     node['type'] = types[canonical_id]
     return node
+
 
 async def get_curie_prefixes(
         app: FastAPI,
