@@ -6,11 +6,11 @@ from typing import List, Optional, Dict
 from fastapi import FastAPI, HTTPException, Query
 from reasoner_pydantic import Response
 from bmt import Toolkit
-from .loader import NodeLoader
-from .apidocs import get_app_info, construct_open_api_schema
-from .model import SemanticTypes, CuriePivot, CurieList, SemanticTypesInput, ConflationList
-from .normalizer import get_normalized_nodes, get_curie_prefixes, normalize_message
-from .redis_adapter import RedisConnectionFactory
+from loader import NodeLoader
+from apidocs import get_app_info, construct_open_api_schema
+from model import SemanticTypes, CuriePivot, CurieList, SemanticTypesInput, ConflationList
+from normalizer import get_normalized_nodes, get_curie_prefixes, normalize_message
+from redis_adapter import RedisConnectionFactory
 
 # Some metadata not implemented see
 # https://github.com/tiangolo/fastapi/pull/1812
@@ -21,7 +21,6 @@ loader = NodeLoader()
 redis_host = os.environ.get('REDIS_HOST', loader.get_config()['redis_host'])
 redis_port = os.environ.get('REDIS_PORT', loader.get_config()['redis_port'])
 TRAPI_VERSION = os.environ.get('TRAPI_VERSION', '1.2')
-
 
 
 @app.on_event('startup')
@@ -44,6 +43,9 @@ async def startup_event():
         connection_id='curie_to_bl_type_db'
     )
     app.state.redis_connection4 = connection_factory.get_connection(
+        connection_id='info_content_db'
+    )
+    app.state.redis_connection5 = connection_factory.get_connection(
         connection_id='gene_protein_db'
     )
     app.state.toolkit = Toolkit('https://raw.githubusercontent.com/biolink/biolink-model/2.1.0/biolink-model.yaml')
@@ -63,6 +65,11 @@ async def shutdown_event():
     await app.state.redis_connection2.wait_closed()
     app.state.redis_connection3.close()
     await app.state.redis_connection3.wait_closed()
+    app.state.redis_connection4.close()
+    await app.state.redis_connection4.wait_closed()
+    app.state.redis_connection5.close()
+    await app.state.redis_connection5.wait_closed()
+
 
 @app.post(
     f'/response',
@@ -77,6 +84,7 @@ async def normalize_response(response: Response) -> Response:
     response.message = await normalize_message(app, response.message)
     return response
 
+
 @app.get(
     '/get_allowed_conflations',
     summary='Get the available conflations',
@@ -86,21 +94,22 @@ async def get_conflations() -> ConflationList:
     """
     Get implemented conflations
     """
-    #TODO: build from config instead of hard-coding.
-    conflations = ConflationList(conflations= ['GeneProtein'])
+    # TODO: build from config instead of hard-coding.
+    conflations = ConflationList(conflations=['GeneProtein'])
 
     return conflations
+
 
 @app.get(
     '/get_normalized_nodes',
     summary='Get the equivalent identifiers and semantic types for the curie(s) entered.',
     description='Returns the equivalent identifiers and semantic types for the curie(s)'
 )
-async def get_normalized_node_handler(curie: List[str] = Query([], example=['MESH:D014867', 'NCIT:C34373']), conflate: bool =True):
+async def get_normalized_node_handler(curie: List[str] = Query([], example=['MESH:D014867', 'NCIT:C34373']), conflate: bool = True):
     """
     Get value(s) for key(s) using redis MGET
     """
-    #no_conflate = request.args.get('dontconflate',['GeneProtein'])
+    # no_conflate = request.args.get('dontconflate',['GeneProtein'])
     normalized_nodes = await get_normalized_nodes(app, curie, conflate)
 
     return normalized_nodes
