@@ -30,7 +30,7 @@ async def normalize_message(app: FastAPI, message: Message) -> Message:
     try:
         merged_qgraph = await normalize_qgraph(app, message.query_graph)
         merged_kgraph, node_id_map, edge_id_map = await normalize_kgraph(app, message.knowledge_graph)
-        merged_results = await normalize_results(message.results, node_id_map, edge_id_map)
+        merged_results = await normalize_results(app, message.results, node_id_map, edge_id_map)
 
         return Message.parse_obj({
             'query_graph': merged_qgraph,
@@ -41,7 +41,7 @@ async def normalize_message(app: FastAPI, message: Message) -> Message:
         logger.error(f'normalize_message Exception: {e}')
 
 
-async def normalize_results(
+async def normalize_results(app,
         results: List[Result],
         node_id_map: Dict[str, str],
         edge_id_map: Dict[str, str]
@@ -69,12 +69,23 @@ async def normalize_results(
                     merged_binding = n_bind.dict()
                     merged_binding['id'] = node_id_map[n_bind.id.__root__]
 
+                    # get the information content value
+                    ic_attrib = await get_info_content_attribute(app, merged_binding['id'])
+
+                    # did we get a good attribute dict
+                    if ic_attrib:
+                        if 'attributes' in merged_binding:
+                            merged_binding['attributes'].append(ic_attrib)
+                        else:
+                            merged_binding['attributes'] = [ic_attrib]
+
                     node_binding_information = [
                         "atts" if k == 'attributes'
                         else (k, tuple(v)) if isinstance(v, list)
                         else (k, v)
                         for k, v in merged_binding.items()
                     ]
+
                     # if there are attributes in the node binding
                     if 'attributes' in merged_binding:
                         # storage for the pydantic Attributes
@@ -297,6 +308,14 @@ async def normalize_kgraph(
                     else:
                         merged_node['categories'] = [equivalent_curies[node_id]['type']]
 
+                # get the information content value
+                ic_attrib = await get_info_content_attribute(app, node_id)
+
+                # did we get a good attribute dict
+                if ic_attrib:
+                    # add the attribute to the node
+                    merged_node['attributes'].append(ic_attrib)
+
                 merged_kgraph['nodes'][primary_id] = merged_node
             else:
                 merged_kgraph['nodes'][node_id] = merged_node
@@ -432,6 +451,9 @@ async def get_normalized_nodes(
         # Get the equivalent_ids and types
         if canonical_nonan:
             eqids, types = await get_eqids_and_types(app, canonical_nonan)
+
+            info_content_ids = await get_info_content_list(app, canonical_nonan)
+
             if conflate:
                 # TODO: filter to just types that have Gene or Protein?  I'm not sure it's worth it when we have pipelining
                 other_ids = await app.state.redis_connection5.mget(*canonical_nonan, encoding='utf8')
@@ -441,32 +463,50 @@ async def get_normalized_nodes(
                 # and we want gene first, then we're relying on the order of the other_ids to put it back in the right place.
                 other_ids = [json.loads(oids) if oids is not None else [] for oids in other_ids]
                 dereference_others = dict(zip(canonical_nonan, other_ids))
+
                 all_other_ids = sum(other_ids, [])
                 eqids2, types2 = await get_eqids_and_types(app, all_other_ids)
+
                 final_eqids = []
                 final_types = []
+                final_info_contents = []
+
                 deref_others_eqs = dict(zip(all_other_ids, eqids2))
                 deref_others_typ = dict(zip(all_other_ids, types2))
-                for canonical_id, e, t in zip(canonical_nonan, eqids, types):
+                deref_info_contents = dict(zip(all_other_ids, info_content_ids))
+
+                zipped = zip(canonical_nonan, eqids, types, info_content_ids)
+
+                for canonical_id, e, t, i in zipped:
                     # here's where we replace the eqids, types
                     if len(dereference_others[canonical_id]) > 0:
                         e = []
                         t = []
+                        i = []
+
                     for other in dereference_others[canonical_id]:
                         e += deref_others_eqs[other]
                         t += deref_others_typ[other]
+                        i += deref_info_contents[other]
+
                     final_eqids.append(e)
                     final_types.append(uniquify_list(t))
+                    final_info_contents.append(i)
+
                 dereference_ids = dict(zip(canonical_nonan, final_eqids))
                 dereference_types = dict(zip(canonical_nonan, final_types))
+                dereference_info_contents = dict(zip(canonical_nonan, final_info_contents))
             else:
                 dereference_ids = dict(zip(canonical_nonan, eqids))
                 dereference_types = dict(zip(canonical_nonan, types))
+                dereference_info_contents = dict(zip(canonical_nonan, info_content_ids))
         else:
             dereference_ids = dict()
             dereference_types = dict()
+            dereference_info_contents = dict()
+
         normal_nodes = {
-            input_curie: await create_node(canonical_id, dereference_ids, dereference_types)
+            input_curie: await create_node(canonical_id, dereference_ids, dereference_types, dereference_info_contents)
             for input_curie, canonical_id in zip(curies, canonical_ids)
         }
 
@@ -476,7 +516,48 @@ async def get_normalized_nodes(
     return normal_nodes
 
 
-async def create_node(canonical_id, equivalent_ids, types):
+async def get_info_content_list(
+        app: FastAPI,
+        canonical_nonan: List) -> list:
+    """
+    Gets the information content value for the node id
+
+    :param app:
+    :param canonical_nonan:
+    :return:
+    """
+    # call redis and get the value
+    info_content_ids = await app.state.redis_connection4.mget(*canonical_nonan, encoding='utf8')
+
+    # get this into a list
+    ic_ids = [round(float(ic_ids), 1) if ic_ids is not None else None for ic_ids in info_content_ids]
+
+    # return the value to the caller
+    return ic_ids
+
+async def get_info_content_attribute(app, canonical_nonan) -> dict:
+    """
+    gets the information content value from the redis cache
+
+    :param app:
+    :param canonical_nonan:
+    :return:
+    """
+    # get the information content value
+    ic_val = await app.state.redis_connection4.get(canonical_nonan, encoding='utf8')
+
+    # did we get a good value
+    if ic_val is not None:
+        # load up a dict with the attribute data and create a trapi attribute object
+        new_attrib = dict(attribute_type_id="biolink:has_numeric_value", original_attribute_name="information_content", value_type_id="EDAM:data_0006", value=round(float(ic_val), 1))
+    else:
+        # else return nothing
+        new_attrib = None
+
+    # return to the caller
+    return new_attrib
+
+async def create_node(canonical_id, equivalent_ids, types, info_context):
     """Construct the output format given the compressed redis data"""
     # It's possible that we didn't find a canonical_id
     if canonical_id is None:
@@ -494,10 +575,16 @@ async def create_node(canonical_id, equivalent_ids, types):
     else:
         # Sometimes, nothing has a label :(
         node = {"id": {"identifier": eids[0]['i']}}
+
     # now need to reformat the identifier keys.  It could be cleaner but we have to worry about if there is a label
     node['equivalent_identifiers'] = [{"identifier": eqid["i"], "label": eqid["l"]} if "l" in eqid
                                       else {"identifier": eqid["i"]} for eqid in eids]
+
     node['type'] = types[canonical_id]
+
+    if info_context is not None:
+        node['information_content'] = info_context[canonical_id]
+
     return node
 
 
