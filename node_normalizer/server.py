@@ -6,11 +6,11 @@ from typing import List, Optional, Dict
 from fastapi import FastAPI, HTTPException, Query
 from reasoner_pydantic import Response
 from bmt import Toolkit
-from loader import NodeLoader
-from apidocs import get_app_info, construct_open_api_schema
-from model import SemanticTypes, CuriePivot, CurieList, SemanticTypesInput, ConflationList
-from normalizer import get_normalized_nodes, get_curie_prefixes, normalize_message
-from redis_adapter import RedisConnectionFactory
+from .loader import NodeLoader
+from .apidocs import get_app_info, construct_open_api_schema
+from .model import SemanticTypes, CuriePivot, CurieList, SemanticTypesInput, ConflationList
+from .normalizer import get_normalized_nodes, get_curie_prefixes, normalize_message
+from .redis_adapter import RedisConnectionFactory
 
 # Some metadata not implemented see
 # https://github.com/tiangolo/fastapi/pull/1812
