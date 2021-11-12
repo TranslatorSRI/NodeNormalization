@@ -2,7 +2,7 @@ import json
 from typing import List, Dict, Optional, Any, Set, Tuple, Union
 import uuid
 from uuid import UUID
-from util import LoggingUtil, uniquify_list
+from .util import LoggingUtil, uniquify_list
 import logging
 import os
 from fastapi import FastAPI
