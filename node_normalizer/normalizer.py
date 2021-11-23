@@ -410,6 +410,29 @@ async def get_equivalent_curies(
     return value
 
 
+async def get_info_content(
+        app: FastAPI,
+        canonical_nonan: List) -> dict:
+    """
+    Gets the information content value for the node id
+
+    :param app:
+    :param canonical_nonan:
+    :return:
+    """
+    # call redis and get the value
+    info_contents = await app.state.redis_connection4.mget(*canonical_nonan, encoding='utf8')
+
+    # get this into a list
+    info_contents = [round(float(ic_ids), 1) if ic_ids is not None else None for ic_ids in info_contents]
+
+    # zip into an array of dicts
+    info_contents = dict(zip(canonical_nonan, info_contents))
+
+    # return the value to the caller
+    return info_contents
+
+
 async def get_eqids_and_types(
         app: FastAPI,
         canonical_nonan: List) -> (List, List):
@@ -437,9 +460,7 @@ async def get_normalized_nodes(
     ]
     normal_nodes = {}
 
-    # TODO: Add an option that lets one choose which conflations to do, and get the details of those conflations
-    # from the configs.
-
+    # TODO: Add an option that lets one choose which conflations to do, and get the details of those conflations from the configs.
     # conflation_types = {"biolink:Gene", "biolink:Protein"}
     # conflation_redis = 5
 
@@ -448,12 +469,15 @@ async def get_normalized_nodes(
         canonical_ids = await app.state.redis_connection0.mget(*upper_curies, encoding='utf-8')
         canonical_nonan = [canonical_id for canonical_id in canonical_ids if canonical_id is not None]
 
-        # Get the equivalent_ids and types
+        # did we get some canonical ids
         if canonical_nonan:
+            # Get the equivalent_ids and types
             eqids, types = await get_eqids_and_types(app, canonical_nonan)
 
-            info_content_ids = await get_info_content_list(app, canonical_nonan)
+            # get the information content values
+            info_contents = await get_info_content(app, canonical_nonan)
 
+            # are we looking for conflated values
             if conflate:
                 # TODO: filter to just types that have Gene or Protein?  I'm not sure it's worth it when we have pipelining
                 other_ids = await app.state.redis_connection5.mget(*canonical_nonan, encoding='utf8')
@@ -469,45 +493,38 @@ async def get_normalized_nodes(
 
                 final_eqids = []
                 final_types = []
-                final_info_contents = []
 
                 deref_others_eqs = dict(zip(all_other_ids, eqids2))
                 deref_others_typ = dict(zip(all_other_ids, types2))
-                deref_info_contents = dict(zip(all_other_ids, info_content_ids))
 
-                zipped = zip(canonical_nonan, eqids, types, info_content_ids)
+                zipped = zip(canonical_nonan, eqids, types)
 
-                for canonical_id, e, t, i in zipped:
+                for canonical_id, e, t in zipped:
                     # here's where we replace the eqids, types
                     if len(dereference_others[canonical_id]) > 0:
                         e = []
                         t = []
-                        i = []
 
                     for other in dereference_others[canonical_id]:
                         e += deref_others_eqs[other]
                         t += deref_others_typ[other]
-                        i += deref_info_contents[other]
 
                     final_eqids.append(e)
                     final_types.append(uniquify_list(t))
-                    final_info_contents.append(i)
 
                 dereference_ids = dict(zip(canonical_nonan, final_eqids))
                 dereference_types = dict(zip(canonical_nonan, final_types))
-                dereference_info_contents = dict(zip(canonical_nonan, final_info_contents))
             else:
                 dereference_ids = dict(zip(canonical_nonan, eqids))
                 dereference_types = dict(zip(canonical_nonan, types))
-                dereference_info_contents = dict(zip(canonical_nonan, info_content_ids))
         else:
             dereference_ids = dict()
             dereference_types = dict()
-            dereference_info_contents = dict()
 
+        # output the final result
         normal_nodes = {
-            input_curie: await create_node(canonical_id, dereference_ids, dereference_types, dereference_info_contents)
-            for input_curie, canonical_id in zip(curies, canonical_ids)
+            input_curie: await create_node(canonical_id, dereference_ids, dereference_types, info_contents)
+            for input_curie, canonical_id, info_content in zip(curies, canonical_ids, info_contents)
         }
 
     except Exception as e:
@@ -515,25 +532,6 @@ async def get_normalized_nodes(
 
     return normal_nodes
 
-
-async def get_info_content_list(
-        app: FastAPI,
-        canonical_nonan: List) -> list:
-    """
-    Gets the information content value for the node id
-
-    :param app:
-    :param canonical_nonan:
-    :return:
-    """
-    # call redis and get the value
-    info_content_ids = await app.state.redis_connection4.mget(*canonical_nonan, encoding='utf8')
-
-    # get this into a list
-    ic_ids = [round(float(ic_ids), 1) if ic_ids is not None else None for ic_ids in info_content_ids]
-
-    # return the value to the caller
-    return ic_ids
 
 async def get_info_content_attribute(app, canonical_nonan) -> dict:
     """
@@ -557,7 +555,7 @@ async def get_info_content_attribute(app, canonical_nonan) -> dict:
     # return to the caller
     return new_attrib
 
-async def create_node(canonical_id, equivalent_ids, types, info_context):
+async def create_node(canonical_id, equivalent_ids, types, info_contents):
     """Construct the output format given the compressed redis data"""
     # It's possible that we didn't find a canonical_id
     if canonical_id is None:
@@ -582,8 +580,9 @@ async def create_node(canonical_id, equivalent_ids, types, info_context):
 
     node['type'] = types[canonical_id]
 
-    if info_context is not None:
-        node['information_content'] = info_context[canonical_id]
+    # add the info content to the node if we got one
+    if info_contents[canonical_id] is not None:
+        node['information_content'] = info_contents[canonical_id]
 
     return node
 
