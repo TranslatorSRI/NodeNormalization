@@ -179,7 +179,7 @@ async def normalize_qgraph(app: FastAPI, qgraph: QueryGraph) -> QueryGraph:
                 primary_ids = set()
                 for nid in node.ids:
                     nr = nid.__root__
-                    equivalent_curies = await get_equivalent_curies(app, nid)
+                    equivalent_curies = await get_equivalent_curies(app, nr)
                     if equivalent_curies[nr]:
                         primary_ids.add(equivalent_curies[nr]['id']['identifier'])
                     else:
@@ -383,16 +383,10 @@ async def get_equivalent_curies(
     }
     """
 
-    # init the return
-    # value = None
-
     # set default return in case curie not found
     default_return = {curie: None}
 
     try:
-        # insure this is a legit curie
-        if isinstance(curie, CURIE):
-            curie = curie.__root__
 
         # Get the equivalent list primary key identifier
         value = await get_normalized_nodes(app, [curie], True)
