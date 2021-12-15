@@ -6,14 +6,14 @@
           "ids": ["NODE_1"],
           "categories": ["biolink:Disease"],
           "is_set": false,
-          "constraints": null
+          "constraints": []
         },
         "n1": {
           "ids": ["NODE_2"],
           "categories": ["biolink:ChemicalSubstance"],
           "is_set": false,
           "set": true,
-          "constraints": null
+          "constraints": []
         }
       },
       "edges": {
@@ -21,8 +21,7 @@
           "subject": "n0",
           "object": "n1",
           "predicates": ["biolink:correlated_with"],
-          "relation": null,
-          "constraints": null
+          "constraints": []
         }
       }
     },
@@ -59,7 +58,8 @@
               "original_attribute_name": "equivalent_identifiers",
               "value_url": null,
               "attribute_source": null,
-              "value_type_id": null
+              "value_type_id": null,
+              "attributes": null
             }
           ]
         }
@@ -69,7 +69,6 @@
           "subject": "NODE_1",
           "object": "NODE_2",
           "predicate": "biolink:correlated_with",
-          "relation": null,
           "attributes": [
             {
               "attribute_type_id": "MetaInformation",
@@ -78,7 +77,8 @@
               "value_url": null,
               "description": null,
               "attribute_source": null,
-              "value_type_id": null
+              "value_type_id": null,
+              "attributes": null
             }
           ]
         }
@@ -110,7 +110,8 @@
             {
               "id": "EDGE_1",
               "a_key": ["a_value"],
-              "predicate": "same_predicate"
+              "predicate": "same_predicate",
+              "attributes": null
             }
           ]
         },
@@ -119,5 +120,6 @@
     ]
   },
   "logs": null,
-  "status": null
+  "status": null,
+  "workflow": null
 }

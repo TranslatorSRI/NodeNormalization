@@ -1,4 +1,4 @@
-{
+{ "workflow": null,
   "message": {
     "query_graph": {
       "nodes": {
@@ -8,7 +8,7 @@
             "biolink:Gene"
           ],
           "is_set": false,
-          "constraints": null
+          "constraints": []
         },
         "n2": {
           "ids": ["NCBIGene:9496"],
@@ -16,7 +16,7 @@
             "biolink:Gene"
           ],
           "is_set": false,
-          "constraints": null
+          "constraints": []
         },
         "n3": {
           "ids": ["MONDO:0005002"],
@@ -24,7 +24,7 @@
             "biolink:Disease"
           ],
           "is_set": false,
-          "constraints": null
+          "constraints": []
         },
         "n4": {
           "ids": ["MONDO:0005002"],
@@ -32,7 +32,7 @@
             "biolink:Disease"
           ],
           "is_set": false,
-          "constraints": null
+          "constraints": []
         },
         "n5": {
           "categories": [
@@ -40,7 +40,7 @@
           ],
           "ids": null,
           "is_set": false,
-          "constraints": null
+          "constraints": []
         }
       },
       "edges": {
@@ -48,22 +48,19 @@
           "subject": "n1",
           "object": "n3",
           "predicates": null,
-          "relation": null,
-          "constraints": null
+          "constraints": []
         },
         "e2": {
           "subject": "n2",
           "object": "n4",
           "predicates": ["biolink:related_to"],
-          "relation": null,
-          "constraints": null
+          "constraints": []
         },
         "e3": {
           "subject": "n1",
           "object": "n5",
           "predicates": null,
-          "relation": null,
-          "constraints": null
+          "constraints": []
         }
       }
     },
@@ -83,7 +80,8 @@
                 "UniProtKB:P57082"
               ],
               "description": null,
-              "value_type_id": "EDAM:data_0006"
+              "value_type_id": "EDAM:data_0006",
+              "attributes": null
             }
           ],
           "categories": [
@@ -115,7 +113,8 @@
                 "HP:0006510"
               ],
               "description": null,
-              "value_type_id": "EDAM:data_0006"
+              "value_type_id": "EDAM:data_0006",
+              "attributes": null
             }
           ],
           "categories": [
@@ -141,7 +140,8 @@
                 "SNOMEDCT:697897003"
               ],
               "description": null,
-              "value_type_id": "EDAM:data_0006"
+              "value_type_id": "EDAM:data_0006",
+              "attributes": null
             }
           ],
           "categories": [
@@ -158,14 +158,12 @@
           "subject": "NCBIGene:9496",
           "object": "MONDO:0017148",
           "predicate": "biolink:related_to",
-          "relation": "RO:0004013",
           "attributes": null
         },
         "a8575c4e-61a6-428a-bf09-fcb3e8d1644d": {
           "subject": "NCBIGene:9496",
           "object": "MONDO:0005002",
           "predicate": "biolink:related_to",
-          "relation": "RO:0003304",
           "attributes": null
         }
       }
@@ -187,7 +185,8 @@
         "edge_bindings": {
           "e1": [
             {
-              "id": "a8575c4e-61a6-428a-bf09-fcb3e8d1644d"
+              "id": "a8575c4e-61a6-428a-bf09-fcb3e8d1644d",
+              "attributes": null
             }
           ]
         },
@@ -209,7 +208,8 @@
         "edge_bindings": {
           "e2": [
             {
-              "id": "a8575c4e-61a6-428a-bf09-fcb3e8d1644d"
+              "id": "a8575c4e-61a6-428a-bf09-fcb3e8d1644d",
+              "attributes": null
             }
           ]
         },
@@ -231,7 +231,8 @@
         "edge_bindings": {
           "e3": [
             {
-              "id": "044a7916-fba9-4b4f-ae48-f0815b0b222d"
+              "id": "044a7916-fba9-4b4f-ae48-f0815b0b222d",
+              "attributes": null
             }
           ]
         },

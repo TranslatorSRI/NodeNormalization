@@ -11,6 +11,8 @@ class MockRedis():
 
 app.state.redis_connection0 = MockRedis()
 app.state.redis_connection1 = MockRedis()
+app.state.redis_connection4 = MockRedis()
+
 
 
 def test_not_found():
