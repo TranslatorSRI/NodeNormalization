@@ -17,7 +17,9 @@ class MockRedis():
         return [self.data[x]  if x in self.data else None for x in args ]
 
 import json
-app.state.redis_connection0 = MockRedis({"DOID:3812":"MONDO:0005002"})
+#Id -> Canonical
+app.state.redis_connection0 = MockRedis({"DOID:3812":"MONDO:0005002", "MONDO:0005002":"MONDO:0005002"})
+#Canonical->Equiv
 app.state.redis_connection1 = MockRedis({"MONDO:0005002":json.dumps([{"i":"MONDO:0005002"},{"i":"DOID:3812"}])})
 app.state.redis_connection2 = MockRedis({"MONDO:0005002":"biolink:Disease"})
 app.state.redis_connection3 = MockRedis({})
@@ -42,6 +44,15 @@ def test_one_missing():
     assert len(result) == 2
     assert result['UNKNOWN:000000'] == None
     assert result['DOID:3812']['id']['identifier'] == 'MONDO:0005002'
+
+def test_merge():
+    client = TestClient(app)
+    response = client.get('/get_normalized_nodes', params={"curie": ["MONDO:0005002", "DOID:3812"]})
+    result = json.loads(response.text)
+    assert len(result) == 2
+    assert 'MONDO:0005002' in result
+    assert 'DOID:3812' in result
+
 
 def test_empty():
     client = TestClient(app)
