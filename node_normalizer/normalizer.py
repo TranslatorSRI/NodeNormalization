@@ -462,14 +462,13 @@ async def get_normalized_nodes(
     try:
         canonical_ids = await app.state.redis_connection0.mget(*upper_curies, encoding='utf-8')
         canonical_nonan = [canonical_id for canonical_id in canonical_ids if canonical_id is not None]
+        # get the information content values
+        info_contents = await get_info_content(app, canonical_nonan)
 
         # did we get some canonical ids
         if canonical_nonan:
             # Get the equivalent_ids and types
             eqids, types = await get_eqids_and_types(app, canonical_nonan)
-
-            # get the information content values
-            info_contents = await get_info_content(app, canonical_nonan)
 
             # are we looking for conflated values
             if conflate:
@@ -518,7 +517,7 @@ async def get_normalized_nodes(
         # output the final result
         normal_nodes = {
             input_curie: await create_node(canonical_id, dereference_ids, dereference_types, info_contents)
-            for input_curie, canonical_id, info_content in zip(curies, canonical_ids, info_contents)
+            for input_curie, canonical_id in zip(curies, canonical_ids)
         }
 
     except Exception as e:

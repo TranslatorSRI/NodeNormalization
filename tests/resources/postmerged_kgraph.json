@@ -14,7 +14,8 @@
             "UniProtKB:P57082"
           ],
           "description": null,
-          "value_type_id": "EDAM:data_0006"
+          "value_type_id": "EDAM:data_0006",
+          "attributes": null
         }
       ],
       "categories": [
@@ -46,7 +47,8 @@
             "HP:0006510"
           ],
           "description": null,
-          "value_type_id": "EDAM:data_0006"
+          "value_type_id": "EDAM:data_0006",
+          "attributes": null
         }
       ],
       "categories": [
@@ -74,7 +76,8 @@
             "SNOMEDCT:719584008"
           ],
           "description": null,
-          "value_type_id": "EDAM:data_0006"
+          "value_type_id": "EDAM:data_0006",
+          "attributes": null
         }
       ],
       "categories": [
@@ -100,7 +103,8 @@
             "SNOMEDCT:697897003"
           ],
           "description": null,
-          "value_type_id": "EDAM:data_0006"
+          "value_type_id": "EDAM:data_0006",
+          "attributes": null
         }
       ],
       "categories": [
@@ -117,21 +121,18 @@
       "subject": "NCBIGene:9496",
       "object": "MONDO:0017148",
       "predicate": "biolink:related_to",
-      "relation": "RO:0004013",
       "attributes": null
     },
     "2d38345a-e9bf-4943-accb-dccba351dd04": {
       "subject": "NCBIGene:9496",
       "object": "MONDO:0013238",
       "predicate": "biolink:related_to",
-      "relation": "RO:0003304",
       "attributes": null
     },
     "a8575c4e-61a6-428a-bf09-fcb3e8d1644d": {
       "subject": "NCBIGene:9496",
       "object": "MONDO:0005002",
       "predicate": "biolink:related_to",
-      "relation": "RO:0003304",
       "attributes": null
     }
   }

@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 # Need to add to sources root to avoid linter warnings
-from helpers.redis_mocks import mock_get_equivalent_curies
+from helpers.redis_mocks import mock_get_equivalent_curies, mock_get_ic
 from node_normalizer.normalizer import normalize_kgraph, _hash_attributes, _merge_node_attributes
 
 
@@ -84,6 +84,7 @@ class TestNormalizer:
 
     @pytest.mark.asyncio
     @patch('node_normalizer.normalizer.get_equivalent_curies', Mock(side_effect=mock_get_equivalent_curies))
+    @patch('node_normalizer.normalizer.get_info_content_attribute', Mock(side_effect=mock_get_ic))
     async def test_kg_normalize(self):
         app = None
         with open(premerged_graph, 'r') as pre:

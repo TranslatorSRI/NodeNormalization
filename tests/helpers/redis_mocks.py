@@ -22,3 +22,7 @@ async def mock_get_equivalent_curies(app, curie):
             f"{curie}": None
         }
     return equivalent_curies
+
+async def mock_get_ic(app, canonical_nonan) -> dict:
+    return None
+
