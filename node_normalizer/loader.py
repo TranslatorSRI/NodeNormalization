@@ -226,7 +226,7 @@ class NodeLoader:
         try:
             # get the list of files in the directory
             compendia: list = self.get_compendia()
-
+            types_prefixes_redis: RedisConnection = await self.get_redis("curie_to_bl_type_db")
             # did we get all the files
             if len(compendia) == len(self._data_files):
                 # for each file validate and process
@@ -235,6 +235,16 @@ class NodeLoader:
                     if self.validate_compendia(comp):
                         # try to load the file
                         loaded = await self.load_compendium(comp, block_size)
+                        semantic_types_redis_pipeline = types_prefixes_redis.pipeline()
+                        # @TODO add meta data about files eg. checksum to this object
+                        semantic_types_redis_pipeline.set(
+                            f"file-{str(comp)}", json.dumps({"source_prefixes": self.source_prefixes})
+                        )
+                        if self._test_mode != 1:
+                            response = await RedisConnection.execute_pipeline(semantic_types_redis_pipeline)
+                            if asyncio.coroutines.iscoroutine(response):
+                                await response
+                        self.source_prefixes = {}
                         if not loaded:
                             self.print_debug_msg(f'Compendia file {comp} did not load.', True)
                             continue
@@ -246,39 +256,8 @@ class NodeLoader:
                     if not loaded:
                         self.print_debug_msg(f'Conflation file {conf} did not load.', True)
                         continue
-
-                # get the connection and pipeline to the database
-                types_prefixes_redis: RedisConnection = await self.get_redis("curie_to_bl_type_db")
-                types_prefixes_pipeline = types_prefixes_redis.pipeline()
-
-                # create a command to get the current semantic types
-                types_prefixes_pipeline.lrange('semantic_types', 0, -1)
-
-                # get the current list of semantic types
-                vals = types_prefixes_pipeline.execute()
-                if asyncio.coroutines.iscoroutine(vals):
-                    vals = await vals
-                types_prefixes_pipeline = types_prefixes_redis.pipeline()
-
-                # get the values and insure they are strings
-                current_types: set = set(x.decode("utf-8") if not isinstance(x, str) else x for x in vals[0])
-
-                # remove any dupes
-                self.semantic_types = self.semantic_types.difference(current_types)
-
-                if len(self.semantic_types) > 0:
-                    # add all the semantic types
-                    types_prefixes_pipeline.lpush('semantic_types', *self.semantic_types)
-
-                # for each semantic type insert the list of source prefixes
-                for item in self.source_prefixes:
-                    types_prefixes_pipeline.set(item, json.dumps(self.source_prefixes[item]))
-
-                if self._test_mode != 1:
-                    # add the data to redis
-                    response = await RedisConnection.execute_pipeline(types_prefixes_pipeline)
-                    if asyncio.coroutines.iscoroutine(response):
-                        await response
+                # merge all semantic counts from other files / loaders
+                await self.merge_semantic_meta_data()
             else:
                 self.print_debug_msg(f'Error: 1 or more data files were incorrect', True)
                 ret_val = False
@@ -288,6 +267,61 @@ class NodeLoader:
 
         # return to the caller
         return ret_val
+
+    async def merge_semantic_meta_data(self):
+
+        # get the connection and pipeline to the database
+
+        types_prefixes_redis: RedisConnection = await self.get_redis("curie_to_bl_type_db")
+        types_prefixes_pipeline = types_prefixes_redis.pipeline()
+        # get all metadata keys
+        types_prefixes_pipeline.keys("file-*")
+        meta_data_keys = types_prefixes_pipeline.execute()
+        if asyncio.coroutines.iscoroutine(meta_data_keys):
+            meta_data_keys = await meta_data_keys
+
+        # recreate pipeline
+
+        types_prefixes_pipeline = types_prefixes_redis.pipeline()
+        # capture all keys except semenatic_types , as that would be the one that will contain the sum of all semantic types
+        meta_data_keys = list(filter(lambda key: key !="semantic_types" , meta_data_keys[0]))
+
+        # get actual data
+        for meta_data_key in meta_data_keys:
+            types_prefixes_pipeline.get(meta_data_key)
+        meta_data = types_prefixes_pipeline.execute()
+        if asyncio.coroutines.iscoroutine(meta_data):
+            meta_data = await meta_data
+        all_meta_data = {}
+        for meta_data_key, meta_datum in zip(meta_data_keys, meta_data):
+            all_meta_data[meta_data_key.decode('utf-8')] = json.loads(meta_datum.decode('utf-8'))
+        sources_prefix = {}
+        for meta_data_key, data in all_meta_data.items():
+            prefix_counts = data['source_prefixes']
+            for bl_type, curie_counts in prefix_counts.items():
+                # if
+                sources_prefix[bl_type] = sources_prefix.get(bl_type, {})
+                for curie_prefix, count in curie_counts.items():
+                    # get count of this curie prefix
+                    sources_prefix[bl_type][curie_prefix] = sources_prefix[bl_type].get(curie_prefix, 0)
+                    # add up the new count
+                    sources_prefix[bl_type][curie_prefix] += count
+
+        types_prefixes_pipeline = types_prefixes_redis.pipeline()
+
+        if len(sources_prefix.keys()) > 0:
+            # add all the semantic types
+            types_prefixes_pipeline.lpush('semantic_types', *list(sources_prefix.keys()))
+
+        # for each semantic type insert the list of source prefixes
+        for item in sources_prefix:
+            types_prefixes_pipeline.set(item, json.dumps(sources_prefix[item]))
+
+        if self._test_mode != 1:
+            # add the data to redis
+            response = await RedisConnection.execute_pipeline(types_prefixes_pipeline)
+            if asyncio.coroutines.iscoroutine(response):
+                await response
 
     def validate_compendia(self, in_file):
         # open the file to validate
