@@ -45,26 +45,8 @@ def test_one_missing():
     assert result['UNKNOWN:000000'] == None
     assert result['DOID:3812']['id']['identifier'] == 'MONDO:0005002'
 
-def test_merge():
-    client = TestClient(app)
-    response = client.get('/get_normalized_nodes', params={"curie": ["MONDO:0005002", "DOID:3812"]})
-    result = json.loads(response.text)
-    assert len(result) == 2
-    assert 'MONDO:0005002' in result
-    assert 'DOID:3812' in result
 
-
-def test_empty():
-    client = TestClient(app)
-    response = client.get('/get_normalized_nodes', params={"curie": []})
-    result = json.loads(response.text)
-    assert result == dict()
-    response = client.post('/get_normalized_nodes', json={"curies": []})
-    result = json.loads(response.text)
-    assert result == dict()
-
-
-def test_without_resolvable_curies():
+def test_all_missing():
     """
     /get_normalized_nodes previously returned {} if none of the provided CURIEs are resolvable.
     This test ensures that that bug has been fixed.
@@ -88,3 +70,23 @@ def test_without_resolvable_curies():
         'NCBIGene:ABCD': None,
         'NCBIGene:GENE:1017': None
     }
+
+
+def test_merge():
+    client = TestClient(app)
+    response = client.get('/get_normalized_nodes', params={"curie": ["MONDO:0005002", "DOID:3812"]})
+    result = json.loads(response.text)
+    assert len(result) == 2
+    assert 'MONDO:0005002' in result
+    assert 'DOID:3812' in result
+
+
+def test_empty():
+    client = TestClient(app)
+    response = client.get('/get_normalized_nodes', params={"curie": []})
+    result = json.loads(response.text)
+    assert result == dict()
+    response = client.post('/get_normalized_nodes', json={"curies": []})
+    result = json.loads(response.text)
+    assert result == dict()
+
