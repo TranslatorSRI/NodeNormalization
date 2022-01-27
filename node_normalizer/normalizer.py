@@ -414,6 +414,10 @@ async def get_info_content(
     :param canonical_nonan:
     :return:
     """
+    # Check to see if canonical_nonan is not empty.
+    if not canonical_nonan:
+        return {}
+
     # call redis and get the value
     info_contents = await app.state.redis_connection4.mget(*canonical_nonan, encoding='utf8')
 
