@@ -26,13 +26,10 @@ RUN pip install -e .
 # gunicorn, hypercorn also options https://fastapi.tiangolo.com/deployment/manually/
 # ENTRYPOINT ["python", "-m" , "uvicorn", "node_normalizer.server:app", "--app-dir", "/home/murphy/", "--port", "6380"]
 
-# uvicorn --host 0.0.0.0, --port 8080 --root-path /1.2 --workers 1 --app-dir /home/murphy/ node_normalizer.server:app
 
 RUN chmod 777 ./
 
 # create a new user and use it.
 RUN useradd -M -u 1001 nonrootuser
 USER nonrootuser
-
-ENTRYPOINT ["uvicorn", "--host", "0.0.0.0", "--port", "8080", '--root-path', '/1.2', "--workers", "1", "--app-dir", "/home/murphy/", "node_normalizer.server:app"]
-
+ENTRYPOINT ["uvicorn", "--host", "0.0.0.0", "--port", "8080" , "--root-path", "/1.2", "--workers", "1", "--app-dir", "/code/", "--loop", "uvloop", "--http", "httptools",  "node_normalizer.server:app"]
