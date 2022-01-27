@@ -1,9 +1,4 @@
-FROM python:3.8.1-buster
-
-# install basic tools
-RUN apt-get update
-RUN apt-get install -yq \
-    vim
+FROM renciorg/renci-python-image:v0.0.1
 
 RUN mkdir /code
 WORKDIR /code
@@ -29,7 +24,5 @@ RUN pip install -e .
 
 RUN chmod 777 ./
 
-# create a new user and use it.
-RUN useradd -M -u 1001 nonrootuser
-USER nonrootuser
+USER nru
 ENTRYPOINT ["uvicorn", "--host", "0.0.0.0", "--port", "8080" , "--root-path", "/1.2", "--workers", "1", "--app-dir", "/code/", "--loop", "uvloop", "--http", "httptools",  "node_normalizer.server:app"]
