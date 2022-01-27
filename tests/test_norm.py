@@ -83,10 +83,20 @@ def test_merge():
 
 def test_empty():
     client = TestClient(app)
+
+    # GET
     response = client.get('/get_normalized_nodes', params={"curie": []})
+    assert response.status_code == 422
+    assert response.reason == 'Unprocessable Entity'
     result = json.loads(response.text)
-    assert result == dict()
+    assert result['detail'][0]['msg'] == 'ensure this value has at least 1 items'
+    assert result['detail'][0]['loc'] == ['query', 'curie']
+
+    # POST
     response = client.post('/get_normalized_nodes', json={"curies": []})
+    assert response.status_code == 422
+    assert response.reason == 'Unprocessable Entity'
     result = json.loads(response.text)
-    assert result == dict()
+    assert result['detail'][0]['msg'] == 'ensure this value has at least 1 items'
+    assert result['detail'][0]['loc'] == ['body', 'curies']
 
