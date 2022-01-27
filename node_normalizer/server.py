@@ -105,12 +105,17 @@ async def get_conflations() -> ConflationList:
     summary='Get the equivalent identifiers and semantic types for the curie(s) entered.',
     description='Returns the equivalent identifiers and semantic types for the curie(s)'
 )
-async def get_normalized_node_handler(curie: List[str] = Query([], example=['MESH:D014867', 'NCIT:C34373']), conflate: bool = True):
+async def get_normalized_node_handler(curie: List[str] = Query([], example=['MESH:D014867', 'NCIT:C34373'], min_items=1), conflate: bool = True):
     """
     Get value(s) for key(s) using redis MGET
     """
     # no_conflate = request.args.get('dontconflate',['GeneProtein'])
     normalized_nodes = await get_normalized_nodes(app, curie, conflate)
+
+    # If curie contains at least one entry, then the only way normalized_nodes could be blank
+    # would be if an error occurred during processing.
+    if not normalized_nodes:
+        raise HTTPException(detail='Error occurred during processing.', status_code=500)
 
     return normalized_nodes
 
@@ -125,6 +130,11 @@ async def get_normalized_node_handler(curies: CurieList):
     Get value(s) for key(s) using redis MGET
     """
     normalized_nodes = await get_normalized_nodes(app, curies.curies, curies.conflate)
+
+    # If curies.curies contains at least one entry, then the only way normalized_nodes could be blank
+    # would be if an error occurred during processing.
+    if not normalized_nodes:
+        raise HTTPException(detail='Error occurred during processing.', status_code=500)
 
     return normalized_nodes
 
