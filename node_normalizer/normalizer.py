@@ -471,7 +471,7 @@ async def get_normalized_nodes(
         # did we get some canonical ids
         if canonical_nonan:
             # get the information content values
-            await get_info_content(app, canonical_nonan)
+            info_contents = await get_info_content(app, canonical_nonan)
 
             # Get the equivalent_ids and types
             eqids, types = await get_eqids_and_types(app, canonical_nonan)
