@@ -72,7 +72,17 @@ def test_without_resolvable_curies():
     Reported in https://github.com/TranslatorSRI/NodeNormalization/issues/113
     """
     client = TestClient(app)
-    response = client.get('/get_normalized_nodes', params={"curies": ["NCBIGene:ABCD", "NCBIGene:GENE:1017"]})
+
+    # Test GET
+    response = client.get('/get_normalized_nodes', params={"curie": ["NCBIGene:ABCD", "NCBIGene:GENE:1017"]})
+    result = json.loads(response.text)
+    assert result == {
+        'NCBIGene:ABCD': None,
+        'NCBIGene:GENE:1017': None
+    }
+
+    # Test POST
+    response = client.post('/get_normalized_nodes', json={"curies": ["NCBIGene:ABCD", "NCBIGene:GENE:1017"]})
     result = json.loads(response.text)
     assert result == {
         'NCBIGene:ABCD': None,
