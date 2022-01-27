@@ -62,3 +62,19 @@ def test_empty():
     response = client.post('/get_normalized_nodes', json={"curies": []})
     result = json.loads(response.text)
     assert result == dict()
+
+
+def test_without_resolvable_curies():
+    """
+    /get_normalized_nodes previously returned {} if none of the provided CURIEs are resolvable.
+    This test ensures that that bug has been fixed.
+
+    Reported in https://github.com/TranslatorSRI/NodeNormalization/issues/113
+    """
+    client = TestClient(app)
+    response = client.get('/get_normalized_nodes', params={"curies": ["NCBIGene:ABCD", "NCBIGene:GENE:1017"]})
+    result = json.loads(response.text)
+    assert result == {
+        'NCBIGene:ABCD': None,
+        'NCBIGene:GENE:1017': None
+    }
