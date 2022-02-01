@@ -45,6 +45,33 @@ def test_one_missing():
     assert result['UNKNOWN:000000'] == None
     assert result['DOID:3812']['id']['identifier'] == 'MONDO:0005002'
 
+
+def test_all_missing():
+    """
+    /get_normalized_nodes previously returned {} if none of the provided CURIEs are resolvable.
+    This test ensures that that bug has been fixed.
+
+    Reported in https://github.com/TranslatorSRI/NodeNormalization/issues/113
+    """
+    client = TestClient(app)
+
+    # Test GET
+    response = client.get('/get_normalized_nodes', params={"curie": ["NCBIGene:ABCD", "NCBIGene:GENE:1017"]})
+    result = json.loads(response.text)
+    assert result == {
+        'NCBIGene:ABCD': None,
+        'NCBIGene:GENE:1017': None
+    }
+
+    # Test POST
+    response = client.post('/get_normalized_nodes', json={"curies": ["NCBIGene:ABCD", "NCBIGene:GENE:1017"]})
+    result = json.loads(response.text)
+    assert result == {
+        'NCBIGene:ABCD': None,
+        'NCBIGene:GENE:1017': None
+    }
+
+
 def test_merge():
     client = TestClient(app)
     response = client.get('/get_normalized_nodes', params={"curie": ["MONDO:0005002", "DOID:3812"]})
@@ -56,9 +83,20 @@ def test_merge():
 
 def test_empty():
     client = TestClient(app)
+
+    # GET
     response = client.get('/get_normalized_nodes', params={"curie": []})
+    assert response.status_code == 422
+    assert response.reason == 'Unprocessable Entity'
     result = json.loads(response.text)
-    assert result == dict()
+    assert result['detail'][0]['msg'] == 'ensure this value has at least 1 items'
+    assert result['detail'][0]['loc'] == ['query', 'curie']
+
+    # POST
     response = client.post('/get_normalized_nodes', json={"curies": []})
+    assert response.status_code == 422
+    assert response.reason == 'Unprocessable Entity'
     result = json.loads(response.text)
-    assert result == dict()
+    assert result['detail'][0]['msg'] == 'ensure this value has at least 1 items'
+    assert result['detail'][0]['loc'] == ['body', 'curies']
+

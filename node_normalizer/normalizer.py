@@ -414,6 +414,10 @@ async def get_info_content(
     :param canonical_nonan:
     :return:
     """
+    # Check to see if canonical_nonan is not empty.
+    if not canonical_nonan:
+        return {}
+
     # call redis and get the value
     info_contents = await app.state.redis_connection4.mget(*canonical_nonan, encoding='utf8')
 
@@ -462,11 +466,13 @@ async def get_normalized_nodes(
     try:
         canonical_ids = await app.state.redis_connection0.mget(*upper_curies, encoding='utf-8')
         canonical_nonan = [canonical_id for canonical_id in canonical_ids if canonical_id is not None]
-        # get the information content values
-        info_contents = await get_info_content(app, canonical_nonan)
+        info_contents = {}
 
         # did we get some canonical ids
         if canonical_nonan:
+            # get the information content values
+            info_contents = await get_info_content(app, canonical_nonan)
+
             # Get the equivalent_ids and types
             eqids, types = await get_eqids_and_types(app, canonical_nonan)
 

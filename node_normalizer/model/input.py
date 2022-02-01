@@ -12,7 +12,8 @@ class CurieList(BaseModel):
 
     curies: List[str] = Field(
         ...,  # Ellipsis means field is required
-        title='list of nodes formatted as curies'
+        title='list of nodes formatted as curies',
+        min_items=1
     )
 
     conflate:bool = Field (

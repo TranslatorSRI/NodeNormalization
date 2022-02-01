@@ -34,7 +34,7 @@ Create a virtual environment
 ```
 Activate the virtual environment
 ```
-    source nodeNodemaization-env/bin/activate
+    source nodeNormalization-env/bin/activate
 ```
 Install requirements 
 ```
