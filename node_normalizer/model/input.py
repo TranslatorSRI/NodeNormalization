@@ -16,7 +16,7 @@ class CurieList(BaseModel):
         min_items=1
     )
 
-    conflate:bool = Field (
+    conflate:bool = Field(
         True,
         title="Whether to apply conflation"
     )
@@ -24,7 +24,8 @@ class CurieList(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "curies": ['MESH:D014867', 'NCIT:C34373']
+                "curies": ['MESH:D014867', 'NCIT:C34373'],
+                "conflate": True
             }
         }
 
