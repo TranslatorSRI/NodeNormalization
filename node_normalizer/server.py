@@ -105,7 +105,10 @@ async def get_conflations() -> ConflationList:
     summary='Get the equivalent identifiers and semantic types for the curie(s) entered.',
     description='Returns the equivalent identifiers and semantic types for the curie(s)'
 )
-async def get_normalized_node_handler(curie: List[str] = Query([], example=['MESH:D014867', 'NCIT:C34373'], min_items=1), conflate: bool = True):
+async def get_normalized_node_handler(
+    curie: List[str] = Query([], description="List of curies to normalize", example=['MESH:D014867', 'NCIT:C34373'], min_items=1),
+    conflate: bool = Query(True, description="Whether to apply conflation")
+):
     """
     Get value(s) for key(s) using redis MGET
     """
@@ -123,7 +126,7 @@ async def get_normalized_node_handler(curie: List[str] = Query([], example=['MES
 @app.post(
     '/get_normalized_nodes',
     summary='Get the equivalent identifiers and semantic types for the curie(s) entered.',
-    description='Returns the equivalent identifiers and semantic types for the curie(s)'
+    description='Returns the equivalent identifiers and semantic types for the curie(s). Use the `conflate` flag to choose whether to apply conflation.'
 )
 async def get_normalized_node_handler(curies: CurieList):
     """
