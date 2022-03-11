@@ -288,7 +288,8 @@ class NodeLoader:
             meta_data = await meta_data
         all_meta_data = {}
         for meta_data_key, meta_datum in zip(meta_data_keys, meta_data):
-            all_meta_data[meta_data_key.decode('utf-8')] = json.loads(meta_datum.decode('utf-8'))
+            if meta_datum:
+                all_meta_data[meta_data_key.decode('utf-8')] = json.loads(meta_datum.decode('utf-8'))
         sources_prefix = {}
         for meta_data_key, data in all_meta_data.items():
             prefix_counts = data['source_prefixes']
