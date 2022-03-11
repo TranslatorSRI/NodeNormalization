@@ -273,13 +273,7 @@ class NodeLoader:
         # get the connection and pipeline to the database
 
         types_prefixes_redis: RedisConnection = await self.get_redis("curie_to_bl_type_db")
-        types_prefixes_pipeline = types_prefixes_redis.pipeline()
-        # get all metadata keys
-        types_prefixes_pipeline.keys("file-*")
-        meta_data_keys = types_prefixes_pipeline.execute()
-        if asyncio.coroutines.iscoroutine(meta_data_keys):
-            meta_data_keys = await meta_data_keys
-
+        meta_data_keys = await types_prefixes_redis.keys("file-*")
         # recreate pipeline
 
         types_prefixes_pipeline = types_prefixes_redis.pipeline()
@@ -294,7 +288,8 @@ class NodeLoader:
             meta_data = await meta_data
         all_meta_data = {}
         for meta_data_key, meta_datum in zip(meta_data_keys, meta_data):
-            all_meta_data[meta_data_key.decode('utf-8')] = json.loads(meta_datum.decode('utf-8'))
+            if meta_datum:
+                all_meta_data[meta_data_key.decode('utf-8')] = json.loads(meta_datum.decode('utf-8'))
         sources_prefix = {}
         for meta_data_key, data in all_meta_data.items():
             prefix_counts = data['source_prefixes']
