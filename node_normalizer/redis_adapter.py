@@ -134,7 +134,7 @@ class RedisConnection:
     def pipeline(self):
         return self.connector.pipeline()
 
-    def keys(self, pattern, encoding="utf-8"):
+    async def keys(self, pattern, encoding="utf-8"):
         """
         Execute keys command
         :param str:
