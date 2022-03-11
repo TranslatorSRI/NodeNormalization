@@ -134,6 +134,18 @@ class RedisConnection:
     def pipeline(self):
         return self.connector.pipeline()
 
+    def keys(self, pattern, encoding="utf-8"):
+        """
+        Execute keys command
+        :param str:
+        :return:
+        """
+        if isinstance(self.connector, RedisCluster):
+            self.connector: RedisCluster
+            return self.connector.keys(pattern=pattern)
+        elif isinstance(self.connector, aioredis.commands.Redis):
+            self.connector: aioredis.commands.Redis
+            return await self.connector.keys(pattern=pattern, encoding=encoding)
     @staticmethod
     def reset_pipeline(pipeline):
         if isinstance(pipeline, aioredis.commands.transaction.Pipeline):
