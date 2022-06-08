@@ -1,12 +1,14 @@
 import json
-from typing import List, Dict, Optional, Any, Set, Tuple, Union
-import uuid
-from uuid import UUID
-from .util import LoggingUtil, uniquify_list
 import logging
 import os
+import uuid
+from typing import List, Dict, Optional, Any, Set, Tuple, Union
+from uuid import UUID
+
 from fastapi import FastAPI
 from reasoner_pydantic import KnowledgeGraph, Message, QueryGraph, Result, CURIE, Attribute
+
+from .util import LoggingUtil, uniquify_list
 
 logger = LoggingUtil.init_logging(__name__, level=logging.INFO, format='medium', logFilePath=os.path.dirname(__file__), logFileLevel=logging.INFO)
 
@@ -28,24 +30,33 @@ async def normalize_message(app: FastAPI, message: Message) -> Message:
     normalized qgraph, kgraph, and results
     """
     try:
-        merged_qgraph = await normalize_qgraph(app, message.query_graph)
-        merged_kgraph, node_id_map, edge_id_map = await normalize_kgraph(app, message.knowledge_graph)
-        merged_results = await normalize_results(app, message.results, node_id_map, edge_id_map)
+        ret = Message()
 
-        return Message.parse_obj({
-            'query_graph': merged_qgraph,
-            'knowledge_graph': merged_kgraph,
-            'results': merged_results
-        })
+        logger.debug(f"message.query_graph is None: {message.query_graph is None}")
+        if message.query_graph is not None:
+            merged_qgraph = await normalize_qgraph(app, message.query_graph)
+            ret.query_graph = merged_qgraph
+
+        logger.debug(f"message.knowledge_graph is None: {message.knowledge_graph is None}")
+        if message.knowledge_graph is not None:
+            merged_kgraph, node_id_map, edge_id_map = await normalize_kgraph(app, message.knowledge_graph)
+            ret.knowledge_graph = merged_kgraph
+
+        logger.debug(f"message.results is None: {message.results is None}")
+        if message.results is not None:
+            merged_results = await normalize_results(app, message.results, node_id_map, edge_id_map)
+            ret.results = merged_results
+
+        return ret
     except Exception as e:
         logger.error(f'normalize_message Exception: {e}')
 
 
 async def normalize_results(app,
-        results: List[Result],
-        node_id_map: Dict[str, str],
-        edge_id_map: Dict[str, str]
-) -> List[Result]:
+                            results: List[Result],
+                            node_id_map: Dict[str, str],
+                            edge_id_map: Dict[str, str]
+                            ) -> List[Result]:
     """
     Given a TRAPI result creates a normalized result object
     """
@@ -546,13 +557,15 @@ async def get_info_content_attribute(app, canonical_nonan) -> dict:
     # did we get a good value
     if ic_val is not None:
         # load up a dict with the attribute data and create a trapi attribute object
-        new_attrib = dict(attribute_type_id="biolink:has_numeric_value", original_attribute_name="information_content", value_type_id="EDAM:data_0006", value=round(float(ic_val), 1))
+        new_attrib = dict(attribute_type_id="biolink:has_numeric_value", original_attribute_name="information_content", value_type_id="EDAM:data_0006",
+                          value=round(float(ic_val), 1))
     else:
         # else return nothing
         new_attrib = None
 
     # return to the caller
     return new_attrib
+
 
 async def create_node(canonical_id, equivalent_ids, types, info_contents):
     """Construct the output format given the compressed redis data"""
