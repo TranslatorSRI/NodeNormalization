@@ -70,10 +70,9 @@ async def normalize_results(app,
             'edge_bindings': {}
         }
 
-        try:
-            node_binding_seen = set()
-            edge_binding_seen = set()
+        node_binding_seen = set()
 
+        try:
             for node_code, node_bindings in result.node_bindings.items():
                 merged_node_bindings = []
                 for n_bind in node_bindings:
@@ -123,6 +122,12 @@ async def normalize_results(app,
 
                 merged_result['node_bindings'][node_code] = merged_node_bindings
 
+        except Exception as e:
+            logger.exception(e)
+
+        edge_binding_seen = set()
+
+        try:
             for edge_code, edge_bindings in result.edge_bindings.items():
                 merged_edge_bindings = []
                 for e_bind in edge_bindings:
@@ -130,9 +135,7 @@ async def normalize_results(app,
                     merged_binding['id'] = edge_id_map[e_bind.id]
 
                     edge_binding_hash = frozenset([
-                        (k, tuple(v))
-                        if isinstance(v, list)
-                        else (k, v)
+                        (k, freeze(v))
                         for k, v in merged_binding.items()
                     ])
 
@@ -143,27 +146,35 @@ async def normalize_results(app,
                         merged_edge_bindings.append(merged_binding)
 
                 merged_result['edge_bindings'][edge_code] = merged_edge_bindings
-
-            try:
-                # This used to have some list comprehension based on types.  But in TRAPI 1.1 the list/dicts get pretty deep.
-                # This is simpler, and the sort_keys argument makes sure we get a constant result.
-                hashed_result = json.dumps(merged_result, sort_keys=True)
-
-            except Exception as e:  # TODO determine exception(s) to catch
-                logger.error(f'normalize_results Exception: {e}')
-                hashed_result = False
-
-            if hashed_result is not False:
-                if hashed_result in result_seen:
-                    continue
-                else:
-                    result_seen.add(hashed_result)
-
-            merged_results.append(Result.parse_obj(merged_result))
         except Exception as e:
+            logger.exception(e)
+
+        try:
+            # This used to have some list comprehension based on types.  But in TRAPI 1.1 the list/dicts get pretty deep.
+            # This is simpler, and the sort_keys argument makes sure we get a constant result.
+            hashed_result = json.dumps(merged_result, sort_keys=True)
+
+        except Exception as e:  # TODO determine exception(s) to catch
             logger.error(f'normalize_results Exception: {e}')
+            hashed_result = False
+
+        if hashed_result is not False:
+            if hashed_result in result_seen:
+                continue
+            else:
+                result_seen.add(hashed_result)
+
+        merged_results.append(Result.parse_obj(merged_result))
 
     return merged_results
+
+
+def freeze(d):
+    if isinstance(d, dict):
+        return frozenset((key, freeze(value)) for key, value in d.items())
+    elif isinstance(d, list):
+        return tuple(freeze(value) for value in d)
+    return d
 
 
 async def normalize_qgraph(app: FastAPI, qgraph: QueryGraph) -> QueryGraph:
