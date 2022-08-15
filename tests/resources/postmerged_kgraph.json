@@ -121,19 +121,22 @@
       "subject": "NCBIGene:9496",
       "object": "MONDO:0017148",
       "predicate": "biolink:related_to",
-      "attributes": null
+      "attributes": null,
+      "qualifiers": null
     },
     "2d38345a-e9bf-4943-accb-dccba351dd04": {
       "subject": "NCBIGene:9496",
       "object": "MONDO:0013238",
       "predicate": "biolink:related_to",
-      "attributes": null
+      "attributes": null,
+      "qualifiers": null
     },
     "a8575c4e-61a6-428a-bf09-fcb3e8d1644d": {
       "subject": "NCBIGene:9496",
       "object": "MONDO:0005002",
       "predicate": "biolink:related_to",
-      "attributes": null
+      "attributes": null,
+      "qualifiers": null
     }
   }
 }
