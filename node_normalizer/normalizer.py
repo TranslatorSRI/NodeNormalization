@@ -77,7 +77,8 @@ async def normalize_results(app,
                 merged_node_bindings = []
                 for n_bind in node_bindings:
                     merged_binding = n_bind.dict()
-                    merged_binding['id'] = node_id_map[n_bind.id.__root__]
+                    # merged_binding['id'] = node_id_map[n_bind.id.__root__]
+                    merged_binding['id'] = node_id_map[n_bind.id]
 
                     # get the information content value
                     ic_attrib = await get_info_content_attribute(app, merged_binding['id'])
@@ -103,15 +104,16 @@ async def normalize_results(app,
 
                         # the items in list of attributes must be of type Attribute
                         # in order to reuse hash method
-                        for attrib in merged_binding['attributes']:
-                            new_attrib = Attribute.parse_obj(attrib)
+                        if merged_binding['attributes'] is not None:
+                            for attrib in merged_binding['attributes']:
+                                new_attrib = Attribute.parse_obj(attrib)
 
-                            # add the new Attribute to the list
-                            attribs.append(new_attrib)
+                                # add the new Attribute to the list
+                                attribs.append(new_attrib)
 
-                        # call to get the hash
-                        atty_hash = _hash_attributes(attribs)
-                        node_binding_information.append(atty_hash)
+                            # call to get the hash
+                            atty_hash = _hash_attributes(attribs)
+                            node_binding_information.append(atty_hash)
                     node_binding_hash = frozenset(node_binding_information)
 
                     if node_binding_hash in node_binding_seen:
@@ -196,11 +198,10 @@ async def normalize_qgraph(app: FastAPI, qgraph: QueryGraph) -> QueryGraph:
                 # do nothing
                 continue
             else:
-                if not isinstance(node.ids, list):
+                if not isinstance(node.ids.__root__, list):
                     raise Exception("node.ids must be a list")
                 primary_ids = set()
-                for nid in node.ids:
-                    nr = nid.__root__
+                for nr in node.ids.__root__:
                     equivalent_curies = await get_equivalent_curies(app, nr)
                     if equivalent_curies[nr]:
                         primary_ids.add(equivalent_curies[nr]['id']['identifier'])
@@ -346,16 +347,16 @@ async def normalize_kgraph(
             # Accessing __root__ directly seems wrong,
             # https://github.com/samuelcolvin/pydantic/issues/730
             # could also do str(edge.subject)
-            if edge.subject.__root__ in node_id_map:
-                primary_subject = node_id_map[edge.subject.__root__]
+            if edge.subject in node_id_map:
+                primary_subject = node_id_map[edge.subject]
             else:
                 # should we throw a validation error here?
-                primary_subject = edge.subject.__root__
+                primary_subject = edge.subject
 
-            if edge.object.__root__ in node_id_map:
-                primary_object = node_id_map[edge.object.__root__]
+            if edge.object in node_id_map:
+                primary_object = node_id_map[edge.object]
             else:
-                primary_object = edge.object.__root__
+                primary_object = edge.object
 
             hashed_attributes = _hash_attributes(edge.attributes)
 
@@ -365,7 +366,7 @@ async def normalize_kgraph(
 
             triple = (
                 primary_subject,
-                edge.predicate.__root__,
+                edge.predicate,
                 primary_object,
                 hashed_attributes
             )
@@ -726,12 +727,12 @@ def _hash_attributes(attributes: List[Attribute] = None) -> Union[int, bool]:
                         for k, v in attribute.value.items())
 
             new_attribute = (
-                attribute.attribute_type_id.__root__,
+                attribute.attribute_type_id,
                 hashed_value,
                 attribute.original_attribute_name,
                 attribute.value_url,
                 attribute.attribute_source,
-                attribute.value_type_id.__root__ if attribute.value_type_id is not None else '',
+                attribute.value_type_id if attribute.value_type_id is not None else '',
                 attribute.attribute_source
             )
             new_attributes.append(new_attribute)
