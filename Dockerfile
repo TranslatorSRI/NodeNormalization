@@ -25,4 +25,4 @@ RUN pip install -e .
 RUN chmod 777 ./
 
 USER nru
-ENTRYPOINT ["uvicorn", "--host", "0.0.0.0", "--port", "8080" , "--root-path", "/1.2", "--workers", "1", "--app-dir", "/code/", "--loop", "uvloop", "--http", "httptools",  "node_normalizer.server:app"]
+ENTRYPOINT ["uvicorn", "--host", "0.0.0.0", "--port", "8080" , "--root-path", "/1.3", "--workers", "1", "--app-dir", "/code/", "--loop", "uvloop", "--http", "httptools",  "node_normalizer.server:app"]
