@@ -570,7 +570,7 @@ class NodeLoader:
             if compendium_filename.endswith("sssom.tsv"):
                 lines = nn_io_rs.sssom_to_legacy_format(str(compendium_filename))
 
-            if compendium_filename.endswith("json"):
+            if compendium_filename.endswith("json") or compendium_filename.endswith("txt"):
                 file = open(compendium_filename, "r", encoding="utf-8")
                 lines = file.readlines()
                 file.close()
