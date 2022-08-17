@@ -48,19 +48,25 @@
           "subject": "n1",
           "object": "n3",
           "predicates": null,
-          "constraints": []
+          "attribute_constraints": [],
+          "qualifier_constraints": [],
+          "knowledge_type": null
         },
         "e2": {
           "subject": "n2",
           "object": "n4",
           "predicates": ["biolink:related_to"],
-          "constraints": []
+          "attribute_constraints": [],
+          "qualifier_constraints": [],
+          "knowledge_type": null
         },
         "e3": {
           "subject": "n1",
           "object": "n5",
           "predicates": null,
-          "constraints": []
+          "attribute_constraints": [],
+          "qualifier_constraints": [],
+          "knowledge_type": null
         }
       }
     },
@@ -158,13 +164,15 @@
           "subject": "NCBIGene:9496",
           "object": "MONDO:0017148",
           "predicate": "biolink:related_to",
-          "attributes": null
+          "attributes": null,
+          "qualifiers": null
         },
         "a8575c4e-61a6-428a-bf09-fcb3e8d1644d": {
           "subject": "NCBIGene:9496",
           "object": "MONDO:0005002",
           "predicate": "biolink:related_to",
-          "attributes": null
+          "attributes": null,
+          "qualifiers": null
         }
       }
     },
@@ -173,12 +181,16 @@
         "node_bindings": {
           "n1": [
             {
-              "id": "NCBIGene:9496"
+              "id": "NCBIGene:9496",
+              "query_id": null,
+              "attributes": null
             }
           ],
           "n3": [
             {
-              "id": "MONDO:0005002"
+              "id": "MONDO:0005002",
+              "query_id": null,
+              "attributes": null
             }
           ]
         },
@@ -196,12 +208,16 @@
         "node_bindings": {
           "n2": [
             {
-              "id": "NCBIGene:9496"
+              "id": "NCBIGene:9496",
+              "query_id": null,
+              "attributes": null
             }
           ],
           "n4": [
             {
-              "id": "MONDO:0005002"
+              "id": "MONDO:0005002",
+              "query_id": null,
+              "attributes": null
             }
           ]
         },
@@ -219,12 +235,16 @@
         "node_bindings": {
           "n1": [
             {
-              "id": "NCBIGene:9496"
+              "id": "NCBIGene:9496",
+              "query_id": null,
+              "attributes": null
             }
           ],
           "n5": [
             {
-              "id": "MONDO:0017148"
+              "id": "MONDO:0017148",
+              "query_id": null,
+              "attributes": null
             }
           ]
         },

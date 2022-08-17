@@ -21,7 +21,9 @@
           "subject": "n0",
           "object": "n1",
           "predicates": ["biolink:correlated_with"],
-          "constraints": []
+          "attribute_constraints": [],
+          "qualifier_constraints": [],
+          "knowledge_type": null
         }
       }
     },
@@ -80,7 +82,8 @@
               "value_type_id": null,
               "attributes": null
             }
-          ]
+          ],
+          "qualifiers": null
         }
       }
     },
@@ -89,7 +92,9 @@
         "node_bindings": {
           "n0": [
             {
-              "id": "NODE_1"
+              "id": "NODE_1",
+              "query_id": null,
+              "attributes": null
             }
           ],
           "n1": [
@@ -101,7 +106,9 @@
               ],
               "properties": [
                 "application"
-              ]
+              ],
+              "query_id": null,
+              "attributes": null
             }
           ]
         },

@@ -1,23 +1,21 @@
 import asyncio
 import json
 import logging
-import os
 from pathlib import Path
 
 import nn_io_rs
-import numpy
-import pytest
-import sssom
 from sssom.parsers import parse_sssom_table
 
 from node_normalizer.loader import NodeLoader
 
+logger = logging.getLogger()
+
 good_sssom = Path(__file__).parent / "resources" / "Cell.sssom.tsv"
 good_cell_json = Path(__file__).parent / "resources" / "Cell.json"
+
+
 good_json = Path(__file__).parent / "resources" / "datafile.json"
 bad_json = Path(__file__).parent / "resources" / "datafile_with_errors.json"
-
-logger = logging.getLogger()
 
 
 def test_nn_load():
@@ -41,14 +39,6 @@ def test_nn_load_with_sssom():
 
 def test_deserialize_sssom():
     mapping_set_data_frame = parse_sssom_table(file_path=good_sssom)
-    # group = mapping_set_data_frame.df.groupby(["subject_id", "subject_category"])
-    #
-    # for (subject_id, subject_category), entries in group:
-    #     logger.info(f"subject_id: {subject_id}, subject_category: {subject_category}")
-    #
-    #     for (subject_label, object_id, object_label) in entries[["subject_label", "object_id", "object_label"]].values:
-    #         logger.info(f"subject_label: {subject_label}, object_id: {object_id}, object_label: {object_label}")
-
     group = mapping_set_data_frame.df.groupby(["subject_category", "subject_id", "subject_label"])
 
     for (subject_category, subject_id, subject_label), entries in group:
@@ -78,8 +68,8 @@ def test_deserialize_sssom():
 
 
 def test_nn_sssom_converter():
-    logger.info(nn_io_rs.sssom_to_legacy_format(str(good_sssom)))
-    assert True
+    entries = nn_io_rs.sssom_to_legacy_format(str(good_sssom))
+    assert type(entries) == list and len(entries) > 8000 and json.loads(entries[0])["type"] == "biolink:Cell"
 
 
 def test_nn_record_validation():
@@ -89,4 +79,3 @@ def test_nn_record_validation():
 
     ret_val = node_loader.validate_compendia(bad_json)
     assert not ret_val
-
