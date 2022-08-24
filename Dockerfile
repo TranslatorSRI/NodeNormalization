@@ -12,9 +12,7 @@ RUN chmod 755 /home/nru
 ENV PATH="/home/nru/.cargo/bin:/home/nru/.local/bin:${PATH}"
 
 USER nru
-#RUN curl --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
-RUN curl --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-
+RUN curl --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
 
 RUN python -m pip install --upgrade pip
 
