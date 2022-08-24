@@ -1,28 +1,47 @@
-FROM renciorg/renci-python-image:v0.0.1
+FROM python:3.10.6-buster
 
-RUN mkdir /code
-WORKDIR /code
+# update/install basic tools
+RUN apt-get update
+RUN apt-get -y dist-upgrade
+RUN apt-get install -yq build-essential curl
+
+# create a new non-root user
+RUN groupadd -r nru && useradd -m -r -g nru nru
+RUN chmod 755 /home/nru
+
+ENV PATH="/home/nru/.cargo/bin:/home/nru/.local/bin:${PATH}"
+
+USER nru
+#RUN curl --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+RUN curl --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+
+
+RUN python -m pip install --upgrade pip
+
+RUN mkdir /home/nru/code
+WORKDIR /home/nru/code
 
 # install requirements
-ADD ./requirements.txt requirements.txt
-RUN pip install -r requirements.txt # --src /usr/local/src
+COPY ./requirements.txt requirements.txt
+COPY ./swagger_ui swagger_ui
+COPY ./setup.py setup.py
+COPY ./nn_io_rs nn_io_rs
+COPY ./node_normalizer node_normalizer
+COPY ./config.json config.json
+COPY ./redis_config.yaml redis_config.yaml
+COPY ./load.py load.py
+COPY ./pyproject.toml pyproject.toml
+COPY ./start_server.sh start_server.sh
 
-# install library
-ADD ./swagger_ui swagger_ui
-ADD ./setup.py setup.py
-ADD ./node_normalizer node_normalizer
-ADD ./config.json config.json
-ADD ./redis_config.yaml redis_config.yaml
-ADD ./load.py load.py
+USER root
+RUN chown -R nru:nru ./
+USER nru
+RUN python -m venv ./venv
 
-RUN pip install -e .
+RUN . venv/bin/activate && pip install -r requirements.txt --no-cache-dir && maturin develop -r -m ./nn_io_rs/Cargo.toml
 
 # setup entrypoint
 # gunicorn, hypercorn also options https://fastapi.tiangolo.com/deployment/manually/
-# ENTRYPOINT ["python", "-m" , "uvicorn", "node_normalizer.server:app", "--app-dir", "/home/murphy/", "--port", "6380"]
+#ENTRYPOINT ["python", "-m" , "uvicorn", "node_normalizer.server:app", "--app-dir", "/home/murphy/", "--port", "6380"]
 
-
-RUN chmod 777 ./
-
-USER nru
-ENTRYPOINT ["uvicorn", "--host", "0.0.0.0", "--port", "8080" , "--root-path", "/1.3", "--workers", "1", "--app-dir", "/code/", "--loop", "uvloop", "--http", "httptools",  "node_normalizer.server:app"]
+CMD ./start_server.sh
