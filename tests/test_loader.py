@@ -34,6 +34,7 @@ def test_nn_load_with_sssom():
     node_loader: NodeLoader = NodeLoader()
     # node_loader._test_mode = 1
     ret = asyncio.run(node_loader.load_compendium(str(good_sssom), 5))
+    # ret = asyncio.run(node_loader.load_compendium_sssom(str(good_sssom), 5))
     assert ret
 
 
@@ -79,3 +80,7 @@ def test_nn_record_validation():
 
     ret_val = node_loader.validate_compendia(bad_json)
     assert not ret_val
+
+    ret_val = node_loader.validate_compendia_sssom(good_sssom)
+    assert ret_val
+
