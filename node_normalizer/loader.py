@@ -175,10 +175,12 @@ class NodeLoader:
                             if len(nodes) > 0:
                                 nodes_to_write = "\n" + "\n".join([json.dumps(node) for node in nodes])
                                 node_file.write(nodes_to_write)
+                                nodes.clear()
 
                             if len(edges) > 0:
                                 edges_to_write = "\n" + "\n".join([json.dumps(edge) for edge in edges])
                                 edge_file.write(edges_to_write)
+                                edges.clear()
                     else:
                         self.print_debug_msg(f'Compendia file {comp} is invalid.', True)
                         continue
