@@ -85,17 +85,20 @@ class NodeLoader:
                     outfile_name = str(comp).split('/')[-1][:-4]  # strip .txt
                     # get the true path to the file
                     comp = os.path.join(self._compendium_directory, comp)
+                    nodefilename = os.path.join(output_directory_name, outfile_name + '_nodes.jsonl')
+                    edgefilename = os.path.join(output_directory_name, outfile_name + '_edges.jsonl')
 
                     # check the validity of the file
                     if self.validate_compendia(comp):
                         with open(comp, 'r', encoding="utf-8") as compendium,  \
-                            open(os.path.join(output_directory_name, outfile_name + '_nodes.jsonl'), 'w', encoding="utf-8") as node_file,  \
-                            open(os.path.join(output_directory_name, outfile_name + '_edges.jsonl'), 'w', encoding="utf-8") as edge_file:
+                            open(nodefilename, 'w', encoding="utf-8") as node_file,  \
+                            open(edgefilename, 'w', encoding="utf-8") as edge_file:
 
                             # set the flag for suppressing the first ",\n" in the written data
                             first = True
 
                             self.print_debug_msg(f'Processing {comp}...', True)
+                            self.print_debug_msg(f'into {nodefilename}...', True)
 
                             # get the name of the source
                             # source = os.path.split(comp)[-1]
