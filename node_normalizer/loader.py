@@ -82,12 +82,12 @@ class NodeLoader:
             if len(compendia) == len(self._data_files):
                 # for each file validate and process
                 for comp in compendia:
+                    outfile_name = str(comp).split('/')[-1][:-4]  # strip .txt
                     # get the true path to the file
                     comp = os.path.join(self._compendium_directory, comp)
 
                     # check the validity of the file
                     if self.validate_compendia(comp):
-                        outfile_name = comp[:-4] #strip .txt
                         with open(comp, 'r', encoding="utf-8") as compendium,  \
                             open(os.path.join(output_directory_name, outfile_name + '_nodes.jsonl'), 'w', encoding="utf-8") as node_file,  \
                             open(os.path.join(output_directory_name, outfile_name + '_edges.jsonl'), 'w', encoding="utf-8") as edge_file:
