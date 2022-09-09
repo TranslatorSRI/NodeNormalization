@@ -325,6 +325,9 @@ class NodeLoader:
 
             # sample the file
             for line in islice(compendium, 5):
+                #skip blanks
+                if len(line.strip()) == 0:
+                    continue
                 try:
                     instance: dict = json.loads(line)
 
