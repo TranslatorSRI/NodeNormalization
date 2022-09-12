@@ -8,7 +8,6 @@ ADD ./requirements.txt requirements.txt
 RUN pip install -r requirements.txt # --src /usr/local/src
 
 # install library
-ADD ./swagger_ui swagger_ui
 ADD ./setup.py setup.py
 ADD ./node_normalizer node_normalizer
 ADD ./config.json config.json
