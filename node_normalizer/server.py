@@ -8,8 +8,9 @@ from typing import List, Optional, Dict
 
 import requests
 from requests.adapters import HTTPAdapter, Retry
-from fastapi import FastAPI, HTTPException, Query
-from reasoner_pydantic import Response
+import fastapi
+from fastapi import FastAPI, HTTPException
+import reasoner_pydantic
 from bmt import Toolkit
 from .loader import NodeLoader
 from .apidocs import get_app_info, construct_open_api_schema
@@ -93,12 +94,12 @@ async def shutdown_event():
     description="Returns the response object with a merged "
     "knowledge graph and query graph bindings",
 )
-async def query(response: Response) -> Response:
+async def query(query: reasoner_pydantic.Query) -> reasoner_pydantic.Query:
     """
     Normalizes a TRAPI compliant knowledge graph
     """
-    response.message = await normalize_message(app, response.message)
-    return response
+    query.message = await normalize_message(app, query.message)
+    return query
 
 
 @app.post(
@@ -107,27 +108,42 @@ async def query(response: Response) -> Response:
     description="Returns the response object with a merged "
     "knowledge graph and query graph bindings",
 )
-async def async_query(response: Response, callback: str):
+async def async_query(async_query: reasoner_pydantic.AsyncQuery):
     """
     Normalizes a TRAPI compliant knowledge graph
     """
     # need a strong reference to task such that GC doesn't remove it mid execution...https://docs.python.org/3/library/asyncio-task.html#creating-tasks
-    task = asyncio.create_task(async_query_task(response, callback))
+    task = asyncio.create_task(async_query_task(async_query))
     async_query_tasks.add(task)
     task.add_done_callback(async_query_tasks.discard)
 
     return {"msg": "received"}
 
 
-async def async_query_task(response: Response, callback: str):
+async def async_query_task(async_query: reasoner_pydantic.AsyncQuery):
     try:
-        response.message = await normalize_message(app, response.message)
+        async_query.message = await normalize_message(app, async_query.message)
         session = requests.Session()
-        retries = Retry(total=3, backoff_factor=2, status_forcelist=[429, 500, 502, 503, 504], method_whitelist=["HEAD", "GET", "PUT", "DELETE", "OPTIONS", "TRACE", "POST"])
+        retries = Retry(
+            total=3,
+            backoff_factor=2,
+            status_forcelist=[429, 500, 502, 503, 504],
+            method_whitelist=[
+                "HEAD",
+                "GET",
+                "PUT",
+                "DELETE",
+                "OPTIONS",
+                "TRACE",
+                "POST",
+            ],
+        )
         session.mount("http://", HTTPAdapter(max_retries=retries))
         session.mount("https://", HTTPAdapter(max_retries=retries))
         post_response = session.post(
-            url=callback, headers={"Content-Type": "application/json"}, data=response
+            url=async_query.callback,
+            headers={"Content-Type": "application/json"},
+            data=async_query,
         )
         print(f"async_query post status code: {post_response.status_code}")
     except BaseException as e:
@@ -155,13 +171,13 @@ async def get_conflations() -> ConflationList:
     description="Returns the equivalent identifiers and semantic types for the curie(s)",
 )
 async def get_normalized_node_handler(
-    curie: List[str] = Query(
+    curie: List[str] = fastapi.Query(
         [],
         description="List of curies to normalize",
         example=["MESH:D014867", "NCIT:C34373"],
         min_items=1,
     ),
-    conflate: bool = Query(True, description="Whether to apply conflation"),
+    conflate: bool = fastapi.Query(True, description="Whether to apply conflation"),
 ):
     """
     Get value(s) for key(s) using redis MGET
@@ -227,7 +243,7 @@ async def get_semantic_types_handler() -> SemanticTypes:
     description="Returns the curies and their hit count for a semantic type(s).",
 )
 async def get_curie_prefixes_handler(
-    semantic_type: Optional[List[str]] = Query(
+    semantic_type: Optional[List[str]] = fastapi.Query(
         [], description="e.g. chemical_substance, anatomical_entity"
     )
 ) -> Dict[str, CuriePivot]:
