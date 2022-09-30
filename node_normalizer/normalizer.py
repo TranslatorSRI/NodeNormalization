@@ -10,8 +10,8 @@ from reasoner_pydantic import KnowledgeGraph, Message, QueryGraph, Result, CURIE
 
 from .util import LoggingUtil, uniquify_list
 
-logger = LoggingUtil.init_logging(__name__, level=logging.INFO, format='medium', logFilePath=os.path.dirname(__file__), logFileLevel=logging.INFO)
-
+# logger = LoggingUtil.init_logging(__name__, level=logging.INFO, format='medium', logFilePath=os.path.dirname(__file__), logFileLevel=logging.INFO)
+logger = LoggingUtil.init_logging()
 
 def get_ancestors(app, input_type):
     if input_type in app.state.ancestor_map:
