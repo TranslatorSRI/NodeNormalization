@@ -5,13 +5,14 @@ import traceback
 
 from pathlib import Path
 from typing import List, Optional, Dict
-
 import requests
 from requests.adapters import HTTPAdapter, Retry
 import fastapi
 from fastapi import FastAPI, HTTPException
 import reasoner_pydantic
 from bmt import Toolkit
+from starlette.responses import JSONResponse
+
 from .loader import NodeLoader
 from .apidocs import get_app_info, construct_open_api_schema
 from .model import (
@@ -23,6 +24,9 @@ from .model import (
 )
 from .normalizer import get_normalized_nodes, get_curie_prefixes, normalize_message
 from .redis_adapter import RedisConnectionFactory
+from .util import LoggingUtil
+
+logger = LoggingUtil.init_logging()
 
 # Some metadata not implemented see
 # https://github.com/tiangolo/fastapi/pull/1812
@@ -33,6 +37,7 @@ loader = NodeLoader()
 redis_host = os.environ.get("REDIS_HOST", loader.get_config()["redis_host"])
 redis_port = os.environ.get("REDIS_PORT", loader.get_config()["redis_port"])
 TRAPI_VERSION = os.environ.get("TRAPI_VERSION", "1.3")
+
 async_query_tasks = set()
 
 
@@ -42,30 +47,14 @@ async def startup_event():
     Start up Redis connection
     """
     redis_config_file = Path(__file__).parent.parent / "redis_config.yaml"
-    connection_factory = await RedisConnectionFactory.create_connection_pool(
-        redis_config_file
-    )
-    app.state.redis_connection0 = connection_factory.get_connection(
-        connection_id="eq_id_to_id_db"
-    )
-    app.state.redis_connection1 = connection_factory.get_connection(
-        connection_id="id_to_eqids_db"
-    )
-    app.state.redis_connection2 = connection_factory.get_connection(
-        connection_id="id_to_type_db"
-    )
-    app.state.redis_connection3 = connection_factory.get_connection(
-        connection_id="curie_to_bl_type_db"
-    )
-    app.state.redis_connection4 = connection_factory.get_connection(
-        connection_id="info_content_db"
-    )
-    app.state.redis_connection5 = connection_factory.get_connection(
-        connection_id="gene_protein_db"
-    )
-    app.state.toolkit = Toolkit(
-        "https://raw.githubusercontent.com/biolink/biolink-model/2.1.0/biolink-model.yaml"
-    )
+    connection_factory = await RedisConnectionFactory.create_connection_pool(redis_config_file)
+    app.state.redis_connection0 = connection_factory.get_connection(connection_id="eq_id_to_id_db")
+    app.state.redis_connection1 = connection_factory.get_connection(connection_id="id_to_eqids_db")
+    app.state.redis_connection2 = connection_factory.get_connection(connection_id="id_to_type_db")
+    app.state.redis_connection3 = connection_factory.get_connection(connection_id="curie_to_bl_type_db")
+    app.state.redis_connection4 = connection_factory.get_connection(connection_id="info_content_db")
+    app.state.redis_connection5 = connection_factory.get_connection(connection_id="gene_protein_db")
+    app.state.toolkit = Toolkit("https://raw.githubusercontent.com/biolink/biolink-model/2.1.0/biolink-model.yaml")
     app.state.ancestor_map = {}
 
 
@@ -89,10 +78,9 @@ async def shutdown_event():
 
 
 @app.post(
-    f"/query",
+    "/query",
     summary="Normalizes a TRAPI response object",
-    description="Returns the response object with a merged "
-    "knowledge graph and query graph bindings",
+    description="Returns the response object with a merged knowledge graph and query graph bindings",
 )
 async def query(query: reasoner_pydantic.Query) -> reasoner_pydantic.Query:
     """
@@ -103,10 +91,9 @@ async def query(query: reasoner_pydantic.Query) -> reasoner_pydantic.Query:
 
 
 @app.post(
-    f"/asyncquery",
+    "/asyncquery",
     summary="Normalizes a TRAPI response object",
-    description="Returns the response object with a merged "
-    "knowledge graph and query graph bindings",
+    description="Returns the response object with a merged knowledge graph and query graph bindings",
 )
 async def async_query(async_query: reasoner_pydantic.AsyncQuery):
     """
@@ -117,7 +104,7 @@ async def async_query(async_query: reasoner_pydantic.AsyncQuery):
     async_query_tasks.add(task)
     task.add_done_callback(async_query_tasks.discard)
 
-    return {"msg": "received"}
+    return JSONResponse(content={"description": f"Query commenced. Will send result to {async_query.callback}"}, status_code=200)
 
 
 async def async_query_task(async_query: reasoner_pydantic.AsyncQuery):
@@ -126,7 +113,7 @@ async def async_query_task(async_query: reasoner_pydantic.AsyncQuery):
         session = requests.Session()
         retries = Retry(
             total=3,
-            backoff_factor=2,
+            backoff_factor=3,
             status_forcelist=[429, 500, 502, 503, 504],
             method_whitelist=[
                 "HEAD",
@@ -140,14 +127,16 @@ async def async_query_task(async_query: reasoner_pydantic.AsyncQuery):
         )
         session.mount("http://", HTTPAdapter(max_retries=retries))
         session.mount("https://", HTTPAdapter(max_retries=retries))
+        logger.info(f"sending callback to: {async_query.callback}")
+
         post_response = session.post(
             url=async_query.callback,
-            headers={"Content-Type": "application/json"},
-            data=async_query,
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
+            data=async_query.json(),
         )
-        print(f"async_query post status code: {post_response.status_code}")
+        logger.info(f"async_query post status code: {post_response.status_code}")
     except BaseException as e:
-        traceback.print_exception(e)
+        logger.exception(e)
 
 
 @app.get(
@@ -220,9 +209,7 @@ async def get_normalized_node_handler(curies: CurieList):
 )
 async def get_semantic_types_handler() -> SemanticTypes:
     # look for all biolink semantic types
-    types = await app.state.redis_connection3.lrange(
-        "semantic_types", 0, -1, encoding="utf-8"
-    )
+    types = await app.state.redis_connection3.lrange("semantic_types", 0, -1, encoding="utf-8")
 
     # did we get any data
     if not types:
@@ -243,9 +230,7 @@ async def get_semantic_types_handler() -> SemanticTypes:
     description="Returns the curies and their hit count for a semantic type(s).",
 )
 async def get_curie_prefixes_handler(
-    semantic_type: Optional[List[str]] = fastapi.Query(
-        [], description="e.g. chemical_substance, anatomical_entity"
-    )
+    semantic_type: Optional[List[str]] = fastapi.Query([], description="e.g. chemical_substance, anatomical_entity")
 ) -> Dict[str, CuriePivot]:
     return await get_curie_prefixes(app, semantic_type)
 
