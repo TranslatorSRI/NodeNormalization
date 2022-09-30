@@ -1,0 +1,54 @@
+"eq_id_to_id_db" :
+  "ssl_enabled": false
+  "is_cluster": false
+  "db": 0
+  "hosts":
+    # list of cluster member ips and ports
+    - "host_name": "redis"
+      "port": "6379"
+  "password": ""
+
+"id_to_eqids_db":
+  "ssl_enabled": false
+  "is_cluster": false
+  "db": 0
+  "hosts":
+    - "host_name": "redis"
+      "port": "6379"
+  "password": ""
+
+"id_to_type_db":
+  "ssl_enabled": false
+  "is_cluster": false
+  "db": 0
+  "hosts":
+    - "host_name": "redis"
+      "port": "6379"
+  "password": ""
+
+"curie_to_bl_type_db":
+  "ssl_enabled": false
+  "is_cluster": false
+  "db": 0
+  "hosts":
+    - "host_name": "redis"
+      "port": "6379"
+  "password": ""
+
+"gene_protein_db":
+  "ssl_enabled": false
+  "is_cluster": false
+  "db": 0
+  "hosts":
+    - "host_name": "redis"
+      "port": "6379"
+  "password": ""
+
+"info_content_db":
+  "ssl_enabled": false
+  "is_cluster": false
+  "db": 0
+  "hosts":
+    - "host_name": "redis"
+      "port": "6379"
+  "password": ""

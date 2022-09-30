@@ -1,12 +1,15 @@
 dist: xenial
 
+services:
+  - docker
 language: python
 python:
-  - "3.8"
+  - "3.9"
 
 notifications:
   email:
-    - powen@renci.org
+    - jdr0887@renci.org
+#    - powen@renci.org
 #    - bizon@renci.org
 #    - kebedey@renci.org
 

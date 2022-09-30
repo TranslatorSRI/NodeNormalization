@@ -5,6 +5,7 @@ import traceback
 
 from pathlib import Path
 from typing import List, Optional, Dict
+from fastapi.middleware.cors import CORSMiddleware
 import requests
 from requests.adapters import HTTPAdapter, Retry
 import fastapi
@@ -31,6 +32,14 @@ logger = LoggingUtil.init_logging()
 # Some metadata not implemented see
 # https://github.com/tiangolo/fastapi/pull/1812
 app = FastAPI(**get_app_info())
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=['*'],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 loader = NodeLoader()
 

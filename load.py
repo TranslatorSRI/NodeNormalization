@@ -11,9 +11,9 @@ async def load_redis():
 
     # check the return
     if not success:
-        loader.print_debug_msg(f'Failed to load node normalization data.', True)
+        print('Failed to load node normalization data.')
     else:
-        loader.print_debug_msg(f'Success', True)
+        print('Success')
 
 
 if __name__ == '__main__':
