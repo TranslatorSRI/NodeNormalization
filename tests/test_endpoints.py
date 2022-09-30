@@ -1,24 +1,24 @@
 """Test node_normalizer server.py"""
 import json
 
+import reasoner_pydantic
+
 from node_normalizer.server import app
 from starlette.testclient import TestClient
 from pathlib import Path
 from unittest.mock import Mock, patch
 from deepdiff import DeepDiff
+import fastapi
 
 # Need to add to sources root to avoid linter warnings
 from .helpers.redis_mocks import mock_get_equivalent_curies
 from .helpers.redis_mocks import mock_get_ic
 
-
 premerged_response = Path(__file__).parent / "resources" / "premerged_response.json"
 postmerged_response = Path(__file__).parent / "resources" / "postmerged_response.json"
 
-
 premerged_dupe_edge = Path(__file__).parent / "resources" / "premerged_dupe_edge.json"
 postmerged_dupe_edge = Path(__file__).parent / "resources" / "postmerged_dupe_edge.json"
-
 
 input_set = Path(__file__).parent / "resources" / "input_set.json"
 
@@ -51,7 +51,7 @@ class TestServer:
         with open(postmerged_response, "r") as post:
             postmerged_from_file = json.load(post)
 
-        response = self.test_client.post("/response", json=premerged_data)
+        response = self.test_client.post("/query", json=premerged_data)
         postmerged_from_api = json.loads(response.text)
 
         # get the difference
@@ -67,7 +67,7 @@ class TestServer:
         with open("resources/ac_out_attributes.json", "r") as pre:
             premerged_data = json.load(pre)
 
-        response = self.test_client.post("/response", json=premerged_data)
+        response = self.test_client.post("/query", json=premerged_data)
         postmerged_from_api = json.loads(response.text)
 
         assert len(postmerged_from_api["message"]["results"]) == len(
@@ -92,7 +92,7 @@ class TestServer:
         with open(postmerged_dupe_edge, "r") as post:
             postmerged_from_file = json.load(post)
 
-        response = self.test_client.post("/response", json=premerged_data)
+        response = self.test_client.post("/query", json=premerged_data)
         postmerged_from_api = json.loads(response.text)
 
         # print(f"{postmerged_from_api}")
@@ -120,10 +120,12 @@ class TestServer:
         with open(input_set, "r") as pre:
             premerged_data = json.load(pre)
 
-        response = self.test_client.post("/response", json=premerged_data)
+        response = self.test_client.post("/query", json=premerged_data)
         postmerged_from_api = json.loads(response.text)
 
         result = postmerged_from_api["message"]["results"][0]
         # There are 2 coming in and no merging, so should be 2 going out
         assert len(result["edge_bindings"]["treats"]) == 2
         assert len(result["node_bindings"]["drug"]) == 2
+
+
