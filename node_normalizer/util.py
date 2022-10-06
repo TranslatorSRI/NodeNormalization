@@ -4,6 +4,7 @@ import os
 import yaml
 from collections import namedtuple
 import copy
+from logging.config import dictConfig
 from logging.handlers import RotatingFileHandler
 
 
@@ -11,52 +12,34 @@ from logging.handlers import RotatingFileHandler
 class LoggingUtil(object):
     """ Logging utility controlling format and setting initial logging level """
     @staticmethod
-    def init_logging(name, level=logging.INFO, format='short', logFilePath=None, logFileLevel=None):
-        logger = logging.getLogger(__name__)
-        if not logger.parent.name == 'root':
-            return logger
-
-        FORMAT = {
-            "short": '%(funcName)s: %(message)s',
-            "medium": '%(funcName)s: %(asctime)-15s %(message)s',
-            "long": '%(asctime)-15s %(filename)s %(funcName)s %(levelname)s: %(message)s'
-        }[format]
-
-        # create a stream handler (default to console)
-        stream_handler = logging.StreamHandler()
-
-        # create a formatter
-        formatter = logging.Formatter(FORMAT)
-
-        # set the formatter on the console stream
-        stream_handler.setFormatter(formatter)
-
-        # get the name of this logger
-        logger = logging.getLogger(name)
-
-        # set the logging level
-        logger.setLevel(level)
+    def init_logging(log_file_path=None, log_file_level="ERROR"):
+        dictConfig({
+            "version": 1,
+            "disable_existing_loggers": False,
+            "formatters": {"default": {"format": "%(asctime)s | %(levelname)s | %(module)s:%(funcName)s | %(message)s"}},
+            "handlers": {
+                "console": {"level": "ERROR", "class": "logging.StreamHandler", "formatter": "default"},
+            },
+            "loggers": {
+                "node-norm": {"handlers": ["console"], "level": os.getenv("LOG_LEVEL", "ERROR")},
+            },
+        })
+        logger = logging.getLogger("node-norm")
 
         # if there was a file path passed in use it
-        if logFilePath is not None:
+        if log_file_path is not None:
             # create a rotating file handler, 100mb max per file with a max number of 10 files
-            file_handler = RotatingFileHandler(filename=logFilePath + name + '.log', maxBytes=1000000, backupCount=10)
+            file_handler = RotatingFileHandler(filename=log_file_path + 'nn.log', maxBytes=1000000, backupCount=10)
 
             # set the formatter
+            formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(module)s:%(funcName)s | %(message)s")
             file_handler.setFormatter(formatter)
 
-            # if a log level for the file was passed in use it
-            if logFileLevel is not None:
-                level = logFileLevel
-
             # set the log level
-            file_handler.setLevel(level)
+            file_handler.setLevel(log_file_level)
 
             # add the handler to the logger
             logger.addHandler(file_handler)
-
-        # add the console handler to the logger
-        logger.addHandler(stream_handler)
 
         # return to the caller
         return logger

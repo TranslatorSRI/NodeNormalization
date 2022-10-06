@@ -128,5 +128,6 @@
   },
   "logs": null,
   "status": null,
+  "log_level": null,
   "workflow": null
 }

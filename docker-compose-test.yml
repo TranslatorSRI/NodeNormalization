@@ -1,0 +1,48 @@
+version: "3"
+services:
+
+  r3:
+    container_name: r3
+    image: r3
+    build:
+      context: .
+      dockerfile: Dockerfile-test
+    env_file: .env
+    expose:
+      - 8080
+    ports:
+      - "8080:8080"
+#    links:
+#      - callback-app
+#    networks:
+#      - nn_network
+    depends_on:
+      - redis
+      - callback-app
+
+  redis:
+    container_name: redis
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    expose:
+      - 6379
+#    networks:
+#      - nn_network
+
+  callback-app:
+    container_name: callback-app
+    image: jdr0887/callback-app:0.1.0
+#    environment:
+#      - ROCKET_LOG_LEVEL=debug
+    expose:
+      - 8008
+    ports:
+      - "8008:8008"
+#    networks:
+#      - nn_network
+
+#networks:
+#  nn_network:
+#    name: nn
+#    external: false

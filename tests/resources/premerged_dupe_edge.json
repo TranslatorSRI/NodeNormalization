@@ -1,4 +1,7 @@
 {
+  "logs": null,
+  "status": null,
+  "log_level": null,
   "message": {
     "query_graph": {
       "nodes": {

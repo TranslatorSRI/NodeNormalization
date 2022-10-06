@@ -1,26 +1,30 @@
-dist: xenial
+dist: focal
+
+services:
+  - docker
 
 language: python
 python:
-  - "3.8"
+  - "3.9"
 
 notifications:
   email:
-    - powen@renci.org
+    - jdr0887@renci.org
+#    - powen@renci.org
 #    - bizon@renci.org
 #    - kebedey@renci.org
 
+before_install:
+  - curl -L https://github.com/docker/compose/releases/download/v2.11.0/docker-compose-`uname -s | awk '{print tolower($0)}'`-`uname -m` > docker-compose
+  - chmod +x docker-compose
+  - sudo mv docker-compose /usr/local/bin
+
 # command to install dependencies
 install:
+  - cp sample.env .env
   - pip install -r requirements.txt
 
-before_script: sudo redis-server /etc/redis/redis.conf --port 6379
-
-env:
-  global:
-    - PYTHONPATH=$PWD
-    - REDIS_HOST=127.0.0.1
-    - REDIS_PORT=6379
+#before_script: sudo redis-server /etc/redis/redis.conf --port 6379
 
 # command to run tests
 script:

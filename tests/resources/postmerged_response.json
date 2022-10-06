@@ -261,5 +261,6 @@
     ]
   },
   "logs": null,
-  "status": null
+  "status": null,
+  "log_level": null
 }
