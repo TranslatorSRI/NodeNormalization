@@ -3,14 +3,28 @@ import os
 from pathlib import Path
 import json
 from typing import Dict
-
 import bmt as bmt
 import asyncclick as click
 import redis_adapter
-from util import validate_compendium, LoggingUtil
+from util import validate_compendium
+import logging
+from logging.config import dictConfig
 
-logger = LoggingUtil.init_logging()
-
+dictConfig(
+    {
+        "version": 1,
+        "disable_existing_loggers": True,
+        "formatters": {"default": {"format": "%(asctime)s | %(levelname)s | %(module)s:%(funcName)s | %(message)s"}},
+        "handlers": {
+            "console": {"level": "DEBUG", "class": "logging.StreamHandler", "formatter": "default"},
+        },
+        "loggers": {
+            "node-norm": {"handlers": ["console"], "level": os.getenv("LOG_LEVEL", "ERROR")},
+        },
+    }
+)
+logger = logging.getLogger("node-norm")
+logger.propagate = False
 
 @click.command(no_args_is_help=True)
 @click.option("--compendium-file", "-c", help="Compendia File", multiple=True)
@@ -48,41 +62,165 @@ async def load(compendium_file, block_size, dry_run, redis_config) -> bool:
     #      Each of these databases corresponds to a particular conflation e.g. gene/protein or chemical/drug
 
     # for each file validate and process
+
+    # check the existence of files
+    for comp in compendium_file:
+        if not os.path.exists(compendium_file):
+            logger.warning(f"Compendium file {compendium_file} is does not exist")
+            return False
+
     # check the validity of the files
     for comp in compendium_file:
         if not validate_compendium(comp, logger):
-            logger.warning(f"Compendia file {comp} is invalid.")
+            logger.warning(f"Compendium file {comp} is invalid")
             return False
 
     try:
 
         connection_factory: redis_adapter.RedisConnectionFactory = await redis_adapter.RedisConnectionFactory.create_connection_pool(redis_config)
 
-        BIOLINK_VERSION = os.getenv("BIOLINK_VERSION", "2.1.0")
-        toolkit = bmt.Toolkit(f"https://raw.githubusercontent.com/biolink/biolink-model/{BIOLINK_VERSION}/biolink-model.yaml")
+        biolink_version = os.getenv("BIOLINK_VERSION", "2.1.0")
+        toolkit = bmt.Toolkit(f"https://raw.githubusercontent.com/biolink/biolink-model/{biolink_version}/biolink-model.yaml")
 
         # get the list of files in the directory
         types_prefixes_redis: redis_adapter.RedisConnection = connection_factory.get_connection("curie_to_bl_type_db")
+        term2id_redis: redis_adapter.RedisConnection = connection_factory.get_connection("eq_id_to_id_db")
+        id2eqids_redis: redis_adapter.RedisConnection = connection_factory.get_connection("id_to_eqids_db")
+        id2type_redis: redis_adapter.RedisConnection = connection_factory.get_connection("id_to_type_db")
+        info_content_redis: redis_adapter.RedisConnection = connection_factory.get_connection("info_content_db")
+
+        ancestor_map = {}
+        source_prefixes: Dict = {}
 
         for comp in compendium_file:
             # try to load the file
-            loaded = await load_compendium(comp, block_size, connection_factory, toolkit, dry_run)
+            # loaded = await load_compendium(comp, block_size, connection_factory, toolkit, dry_run)
+
+            def get_ancestors(input_type):
+                if input_type in ancestor_map:
+                    return ancestor_map[input_type]
+                a = toolkit.get_ancestors(input_type)
+                ancs = {toolkit.get_element(ai)["class_uri"] for ai in a}
+                if input_type not in ancs:
+                    ancs = ancs.add(input_type)
+                ancestor_map[input_type] = ancs
+                return ancs
+
+            # init a line counter
+            line_counter: int = 0
+            try:
+
+                term2id_pipeline = term2id_redis.pipeline()
+                id2eqids_pipeline = id2eqids_redis.pipeline()
+                id2type_pipeline = id2type_redis.pipeline()
+                info_content_pipeline = info_content_redis.pipeline()
+
+                with open(comp, "r", encoding="utf-8") as compendium:
+                    logger.info(f"Processing {comp}...")
+
+                    # for each line in the file
+                    for line in compendium:
+                        line_counter = line_counter + 1
+
+                        # example line:
+                        # {"type": "biolink:Cell", "ic": "100", "identifiers": [{"i": "UMLS:C0229659", "l": "Myelomonocyte"}, {"i": "NCIT:C37041",
+                        # "l": "Neoplastic Monocyte"}, {"i": "SNOMEDCT:41621006"}]}
+
+                        # load the line into memory
+                        instance: dict = json.loads(line)
+
+                        # save the identifier
+                        # "The" identifier is the first one in the presorted identifiers list
+                        identifier: str = instance["identifiers"][0]["i"]
+
+                        # We want to accumulate statistics for each implied type as well, though we are only keeping the
+                        # leaf type in the file (and redis).  so now is the time to expand.  We'll regenerate the same
+                        # list on output.
+                        semantic_types = get_ancestors(instance["type"])
+                        logger.debug(f"semantic_types: {semantic_types}")
+                        logger.debug(f"source_prefixes: {source_prefixes}")
+
+                        # for each semantic type in the list
+                        for semantic_type in semantic_types:
+                            # save the semantic type in a set to avoid duplicates
+                            semantic_types.add(semantic_type)
+
+                            #  create a source prefix if it has not been encountered
+                            if source_prefixes.get(semantic_type) is None:
+                                source_prefixes[semantic_type] = {}
+
+                            # go through each equivalent identifier in the data row
+                            # each will be assigned the semantic type information
+                            for equivalent_id in instance["identifiers"]:
+                                # split the identifier to just get the data source out of the curie
+                                source_prefix: str = equivalent_id["i"].split(":")[0]
+
+                                # save the source prefix if no already there
+                                if source_prefixes[semantic_type].get(source_prefix) is None:
+                                    source_prefixes[semantic_type][source_prefix] = 1
+                                # else just increment the count for the semantic type/source
+                                else:
+                                    source_prefixes[semantic_type][source_prefix] += 1
+
+                                # equivalent_id might be an array, where the first element is
+                                # the identifier, or it might just be a string. not worrying about that case yet.
+                                equivalent_id = equivalent_id["i"]
+                                term2id_pipeline.set(equivalent_id.upper(), identifier)
+                                # term2id_pipeline.set(equivalent_id, identifier)
+
+                            id2eqids_pipeline.set(identifier, json.dumps(instance["identifiers"]))
+                            id2type_pipeline.set(identifier, instance["type"])
+
+                            # if there is information content add it to the cache
+                            if "ic" in instance:
+                                info_content_pipeline.set(identifier, instance["ic"])
+
+                        if not dry_run and line_counter % block_size == 0:
+                            await redis_adapter.RedisConnection.execute_pipeline(term2id_pipeline)
+                            await redis_adapter.RedisConnection.execute_pipeline(id2eqids_pipeline)
+                            await redis_adapter.RedisConnection.execute_pipeline(id2type_pipeline)
+                            await redis_adapter.RedisConnection.execute_pipeline(info_content_pipeline)
+
+                            # Pipeline executed create a new one error
+                            term2id_pipeline = term2id_redis.pipeline()
+                            id2eqids_pipeline = id2eqids_redis.pipeline()
+                            id2type_pipeline = id2type_redis.pipeline()
+                            info_content_pipeline = info_content_redis.pipeline()
+
+                            logger.info(f"{line_counter} {comp} lines processed")
+
+                    if not dry_run:
+                        await redis_adapter.RedisConnection.execute_pipeline(term2id_pipeline)
+                        await redis_adapter.RedisConnection.execute_pipeline(id2eqids_pipeline)
+                        await redis_adapter.RedisConnection.execute_pipeline(id2type_pipeline)
+                        await redis_adapter.RedisConnection.execute_pipeline(info_content_pipeline)
+
+                        logger.info(f"{line_counter} {comp} total lines processed")
+
+                    print(f"Done loading {comp}...")
+            except Exception as e:
+                logger.error(f"Exception thrown in load_compendium({comp}), line {line_counter}: {e}")
+                return False
+
             semantic_types_redis_pipeline = types_prefixes_redis.pipeline()
             # @TODO add meta data about files eg. checksum to this object
-            semantic_types_redis_pipeline.set(f"file-{str(comp)}", json.dumps({"source_prefixes": source_prefixes}))
+            semantic_types_key = f"file-{os.path.basename(comp)}"
+            logger.debug(f"semantic_types_key: {semantic_types_key}")
+            semantic_types_values = json.dumps({"source_prefixes": source_prefixes})
+            logger.debug(f"semantic_types_values: {semantic_types_values}")
+            semantic_types_redis_pipeline.set(semantic_types_key, semantic_types_values)
             if not dry_run:
                 response = await redis_adapter.RedisConnection.execute_pipeline(semantic_types_redis_pipeline)
                 if asyncio.coroutines.iscoroutine(response):
                     await response
-            # self.source_prefixes = {}
-            if not loaded:
-                logger.warning(f"Compendia file {comp} did not load.")
-                continue
+            source_prefixes = {}
+            # if not loaded:
+            #     logger.warning(f"Compendia file {comp} did not load.")
+            #     continue
         # merge all semantic counts from other files / loaders
         await merge_semantic_meta_data(connection_factory, dry_run)
     except Exception as e:
-        logger.error(f"Exception thrown in load(): {e}")
-        raise e
+        logger.exception(f"Exception thrown in load(): {e}")
 
     # return to the caller
     return True
@@ -144,129 +282,5 @@ async def merge_semantic_meta_data(connection_factory: redis_adapter.RedisConnec
             await response
 
 
-
-
-async def load_compendium(compendium_filename: str, block_size: int, connection_factory: redis_adapter.RedisConnectionFactory, toolkit: bmt.Toolkit, dry_run: bool) -> bool:
-    """
-    Given the full path to a compendium, load it into redis so that it can
-    be read by R3.  We also load extra keys, which are the upper-cased
-    identifiers, for ease of use
-    """
-    ancestor_map = {}
-    source_prefixes: Dict = {}
-
-    def get_ancestors(input_type):
-        if input_type in ancestor_map:
-            return ancestor_map[input_type]
-        a = toolkit.get_ancestors(input_type)
-        ancs = [toolkit.get_element(ai)["class_uri"] for ai in a]
-        if input_type not in ancs:
-            ancs = [input_type] + ancs
-        ancestor_map[input_type] = ancs
-        return ancs
-
-    # init a line counter
-    line_counter: int = 0
-    try:
-
-        term2id_redis: redis_adapter.RedisConnection = connection_factory.get_connection("eq_id_to_id_db")
-        id2eqids_redis: redis_adapter.RedisConnection = connection_factory.get_connection("id_to_eqids_db")
-        id2type_redis: redis_adapter.RedisConnection = connection_factory.get_connection("id_to_type_db")
-        info_content_redis: redis_adapter.RedisConnection = connection_factory.get_connection("info_content_db")
-
-        term2id_pipeline = term2id_redis.pipeline()
-        id2eqids_pipeline = id2eqids_redis.pipeline()
-        id2type_pipeline = id2type_redis.pipeline()
-        info_content_pipeline = info_content_redis.pipeline()
-
-        with open(compendium_filename, "r", encoding="utf-8") as compendium:
-            logger.info(f"Processing {compendium_filename}...")
-
-            # for each line in the file
-            for line in compendium:
-                line_counter = line_counter + 1
-
-                # example line:
-                # {"type": "biolink:Cell", "ic": "100", "identifiers": [{"i": "UMLS:C0229659", "l": "Myelomonocyte"}, {"i": "NCIT:C37041",
-                # "l": "Neoplastic Monocyte"}, {"i": "SNOMEDCT:41621006"}]}
-
-                # load the line into memory
-                instance: dict = json.loads(line)
-
-                # save the identifier
-                # "The" identifier is the first one in the presorted identifiers list
-                identifier: str = instance["identifiers"][0]["i"]
-
-                # We want to accumulate statistics for each implied type as well, though we are only keeping the
-                # leaf type in the file (and redis).  so now is the time to expand.  We'll regenerate the same
-                # list on output.
-                semantic_types = get_ancestors(instance["type"])
-
-                # for each semantic type in the list
-                for semantic_type in semantic_types:
-                    # save the semantic type in a set to avoid duplicates
-                    semantic_types.add(semantic_type)
-
-                    #  create a source prefix if it has not been encountered
-                    if source_prefixes.get(semantic_type) is None:
-                        source_prefixes[semantic_type] = {}
-
-                    # go through each equivalent identifier in the data row
-                    # each will be assigned the semantic type information
-                    for equivalent_id in instance["identifiers"]:
-                        # split the identifier to just get the data source out of the curie
-                        source_prefix: str = equivalent_id["i"].split(":")[0]
-
-                        # save the source prefix if no already there
-                        if source_prefixes[semantic_type].get(source_prefix) is None:
-                            source_prefixes[semantic_type][source_prefix] = 1
-                        # else just increment the count for the semantic type/source
-                        else:
-                            source_prefixes[semantic_type][source_prefix] += 1
-
-                        # equivalent_id might be an array, where the first element is
-                        # the identifier, or it might just be a string. not worrying about that case yet.
-                        equivalent_id = equivalent_id["i"]
-                        term2id_pipeline.set(equivalent_id.upper(), identifier)
-                        # term2id_pipeline.set(equivalent_id, identifier)
-
-                    id2eqids_pipeline.set(identifier, json.dumps(instance["identifiers"]))
-                    id2type_pipeline.set(identifier, instance["type"])
-
-                    # if there is information content add it to the cache
-                    if "ic" in instance:
-                        info_content_pipeline.set(identifier, instance["ic"])
-
-                if not dry_run and line_counter % block_size == 0:
-                    await redis_adapter.RedisConnection.execute_pipeline(term2id_pipeline)
-                    await redis_adapter.RedisConnection.execute_pipeline(id2eqids_pipeline)
-                    await redis_adapter.RedisConnection.execute_pipeline(id2type_pipeline)
-                    await redis_adapter.RedisConnection.execute_pipeline(info_content_pipeline)
-
-                    # Pipeline executed create a new one error
-                    term2id_pipeline = term2id_redis.pipeline()
-                    id2eqids_pipeline = id2eqids_redis.pipeline()
-                    id2type_pipeline = id2type_redis.pipeline()
-                    info_content_pipeline = info_content_redis.pipeline()
-
-                    logger.info(f"{line_counter} {compendium_filename} lines processed")
-
-            if not dry_run:
-                await redis_adapter.RedisConnection.execute_pipeline(term2id_pipeline)
-                await redis_adapter.RedisConnection.execute_pipeline(id2eqids_pipeline)
-                await redis_adapter.RedisConnection.execute_pipeline(id2type_pipeline)
-                await redis_adapter.RedisConnection.execute_pipeline(info_content_pipeline)
-
-                logger.info(f"{line_counter} {compendium_filename} total lines processed")
-
-            print(f"Done loading {compendium_filename}...")
-    except Exception as e:
-        logger.error(f"Exception thrown in load_compendium({compendium_filename}), line {line_counter}: {e}")
-        return False
-
-    # return to the caller
-    return True
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     load()
