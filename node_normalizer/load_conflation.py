@@ -1,183 +1,144 @@
-import asyncio
-import logging
 from pathlib import Path
-from itertools import islice
-from datetime import datetime
-from typing import Dict, Any
-import json
-import hashlib
-from itertools import combinations
-import jsonschema
 import os
-from .redis_adapter import RedisConnectionFactory, RedisConnection
-from bmt import Toolkit
-from .util import LoggingUtil
+from itertools import islice
+import json
+import jsonschema
+from model.response import ConflationType
+import redis_adapter
+from redis_adapter import RedisConnectionFactory, RedisConnection
+import asyncclick as click
+import logging
+from logging.config import dictConfig
 
-logger = LoggingUtil.init_logging()
+dictConfig(
+    {
+        "version": 1,
+        "disable_existing_loggers": True,
+        "formatters": {"default": {"format": "%(asctime)s | %(levelname)s | %(module)s:%(funcName)s | %(message)s"}},
+        "handlers": {
+            "console": {"level": "DEBUG", "class": "logging.StreamHandler", "formatter": "default"},
+        },
+        "loggers": {
+            "node-norm": {"handlers": ["console"], "level": os.getenv("LOG_LEVEL", "ERROR")},
+        },
+    }
+)
+logger = logging.getLogger("node-norm")
+logger.propagate = False
 
 
-class NodeLoader:
+@click.command(no_args_is_help=True)
+@click.option("--conflation-file", "-c", help="Conflation File", type=click.Path())
+@click.option("--conflation-type", "-s", type=click.Choice(ConflationType), help="Conflation Type")
+# @click.option("--conflation-db", "-s", help="Redis DB for conflation data")
+@click.option("--block-size", "-b", help="Block Size", default=1000)
+@click.option("--dry-run", "-d", help="Dry Run", default=False, is_flag=True)
+@click.option("--redis-config", "-r", help="Redis Config File", type=click.Path(), default=Path(__file__).parent.parent / "redis_config.yaml")
+async def main(conflation_file, conflation_type, block_size, dry_run, redis_config):
     """
-    Class that gets all node definitions from a series of flat files
-    and produces Translator compliant nodes which are then loaded into
-    a redis database.
+    Given a conflation, load it into a redis so that it can
+    be read by R3.
     """
 
-    def __init__(self):
-        self._config = self.get_config()
+    # check the validity
+    if not os.path.exists(conflation_file):
+        logger.warning(f"Conflation file {conflation_file} is invalid.")
+        return False
 
-        self._compendium_directory: Path = Path(self._config["compendium_directory"])
-        self._conflation_directory: Path = Path(self._config["conflation_directory"])
-        self._test_mode: int = self._config["test_mode"]
-        self._data_files: list = self._config["data_files"]
-        self._conflations: list = self._config["conflations"]
+    # check the validity
+    if not validate(conflation_file):
+        logger.warning(f"Conflation file {conflation_file} is invalid.")
+        return False
 
-        json_schema = Path(__file__).parent / "resources" / "valid_data_format.json"
+    try:
+        connection_factory: redis_adapter.RedisConnectionFactory = await redis_adapter.RedisConnectionFactory.create_connection_pool(redis_config)
 
-        with open(json_schema) as json_file:
-            self._validate_with = json.load(json_file)
+        conflation_db_conn: redis_adapter.RedisConnection = connection_factory.get_connection("conflation_db")
+        conflation_type_db_conn: redis_adapter.RedisConnection = connection_factory.get_connection("conflation_type_db")
 
-        # Initialize storage instance vars for the semantic types and source prefixes
-        self.semantic_types: set = set()
-        self.source_prefixes: Dict = {}
+        conflation_pipeline = conflation_db_conn.pipeline()
+        conflation_type_pipeline = conflation_type_db_conn.pipeline()
 
-        self.toolkit = Toolkit("https://raw.githubusercontent.com/biolink/biolink-model/2.1.0/biolink-model.yaml")
-        self.ancestor_map = {}
-
-    def get_ancestors(self, input_type):
-        if input_type in self.ancestor_map:
-            return self.ancestor_map[input_type]
-        a = self.toolkit.get_ancestors(input_type)
-        ancs = [self.toolkit.get_element(ai)["class_uri"] for ai in a]
-        if input_type not in ancs:
-            ancs = [input_type] + ancs
-        self.ancestor_map[input_type] = ancs
-        return ancs
-
-    async def merge_semantic_meta_data(self):
-
-        # get the connection and pipeline to the database
-
-        types_prefixes_redis: RedisConnection = await self.get_redis("curie_to_bl_type_db")
-        meta_data_keys = await types_prefixes_redis.keys("file-*")
-        # recreate pipeline
-
-        types_prefixes_pipeline = types_prefixes_redis.pipeline()
-        # capture all keys except semenatic_types , as that would be the one that will contain the sum of all semantic types
-        meta_data_keys = list(filter(lambda key: key != "semantic_types", meta_data_keys[0]))
-
-        # get actual data
-        for meta_data_key in meta_data_keys:
-            types_prefixes_pipeline.get(meta_data_key)
-        meta_data = types_prefixes_pipeline.execute()
-        if asyncio.coroutines.iscoroutine(meta_data):
-            meta_data = await meta_data
-        all_meta_data = {}
-        for meta_data_key, meta_datum in zip(meta_data_keys, meta_data):
-            if meta_datum:
-                all_meta_data[meta_data_key.decode("utf-8")] = json.loads(meta_datum.decode("utf-8"))
-        sources_prefix = {}
-        for meta_data_key, data in all_meta_data.items():
-            prefix_counts = data["source_prefixes"]
-            for bl_type, curie_counts in prefix_counts.items():
-                # if
-                sources_prefix[bl_type] = sources_prefix.get(bl_type, {})
-                for curie_prefix, count in curie_counts.items():
-                    # get count of this curie prefix
-                    sources_prefix[bl_type][curie_prefix] = sources_prefix[bl_type].get(curie_prefix, 0)
-                    # add up the new count
-                    sources_prefix[bl_type][curie_prefix] += count
-
-        types_prefixes_pipeline = types_prefixes_redis.pipeline()
-
-        if len(sources_prefix.keys()) > 0:
-            # add all the semantic types
-            types_prefixes_pipeline.lpush("semantic_types", *list(sources_prefix.keys()))
-
-        # for each semantic type insert the list of source prefixes
-        for item in sources_prefix:
-            types_prefixes_pipeline.set(item, json.dumps(sources_prefix[item]))
-
-        if self._test_mode != 1:
-            # add the data to redis
-            response = await RedisConnection.execute_pipeline(types_prefixes_pipeline)
-            if asyncio.coroutines.iscoroutine(response):
-                await response
-
-    def validate_compendia(self, in_file):
-        # open the file to validate
-        with open(in_file, "r") as compendium:
-            logger.info(f"Validating {in_file}...")
-
-            # sample the file
-            for line in islice(compendium, 5):
-                try:
-                    instance: dict = json.loads(line)
-
-                    # validate the incoming json against the spec
-                    jsonschema.validate(instance=instance, schema=self._validate_with)
-                # catch any exceptions
-                except Exception as e:
-                    logger.error(f"Exception thrown in validate_compendia({in_file}): {e}")
-                    return False
-
-        return True
-
-    # TODO: this strikes me as backwards.  Caller has to know and look up by index.  So the info about what index
-    # does what is scattered.  Instead this should look up by what kind of redis you want and map to dbid for you.
-    @staticmethod
-    async def get_redis(db_name):
-        """
-        Return a redis instance
-        """
-        redis_config_path = Path(__file__).parent.parent / "redis_config.yaml"
-        connection_factory: RedisConnectionFactory = await RedisConnectionFactory.create_connection_pool(redis_config_path)
-        connection = connection_factory.get_connection(db_name)
-        return connection
-
-    async def load_conflation(self, conflation: dict, block_size: int) -> bool:
-        """
-        Given a conflation, load it into a redis so that it can
-        be read by R3.
-        """
-
-        conflation_file = conflation["file"]
-        conflation_redis_connection_name = conflation["redis_db"]
-        # init a line counter
         line_counter: int = 0
-        try:
-            conflation_redis: RedisConnection = await self.get_redis(conflation_redis_connection_name)
-            conflation_pipeline = conflation_redis.pipeline()
+        with open(conflation_file, "r", encoding="utf-8") as cfile:
+            logger.info(f"Processing {conflation_file}...")
 
-            with open(f"{self._conflation_directory}/{conflation_file}", "r", encoding="utf-8") as cfile:
-                logger.info(f"Processing {conflation_file}...")
+            # for each line in the file
+            for line in cfile:
 
-                # for each line in the file
-                for line in cfile:
+                # example line:
+                # {"id": {"identifier": "NCBIGene:105021066", "label": "tet2"}, "equivalent_identifiers": [{"identifier": "NCBIGene:105021066",
+                # "label": "tet2"}, {"identifier": "ENSEMBL:ENSELUG00000017237"}], "type": ["biolink:Gene", "biolink:GeneOrGeneProduct",
+                # "biolink:BiologicalEntity", "biolink:NamedThing", "biolink:Entity", "biolink:MacromolecularMachineMixin"]}
+
+                # load the line into memory
+                instance: dict = json.loads(line)
+
+                # We need to include the identifier in the list of identifiers so that we know its position
+                key = {"conflation_type": conflation_type.value, "canonical_id": instance["id"]}
+                equivalent_identifiers = list(instance["equivalent_identifiers"])
+
+                if equivalent_identifiers[0] == instance["id"]:
+                    del equivalent_identifiers[0]
+
+                if equivalent_identifiers:
                     line_counter = line_counter + 1
 
-                    # load the line into memory
-                    instance: dict = json.loads(line)
+                    logger.debug(f"key: {key}")
 
-                    for identifier in instance:
-                        # We need to include the identifier in the list of identifiers so that we know its position
-                        conflation_pipeline.set(identifier, line)
+                    value = {"equivalent_identifiers": equivalent_identifiers}
+                    # conflation_pipeline.set(identifier, line)
+                    logger.debug(f"conflations: {value}")
+                    conflation_pipeline.set(key, value)
 
-                    if self._test_mode != 1 and line_counter % block_size == 0:
-                        await RedisConnection.execute_pipeline(conflation_pipeline)
-                        # Pipeline executed create a new one error
-                        conflation_pipeline = conflation_redis.pipeline()
-                        logger.info(f"{line_counter} {conflation_file} lines processed")
+                    semantic_types = instance["type"]
+                    logger.debug(f"types: {semantic_types}")
+                    conflation_type_pipeline.set(key, semantic_types)
 
-                if self._test_mode != 1:
+                if not dry_run and line_counter % block_size == 0:
                     await RedisConnection.execute_pipeline(conflation_pipeline)
-                    logger.info(f"{line_counter} {conflation_file} total lines processed")
+                    await RedisConnection.execute_pipeline(conflation_type_pipeline)
 
-                print(f"Done loading {conflation_file}...")
-        except Exception as e:
-            logger.error(f"Exception thrown in load_conflation({conflation_file}), line {line_counter}: {e}")
-            return False
+                    # pipelines executed...create a new one
+                    conflation_pipeline = conflation_db_conn.pipeline()
+                    conflation_type_pipeline = conflation_type_db_conn.pipeline()
 
-        # return to the caller
-        return True
+                    logger.info(f"{line_counter} {conflation_file} lines processed")
 
+                # break
+            if not dry_run:
+                await RedisConnection.execute_pipeline(conflation_pipeline)
+                logger.info(f"{line_counter} {conflation_file} total lines processed")
+
+            logger.info(f"Done loading {conflation_file}...")
+    except Exception as e:
+        logger.error(f"Exception thrown in load_conflation({conflation_file}), line {line_counter}: {e}")
+        return False
+
+    # return to the caller
+    return True
+
+
+def validate(in_file):
+    # open the file to validate
+    # used https://extendsclass.com/json-schema-validator.html to produce the schema
+    json_schema = Path(__file__).parent / "resources" / "valid_conflation_data_format.json"
+    with open(in_file, "r") as conflation, open(json_schema, "r", encoding="UTF-8") as json_file:
+        logger.info(f"Validating {in_file}...")
+        validation_schema = json.load(json_file)
+        # sample the file
+        for line in islice(conflation, 5):
+            try:
+                instance: dict = json.loads(line)
+                # validate the incoming json against the spec
+                jsonschema.validate(instance=instance, schema=validation_schema)
+            # catch any exceptions
+            except Exception as e:
+                logger.error(f"Exception thrown in validate: ({in_file}): {e}")
+                return False
+
+    return True
+
+
+if __name__ == "__main__":
+    main()
