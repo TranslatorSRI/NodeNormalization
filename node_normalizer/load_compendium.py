@@ -65,8 +65,8 @@ async def load(compendium_file, block_size, dry_run, redis_config) -> bool:
 
     # check the existence of files
     for comp in compendium_file:
-        if not os.path.exists(compendium_file):
-            logger.warning(f"Compendium file {compendium_file} is does not exist")
+        if not os.path.exists(comp):
+            logger.warning(f"Compendium file {comp} is does not exist")
             return False
 
     # check the validity of the files
@@ -89,12 +89,10 @@ async def load(compendium_file, block_size, dry_run, redis_config) -> bool:
         id2type_redis: redis_adapter.RedisConnection = connection_factory.get_connection("id_to_type_db")
         info_content_redis: redis_adapter.RedisConnection = connection_factory.get_connection("info_content_db")
 
-        ancestor_map = {}
-        source_prefixes: Dict = {}
-
         for comp in compendium_file:
-            # try to load the file
-            # loaded = await load_compendium(comp, block_size, connection_factory, toolkit, dry_run)
+
+            ancestor_map = {}
+            source_prefixes: Dict = {}
 
             def get_ancestors(input_type):
                 if input_type in ancestor_map:
@@ -137,8 +135,6 @@ async def load(compendium_file, block_size, dry_run, redis_config) -> bool:
                         # leaf type in the file (and redis).  so now is the time to expand.  We'll regenerate the same
                         # list on output.
                         semantic_types = get_ancestors(instance["type"])
-                        logger.debug(f"semantic_types: {semantic_types}")
-                        logger.debug(f"source_prefixes: {source_prefixes}")
 
                         # for each semantic type in the list
                         for semantic_type in semantic_types:
@@ -168,12 +164,12 @@ async def load(compendium_file, block_size, dry_run, redis_config) -> bool:
                                 term2id_pipeline.set(equivalent_id.upper(), identifier)
                                 # term2id_pipeline.set(equivalent_id, identifier)
 
-                            id2eqids_pipeline.set(identifier, json.dumps(instance["identifiers"]))
-                            id2type_pipeline.set(identifier, instance["type"])
+                        id2eqids_pipeline.set(identifier, json.dumps(instance["identifiers"]))
+                        id2type_pipeline.set(identifier, instance["type"])
 
-                            # if there is information content add it to the cache
-                            if "ic" in instance:
-                                info_content_pipeline.set(identifier, instance["ic"])
+                        # if there is information content add it to the cache
+                        if "ic" in instance:
+                            info_content_pipeline.set(identifier, instance["ic"])
 
                         if not dry_run and line_counter % block_size == 0:
                             await redis_adapter.RedisConnection.execute_pipeline(term2id_pipeline)
@@ -213,10 +209,6 @@ async def load(compendium_file, block_size, dry_run, redis_config) -> bool:
                 response = await redis_adapter.RedisConnection.execute_pipeline(semantic_types_redis_pipeline)
                 if asyncio.coroutines.iscoroutine(response):
                     await response
-            source_prefixes = {}
-            # if not loaded:
-            #     logger.warning(f"Compendia file {comp} did not load.")
-            #     continue
         # merge all semantic counts from other files / loaders
         await merge_semantic_meta_data(connection_factory, dry_run)
     except Exception as e:
@@ -235,23 +227,27 @@ async def merge_semantic_meta_data(connection_factory: redis_adapter.RedisConnec
 
     types_prefixes_pipeline = types_prefixes_redis.pipeline()
     # capture all keys except semenatic_types , as that would be the one that will contain the sum of all semantic types
-    meta_data_keys = list(filter(lambda key: key != "semantic_types", meta_data_keys[0]))
+    meta_data_keys = list(filter(lambda key: key != "semantic_types", meta_data_keys))
+
+    logger.debug(f"meta_data_keys: {meta_data_keys}")
 
     # get actual data
-    for meta_data_key in meta_data_keys:
-        types_prefixes_pipeline.get(meta_data_key)
+    # for meta_data_key in meta_data_keys:
+    meta_data = await types_prefixes_redis.mget(*meta_data_keys)
 
-    meta_data = types_prefixes_pipeline.execute()
+    # meta_data = types_prefixes_pipeline.execute()
+    logger.debug(f"meta_data: {meta_data}")
 
-    if asyncio.coroutines.iscoroutine(meta_data):
-        meta_data = await meta_data
+    # if asyncio.coroutines.iscoroutine(meta_data):
+    #     meta_data = await meta_data
 
     all_meta_data = {}
 
     for meta_data_key, meta_datum in zip(meta_data_keys, meta_data):
         if meta_datum:
-            all_meta_data[meta_data_key.decode("utf-8")] = json.loads(meta_datum.decode("utf-8"))
+            all_meta_data[meta_data_key] = json.loads(meta_datum)
 
+    logger.debug(f"all_meta_data: {all_meta_data}")
     sources_prefix = {}
 
     for meta_data_key, data in all_meta_data.items():
@@ -268,12 +264,15 @@ async def merge_semantic_meta_data(connection_factory: redis_adapter.RedisConnec
     types_prefixes_pipeline = types_prefixes_redis.pipeline()
 
     if len(sources_prefix.keys()) > 0:
+        logger.debug(f"sources_prefix.keys(): {sources_prefix.keys()}")
         # add all the semantic types
         types_prefixes_pipeline.lpush("semantic_types", *list(sources_prefix.keys()))
 
     # for each semantic type insert the list of source prefixes
     for item in sources_prefix:
-        types_prefixes_pipeline.set(item, json.dumps(sources_prefix[item]))
+        source_prefix_item_json = json.dumps(sources_prefix[item])
+        logger.debug(f"item: {item}, source_prefix_item_json: {source_prefix_item_json}")
+        types_prefixes_pipeline.set(item, source_prefix_item_json)
 
     if not dry_run:
         # add the data to redis
