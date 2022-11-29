@@ -1,6 +1,9 @@
 import logging
 import json
 import os
+from itertools import islice
+from pathlib import Path
+import jsonschema
 import yaml
 from collections import namedtuple
 import copy
@@ -18,7 +21,7 @@ class LoggingUtil(object):
             "disable_existing_loggers": False,
             "formatters": {"default": {"format": "%(asctime)s | %(levelname)s | %(module)s:%(funcName)s | %(message)s"}},
             "handlers": {
-                "console": {"level": "ERROR", "class": "logging.StreamHandler", "formatter": "default"},
+                "console": {"level": "DEBUG", "class": "logging.StreamHandler", "formatter": "default"},
             },
             "loggers": {
                 "node-norm": {"handlers": ["console"], "level": os.getenv("LOG_LEVEL", "ERROR")},
@@ -204,3 +207,25 @@ def uniquify_list(seq):
     seen = set()
     seen_add = seen.add
     return [x for x in seq if not (x in seen or seen_add(x))]
+
+
+def validate_compendium(in_file, logger):
+    # open the file to validate
+    json_schema = Path(__file__).parent / "resources" / "valid_compendium_data_format.json"
+    with open(in_file, "r") as compendium, open(json_schema) as json_file:
+        logger.info(f"Validating {in_file}...")
+        validation_schema = json.load(json_file)
+
+        # sample the file
+        for line in islice(compendium, 5):
+            try:
+                instance: dict = json.loads(line)
+                # validate the incoming json against the spec
+                jsonschema.validate(instance=instance, schema=validation_schema)
+            # catch any exceptions
+            except Exception as e:
+                logger.error(f"Exception thrown in validate_compendia({in_file}): {e}")
+                return False
+
+    return True
+
