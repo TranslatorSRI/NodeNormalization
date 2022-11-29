@@ -1,142 +1,99 @@
 {
-  "nodes": {
-    "NCBIGene:9496": {
-      "attributes": [
-        {
-          "attribute_type_id": "biolink:same_as",
-          "attribute_source": null,
-          "original_attribute_name": "equivalent_identifiers",
-          "value_url": null,
-          "value": [
-            "NCBIGene:9496",
-            "ENSEMBL:ENSG00000121075",
-            "HGNC:11603",
-            "UniProtKB:P57082"
-          ],
-          "description": null,
-          "value_type_id": "EDAM:data_0006",
-          "attributes": null
+    "nodes": {
+        "NCBIGene:9496": {
+            "attributes": [
+                {
+                    "attribute_type_id": "biolink:same_as",
+                    "attribute_source": null,
+                    "original_attribute_name": "equivalent_identifiers",
+                    "value_url": null,
+                    "value": ["NCBIGene:9496", "ENSEMBL:ENSG00000121075", "HGNC:11603", "UniProtKB:P57082"],
+                    "description": null,
+                    "value_type_id": "EDAM:data_0006",
+                    "attributes": null
+                }
+            ],
+            "categories": [
+                "biolink:Gene",
+                "biolink:NamedThing",
+                "biolink:BiologicalEntity",
+                "biolink:MolecularEntity",
+                "biolink:GenomicEntity",
+                "biolink:MacromolecularMachine",
+                "biolink:GeneOrGeneProduct"
+            ],
+            "name": "TBX4"
+        },
+        "MONDO:0005002": {
+            "attributes": [
+                {
+                    "attribute_type_id": "biolink:same_as",
+                    "attribute_source": null,
+                    "original_attribute_name": "equivalent_identifiers",
+                    "value_url": null,
+                    "value": ["MONDO:0005002", "DOID:3083", "EFO:0000341", "UMLS:C0024117", "MESH:D029424", "NCIT:C3199", "SNOMEDCT:13645005", "HP:0006510"],
+                    "description": null,
+                    "value_type_id": "EDAM:data_0006",
+                    "attributes": null
+                }
+            ],
+            "categories": ["biolink:Disease", "biolink:NamedThing", "biolink:BiologicalEntity", "biolink:DiseaseOrPhenotypicFeature"],
+            "name": "chronic obstructive pulmonary disease"
+        },
+        "MONDO:0013238": {
+            "attributes": [
+                {
+                    "attribute_type_id": "biolink:same_as",
+                    "attribute_source": null,
+                    "original_attribute_name": "equivalent_identifiers",
+                    "value_url": null,
+                    "value": ["MONDO:0013238", "DOID:0060405", "OMIM:613355", "ORPHANET:261279", "UMLS:C3150607", "UMLS:C4304591", "SNOMEDCT:719584008"],
+                    "description": null,
+                    "value_type_id": "EDAM:data_0006",
+                    "attributes": null
+                }
+            ],
+            "categories": ["biolink:Disease", "biolink:NamedThing", "biolink:BiologicalEntity", "biolink:DiseaseOrPhenotypicFeature"],
+            "name": "chromosome 17q23.1-q23.2 deletion syndrome"
+        },
+        "MONDO:0017148": {
+            "attributes": [
+                {
+                    "attribute_type_id": "biolink:same_as",
+                    "attribute_source": null,
+                    "original_attribute_name": "equivalent_identifiers",
+                    "value_url": null,
+                    "value": ["MONDO:0017148", "ORPHANET:275777", "UMLS:CN202575", "NCIT:C121945", "SNOMEDCT:697897003"],
+                    "description": null,
+                    "value_type_id": "EDAM:data_0006",
+                    "attributes": null
+                }
+            ],
+            "categories": ["biolink:Disease", "biolink:DiseaseOrPhenotypicFeature", "biolink:BiologicalEntity", "biolink:NamedThing"],
+            "name": "heritable pulmonary arterial hypertension"
         }
-      ],
-      "categories": [
-        "biolink:Gene",
-        "biolink:NamedThing",
-        "biolink:BiologicalEntity",
-        "biolink:MolecularEntity",
-        "biolink:GenomicEntity",
-        "biolink:MacromolecularMachine",
-        "biolink:GeneOrGeneProduct"
-      ],
-      "name": "TBX4"
     },
-    "MONDO:0005002": {
-      "attributes": [
-        {
-          "attribute_type_id": "biolink:same_as",
-          "attribute_source": null,
-          "original_attribute_name": "equivalent_identifiers",
-          "value_url": null,
-          "value": [
-            "MONDO:0005002",
-            "DOID:3083",
-            "EFO:0000341",
-            "UMLS:C0024117",
-            "MESH:D029424",
-            "NCIT:C3199",
-            "SNOMEDCT:13645005",
-            "HP:0006510"
-          ],
-          "description": null,
-          "value_type_id": "EDAM:data_0006",
-          "attributes": null
+    "edges": {
+        "044a7916-fba9-4b4f-ae48-f0815b0b222d": {
+            "subject": "NCBIGene:9496",
+            "object": "MONDO:0017148",
+            "predicate": "biolink:related_to",
+            "attributes": null,
+            "qualifiers": null
+        },
+        "2d38345a-e9bf-4943-accb-dccba351dd04": {
+            "subject": "NCBIGene:9496",
+            "object": "MONDO:0013238",
+            "predicate": "biolink:related_to",
+            "attributes": null,
+            "qualifiers": null
+        },
+        "a8575c4e-61a6-428a-bf09-fcb3e8d1644d": {
+            "subject": "NCBIGene:9496",
+            "object": "MONDO:0005002",
+            "predicate": "biolink:related_to",
+            "attributes": null,
+            "qualifiers": null
         }
-      ],
-      "categories": [
-        "biolink:Disease",
-        "biolink:NamedThing",
-        "biolink:BiologicalEntity",
-        "biolink:DiseaseOrPhenotypicFeature"
-      ],
-      "name": "chronic obstructive pulmonary disease"
-    },
-    "MONDO:0013238": {
-      "attributes": [
-        {
-          "attribute_type_id": "biolink:same_as",
-          "attribute_source": null,
-          "original_attribute_name": "equivalent_identifiers",
-          "value_url": null,
-          "value": [
-            "MONDO:0013238",
-            "DOID:0060405",
-            "OMIM:613355",
-            "ORPHANET:261279",
-            "UMLS:C3150607",
-            "UMLS:C4304591",
-            "SNOMEDCT:719584008"
-          ],
-          "description": null,
-          "value_type_id": "EDAM:data_0006",
-          "attributes": null
-        }
-      ],
-      "categories": [
-        "biolink:Disease",
-        "biolink:NamedThing",
-        "biolink:BiologicalEntity",
-        "biolink:DiseaseOrPhenotypicFeature"
-      ],
-      "name": "chromosome 17q23.1-q23.2 deletion syndrome"
-    },
-    "MONDO:0017148": {
-      "attributes": [
-        {
-          "attribute_type_id": "biolink:same_as",
-          "attribute_source": null,
-          "original_attribute_name": "equivalent_identifiers",
-          "value_url": null,
-          "value": [
-            "MONDO:0017148",
-            "ORPHANET:275777",
-            "UMLS:CN202575",
-            "NCIT:C121945",
-            "SNOMEDCT:697897003"
-          ],
-          "description": null,
-          "value_type_id": "EDAM:data_0006",
-          "attributes": null
-        }
-      ],
-      "categories": [
-        "biolink:Disease",
-        "biolink:DiseaseOrPhenotypicFeature",
-        "biolink:BiologicalEntity",
-        "biolink:NamedThing"
-      ],
-      "name": "heritable pulmonary arterial hypertension"
     }
-  },
-  "edges": {
-    "044a7916-fba9-4b4f-ae48-f0815b0b222d": {
-      "subject": "NCBIGene:9496",
-      "object": "MONDO:0017148",
-      "predicate": "biolink:related_to",
-      "attributes": null,
-      "qualifiers": null
-    },
-    "2d38345a-e9bf-4943-accb-dccba351dd04": {
-      "subject": "NCBIGene:9496",
-      "object": "MONDO:0013238",
-      "predicate": "biolink:related_to",
-      "attributes": null,
-      "qualifiers": null
-    },
-    "a8575c4e-61a6-428a-bf09-fcb3e8d1644d": {
-      "subject": "NCBIGene:9496",
-      "object": "MONDO:0005002",
-      "predicate": "biolink:related_to",
-      "attributes": null,
-      "qualifiers": null
-    }
-  }
 }
