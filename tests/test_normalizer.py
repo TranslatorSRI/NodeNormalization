@@ -104,8 +104,8 @@ def float_or_none(x):
         return None
 
 
-premerged_graph = Path(__file__).parent / "resources" / "premerged_kgraph.json"
-postmerged_graph = Path(__file__).parent / "resources" / "postmerged_kgraph.json"
+pre_merged_graph = Path(__file__).parent / "resources" / "premerged_kgraph.json"
+post_merged_graph = Path(__file__).parent / "resources" / "postmerged_kgraph.json"
 
 
 class TestNormalizer:
@@ -120,13 +120,14 @@ class TestNormalizer:
     )
     async def test_kg_normalize(self):
         app = None
-        with open(premerged_graph, "r") as pre:
-            premerged_data = KnowledgeGraph.parse_obj(json.load(pre))
+        with open(pre_merged_graph, "r") as pre:
+            pre_merged_data = KnowledgeGraph.parse_obj(json.load(pre))
 
-        with open(postmerged_graph, "r") as post:
-            postmerged_from_file = json.load(post)
+        with open(post_merged_graph, "r") as post:
+            post_merged_from_file = json.load(post)
+        print(f"post_merged_from_file: {post_merged_from_file}")
 
-        postmerged_from_api, nmap, emap = await normalize_kgraph(app, premerged_data)
+        postmerged_from_api, nmap, emap = await normalize_kgraph(app, pre_merged_data, None)
 
         nodes: dict = {}
         for code, node in postmerged_from_api.nodes.items():
@@ -138,8 +139,10 @@ class TestNormalizer:
 
         post = {"nodes": nodes, "edges": edges}
 
+        print(f"post_merged_from_api: {postmerged_from_api.json()}")
         # get the difference
-        diffs = DeepDiff(post, postmerged_from_file, ignore_order=True)
+        diffs = DeepDiff(post_merged_from_file, post, ignore_order=True)
+        print(diffs)
         # diffs = find_diffs(post, postmerged_from_file)
 
         # no diffs, no problem
