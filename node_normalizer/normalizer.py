@@ -1,6 +1,4 @@
 import json
-import logging
-import os
 import uuid
 from typing import List, Dict, Optional, Any, Set, Tuple, Union
 from uuid import UUID
@@ -8,23 +6,25 @@ from uuid import UUID
 from fastapi import FastAPI
 from reasoner_pydantic import KnowledgeGraph, Message, QueryGraph, Result, CURIE, Attribute
 
+from .model.response import ConflationType
 from .util import LoggingUtil, uniquify_list
 
 # logger = LoggingUtil.init_logging(__name__, level=logging.INFO, format='medium', logFilePath=os.path.dirname(__file__), logFileLevel=logging.INFO)
 logger = LoggingUtil.init_logging()
 
+
 def get_ancestors(app, input_type):
     if input_type in app.state.ancestor_map:
         return app.state.ancestor_map[input_type]
     a = app.state.toolkit.get_ancestors(input_type)
-    ancs = [app.state.toolkit.get_element(ai)['class_uri'] for ai in a]
+    ancs = [app.state.toolkit.get_element(ai)["class_uri"] for ai in a]
     if input_type not in ancs:
         ancs = [input_type] + ancs
     app.state.ancestor_map[input_type] = ancs
     return ancs
 
 
-async def normalize_message(app: FastAPI, message: Message) -> Message:
+async def normalize_message(app: FastAPI, message: Message, conflation_type: ConflationType = None) -> Message:
     """
     Given a TRAPI message, updates the message to include a
     normalized qgraph, kgraph, and results
@@ -39,7 +39,7 @@ async def normalize_message(app: FastAPI, message: Message) -> Message:
 
         logger.debug(f"message.knowledge_graph is None: {message.knowledge_graph is None}")
         if message.knowledge_graph is not None:
-            merged_kgraph, node_id_map, edge_id_map = await normalize_kgraph(app, message.knowledge_graph)
+            merged_kgraph, node_id_map, edge_id_map = await normalize_kgraph(app, message.knowledge_graph, conflation_type)
             ret.knowledge_graph = merged_kgraph
 
         logger.debug(f"message.results is None: {message.results is None}")
@@ -49,14 +49,10 @@ async def normalize_message(app: FastAPI, message: Message) -> Message:
 
         return ret
     except Exception as e:
-        logger.error(f'normalize_message Exception: {e}')
+        logger.error(f"normalize_message Exception: {e}")
 
 
-async def normalize_results(app,
-                            results: List[Result],
-                            node_id_map: Dict[str, str],
-                            edge_id_map: Dict[str, str]
-                            ) -> List[Result]:
+async def normalize_results(app, results: List[Result], node_id_map: Dict[str, str], edge_id_map: Dict[str, str]) -> List[Result]:
     """
     Given a TRAPI result creates a normalized result object
     """
@@ -65,10 +61,7 @@ async def normalize_results(app,
     result_seen = set()
 
     for result in results:
-        merged_result = {
-            'node_bindings': {},
-            'edge_bindings': {}
-        }
+        merged_result = {"node_bindings": {}, "edge_bindings": {}}
 
         node_binding_seen = set()
 
@@ -78,34 +71,31 @@ async def normalize_results(app,
                 for n_bind in node_bindings:
                     merged_binding = n_bind.dict()
                     # merged_binding['id'] = node_id_map[n_bind.id.__root__]
-                    merged_binding['id'] = node_id_map[n_bind.id]
+                    merged_binding["id"] = node_id_map[n_bind.id]
 
                     # get the information content value
-                    ic_attrib = await get_info_content_attribute(app, merged_binding['id'])
+                    ic_attrib = await get_info_content_attribute(app, merged_binding["id"])
 
                     # did we get a good attribute dict
                     if ic_attrib:
-                        if 'attributes' in merged_binding:
-                            merged_binding['attributes'].append(ic_attrib)
+                        if "attributes" in merged_binding:
+                            merged_binding["attributes"].append(ic_attrib)
                         else:
-                            merged_binding['attributes'] = [ic_attrib]
+                            merged_binding["attributes"] = [ic_attrib]
 
                     node_binding_information = [
-                        "atts" if k == 'attributes'
-                        else (k, tuple(v)) if isinstance(v, list)
-                        else (k, v)
-                        for k, v in merged_binding.items()
+                        "atts" if k == "attributes" else (k, tuple(v)) if isinstance(v, list) else (k, v) for k, v in merged_binding.items()
                     ]
 
                     # if there are attributes in the node binding
-                    if 'attributes' in merged_binding:
+                    if "attributes" in merged_binding:
                         # storage for the pydantic Attributes
                         attribs = []
 
                         # the items in list of attributes must be of type Attribute
                         # in order to reuse hash method
-                        if merged_binding['attributes'] is not None:
-                            for attrib in merged_binding['attributes']:
+                        if merged_binding["attributes"] is not None:
+                            for attrib in merged_binding["attributes"]:
                                 new_attrib = Attribute.parse_obj(attrib)
 
                                 # add the new Attribute to the list
@@ -122,7 +112,7 @@ async def normalize_results(app,
                         node_binding_seen.add(node_binding_hash)
                         merged_node_bindings.append(merged_binding)
 
-                merged_result['node_bindings'][node_code] = merged_node_bindings
+                merged_result["node_bindings"][node_code] = merged_node_bindings
 
         except Exception as e:
             logger.exception(e)
@@ -134,12 +124,9 @@ async def normalize_results(app,
                 merged_edge_bindings = []
                 for e_bind in edge_bindings:
                     merged_binding = e_bind.dict()
-                    merged_binding['id'] = edge_id_map[e_bind.id]
+                    merged_binding["id"] = edge_id_map[e_bind.id]
 
-                    edge_binding_hash = frozenset([
-                        (k, freeze(v))
-                        for k, v in merged_binding.items()
-                    ])
+                    edge_binding_hash = frozenset([(k, freeze(v)) for k, v in merged_binding.items()])
 
                     if edge_binding_hash in edge_binding_seen:
                         continue
@@ -147,7 +134,7 @@ async def normalize_results(app,
                         edge_binding_seen.add(edge_binding_hash)
                         merged_edge_bindings.append(merged_binding)
 
-                merged_result['edge_bindings'][edge_code] = merged_edge_bindings
+                merged_result["edge_bindings"][edge_code] = merged_edge_bindings
         except Exception as e:
             logger.exception(e)
 
@@ -157,7 +144,7 @@ async def normalize_results(app,
             hashed_result = json.dumps(merged_result, sort_keys=True)
 
         except Exception as e:  # TODO determine exception(s) to catch
-            logger.error(f'normalize_results Exception: {e}')
+            logger.error(f"normalize_results Exception: {e}")
             hashed_result = False
 
         if hashed_result is not False:
@@ -202,26 +189,20 @@ async def normalize_qgraph(app: FastAPI, qgraph: QueryGraph) -> QueryGraph:
                     raise Exception("node.ids must be a list")
                 primary_ids = set()
                 for nr in node.ids.__root__:
-                    equivalent_curies = await get_equivalent_curies(app, nr)
+                    equivalent_curies = await get_equivalent_curies(app, nr, None)
                     if equivalent_curies[nr]:
-                        primary_ids.add(equivalent_curies[nr]['id']['identifier'])
+                        primary_ids.add(equivalent_curies[nr]["id"]["identifier"])
                     else:
                         primary_ids.add(nr)
-                merged_nodes[node_code]['ids'] = list(primary_ids)
+                merged_nodes[node_code]["ids"] = list(primary_ids)
                 node_code_map[node_code] = list(primary_ids)
         except Exception as e:
-            logger.error(f'normalize_qgraph Exception: {e}')
+            logger.error(f"normalize_qgraph Exception: {e}")
 
-    return QueryGraph.parse_obj({
-        'nodes': merged_nodes,
-        'edges': qgraph.edges
-    })
+    return QueryGraph.parse_obj({"nodes": merged_nodes, "edges": qgraph.edges})
 
 
-async def normalize_kgraph(
-        app: FastAPI,
-        kgraph: KnowledgeGraph
-) -> Tuple[KnowledgeGraph, Dict[str, str], Dict[str, str]]:
+async def normalize_kgraph(app: FastAPI, kgraph: KnowledgeGraph, conflation_type: ConflationType = None) -> Tuple[KnowledgeGraph, Dict[str, str], Dict[str, str]]:
     """
     Given a TRAPI knowledge graph creates a merged graph
     by iterating over each node, getting the primary id,
@@ -233,10 +214,7 @@ async def normalize_kgraph(
     being an edge id map
     """
 
-    merged_kgraph: Dict = {
-        'nodes': {},
-        'edges': {}
-    }
+    merged_kgraph: Dict = {"nodes": {}, "edges": {}}
 
     node_id_map: Dict[str, str] = {}
     edge_id_map: Dict[str, str] = {}
@@ -272,19 +250,17 @@ async def normalize_kgraph(
 
             merged_node = node.dict()
 
-            equivalent_curies = await get_equivalent_curies(app, node_id)
+            equivalent_curies = await get_equivalent_curies(app, node_id, conflation_type)
 
             if equivalent_curies[node_id]:
-                primary_id = equivalent_curies[node_id]['id']['identifier']
+                primary_id = equivalent_curies[node_id]["id"]["identifier"]
                 node_id_map[node_id] = primary_id
 
                 if primary_id in primary_nodes_seen:
                     merged_node = _merge_node_attributes(
-                        node_a=merged_kgraph['nodes'][primary_id],
-                        node_b=node.dict(),
-                        merged_count=node_merge_count[primary_id]
+                        node_a=merged_kgraph["nodes"][primary_id], node_b=node.dict(), merged_count=node_merge_count[primary_id]
                     )
-                    merged_kgraph['nodes'][primary_id] = merged_node
+                    merged_kgraph["nodes"][primary_id] = merged_node
                     node_merge_count[primary_id] += 1
                     continue
                 else:
@@ -292,44 +268,39 @@ async def normalize_kgraph(
 
                 primary_nodes_seen.add(primary_id)
 
-                if 'label' in equivalent_curies[node_id]['id']:
-                    primary_label = equivalent_curies[node_id]['id']['label']
-                elif 'name' in merged_node:
-                    primary_label = merged_node['name']
+                if "label" in equivalent_curies[node_id]["id"]:
+                    primary_label = equivalent_curies[node_id]["id"]["label"]
+                elif "name" in merged_node:
+                    primary_label = merged_node["name"]
                 else:
-                    primary_label = ''
+                    primary_label = ""
 
-                merged_node['name'] = primary_label
+                merged_node["name"] = primary_label
 
                 # Even if there's already a same_as attribute we add another
                 # since it is coming from a new source
-                if 'equivalent_identifiers' in equivalent_curies[node_id]:
+                if "equivalent_identifiers" in equivalent_curies[node_id]:
                     same_as_attribute = {
-                        'attribute_type_id': 'biolink:same_as',
-                        'value': [
-                            node['identifier']
-                            for node in equivalent_curies[node_id]['equivalent_identifiers']
-                        ],
-                        'original_attribute_name': 'equivalent_identifiers',
+                        "attribute_type_id": "biolink:same_as",
+                        "value": [node["identifier"] for node in equivalent_curies[node_id]["equivalent_identifiers"]],
+                        "original_attribute_name": "equivalent_identifiers",
                         "value_type_id": "EDAM:data_0006",
-
                         # TODO, should we add the app version as the source
                         # or perhaps the babel/redis cache version
                         # This will make unit testing a little more tricky
                         # see https://stackoverflow.com/q/57624731
-
                         # 'source': f'{app.title} {app.version}',
                     }
-                    if 'attributes' in merged_node and merged_node['attributes']:
-                        merged_node['attributes'].append(same_as_attribute)
+                    if "attributes" in merged_node and merged_node["attributes"]:
+                        merged_node["attributes"].append(same_as_attribute)
                     else:
-                        merged_node['attributes'] = [same_as_attribute]
+                        merged_node["attributes"] = [same_as_attribute]
 
-                if 'type' in equivalent_curies[node_id]:
-                    if type(equivalent_curies[node_id]['type']) is list:
-                        merged_node['categories'] = equivalent_curies[node_id]['type']
+                if "type" in equivalent_curies[node_id]:
+                    if type(equivalent_curies[node_id]["type"]) is list:
+                        merged_node["categories"] = equivalent_curies[node_id]["type"]
                     else:
-                        merged_node['categories'] = [equivalent_curies[node_id]['type']]
+                        merged_node["categories"] = [equivalent_curies[node_id]["type"]]
 
                 # get the information content value
                 ic_attrib = await get_info_content_attribute(app, node_id)
@@ -337,11 +308,11 @@ async def normalize_kgraph(
                 # did we get a good attribute dict
                 if ic_attrib:
                     # add the attribute to the node
-                    merged_node['attributes'].append(ic_attrib)
+                    merged_node["attributes"].append(ic_attrib)
 
-                merged_kgraph['nodes'][primary_id] = merged_node
+                merged_kgraph["nodes"][primary_id] = merged_node
             else:
-                merged_kgraph['nodes'][node_id] = merged_node
+                merged_kgraph["nodes"][node_id] = merged_node
 
         for edge_id, edge in kgraph.edges.items():
             # Accessing __root__ directly seems wrong,
@@ -364,12 +335,7 @@ async def normalize_kgraph(
                 # we couldn't hash the attribute so assume unique
                 hashed_attributes = uuid.uuid4()
 
-            triple = (
-                primary_subject,
-                edge.predicate,
-                primary_object,
-                hashed_attributes
-            )
+            triple = (primary_subject, edge.predicate, primary_object, hashed_attributes)
 
             if triple in edges_seen:
                 edge_id_map[edge_id] = primary_edges[triple]
@@ -381,19 +347,16 @@ async def normalize_kgraph(
             edges_seen.add(triple)
             merged_edge = edge.dict()
 
-            merged_edge['subject'] = primary_subject
-            merged_edge['object'] = primary_object
-            merged_kgraph['edges'][edge_id] = merged_edge
+            merged_edge["subject"] = primary_subject
+            merged_edge["object"] = primary_object
+            merged_kgraph["edges"][edge_id] = merged_edge
     except Exception as e:
-        logger.error(f'normalize_kgraph Exception: {e}')
+        logger.error(f"normalize_kgraph Exception: {e}")
 
     return KnowledgeGraph.parse_obj(merged_kgraph), node_id_map, edge_id_map
 
 
-async def get_equivalent_curies(
-        app: FastAPI,
-        curie: Union[str, CURIE]
-) -> Dict:
+async def get_equivalent_curies(app: FastAPI, curie: Union[str, CURIE], conflation_type: ConflationType = None) -> Dict:
     """
     Get primary id and equivalent curies using redis GET
 
@@ -412,7 +375,7 @@ async def get_equivalent_curies(
     try:
 
         # Get the equivalent list primary key identifier
-        value = await get_normalized_nodes(app, [curie], True)
+        value = await get_normalized_nodes(app, [curie], conflation_type)
 
         # did we get a valid response
         if value is None:
@@ -420,16 +383,14 @@ async def get_equivalent_curies(
             return default_return
 
     except Exception as e:
-        logger.error(f'get_equivalent_curies Exception: {e}')
+        logger.error(f"get_equivalent_curies Exception: {e}")
         return default_return
 
     # return the curie normalization data
     return value
 
 
-async def get_info_content(
-        app: FastAPI,
-        canonical_nonan: List) -> dict:
+async def get_info_content(app: FastAPI, canonical_nonan: List) -> dict:
     """
     Gets the information content value for the node id
 
@@ -442,7 +403,7 @@ async def get_info_content(
         return {}
 
     # call redis and get the value
-    info_contents = await app.state.redis_connection4.mget(*canonical_nonan, encoding='utf8')
+    info_contents = await app.state.redis_connection4.mget(*canonical_nonan, encoding="utf8")
 
     # get this into a list
     info_contents = [round(float(ic_ids), 1) if ic_ids is not None else None for ic_ids in info_contents]
@@ -454,55 +415,48 @@ async def get_info_content(
     return info_contents
 
 
-async def get_eqids_and_types(
-        app: FastAPI,
-        canonical_nonan: List) -> (List, List):
+async def get_eqids_and_types(app: FastAPI, canonical_nonan: List) -> (List, List):
     if len(canonical_nonan) == 0:
         return [], []
-    eqids = await app.state.redis_connection1.mget(*canonical_nonan, encoding='utf-8')
+    eqids = await app.state.redis_connection1.mget(*canonical_nonan, encoding="utf-8")
     eqids = [json.loads(value) if value is not None else None for value in eqids]
-    types = await app.state.redis_connection2.mget(*canonical_nonan, encoding='utf-8')
+    types = await app.state.redis_connection2.mget(*canonical_nonan, encoding="utf-8")
     types = [get_ancestors(app, t) for t in types]
     return eqids, types
 
 
-async def get_normalized_nodes(
-        app: FastAPI,
-        curies: List[Union[CURIE, str]],
-        conflate: bool
-) -> Dict[str, Optional[str]]:
+async def get_normalized_nodes(app: FastAPI, curies: List[Union[CURIE, str]], conflation_type: ConflationType = None) -> Dict[str, Optional[str]]:
     """
     Get value(s) for key(s) using redis MGET
     """
     # malkovich malkovich
-    curies = [
-        curie.__root__ if isinstance(curie, CURIE) else curie
-        for curie in curies
-    ]
+    curies = [curie.__root__ if isinstance(curie, CURIE) else curie for curie in curies]
     normal_nodes = {}
 
-    # TODO: Add an option that lets one choose which conflations to do, and get the details of those conflations from the configs.
-    # conflation_types = {"biolink:Gene", "biolink:Protein"}
-    # conflation_redis = 5
+    logger.info(f"conflation_type: {conflation_type}")
 
     upper_curies = [c.upper() for c in curies]
+    logger.info(f"upper_curies: {upper_curies}")
     try:
-        canonical_ids = await app.state.redis_connection0.mget(*upper_curies, encoding='utf-8')
+        canonical_ids = await app.state.redis_connection0.mget(*upper_curies, encoding="utf-8")
         canonical_nonan = [canonical_id for canonical_id in canonical_ids if canonical_id is not None]
+        logger.info(f"canonical_nonan: {canonical_nonan}")
         info_contents = {}
 
         # did we get some canonical ids
         if canonical_nonan:
+
             # get the information content values
             info_contents = await get_info_content(app, canonical_nonan)
+            logger.info(f"info_contents: {info_contents}")
 
             # Get the equivalent_ids and types
             eqids, types = await get_eqids_and_types(app, canonical_nonan)
+            logger.info(f"eqids: {eqids}, types: {types}")
 
             # are we looking for conflated values
-            if conflate:
-                # TODO: filter to just types that have Gene or Protein?  I'm not sure it's worth it when we have pipelining
-                other_ids = await app.state.redis_connection5.mget(*canonical_nonan, encoding='utf8')
+            if conflation_type:
+                other_ids = await app.state.redis_connection5.mget(*canonical_nonan, encoding="utf8")
 
                 # if there are other ids, then we want to rebuild eqids and types.  That's because even though we have them,
                 # they're not necessarily first.  For instance if what came in and got canonicalized was a protein id
@@ -537,6 +491,8 @@ async def get_normalized_nodes(
                 dereference_ids = dict(zip(canonical_nonan, final_eqids))
                 dereference_types = dict(zip(canonical_nonan, final_types))
             else:
+                logger.info("conflation type is None")
+
                 dereference_ids = dict(zip(canonical_nonan, eqids))
                 dereference_types = dict(zip(canonical_nonan, types))
         else:
@@ -550,7 +506,7 @@ async def get_normalized_nodes(
         }
 
     except Exception as e:
-        logger.error(f'Exception: {e}')
+        logger.exception(e)
 
     return normal_nodes
 
@@ -564,13 +520,17 @@ async def get_info_content_attribute(app, canonical_nonan) -> dict:
     :return:
     """
     # get the information content value
-    ic_val = await app.state.redis_connection4.get(canonical_nonan, encoding='utf8')
+    ic_val = await app.state.redis_connection4.get(canonical_nonan, encoding="utf8")
 
     # did we get a good value
     if ic_val is not None:
         # load up a dict with the attribute data and create a trapi attribute object
-        new_attrib = dict(attribute_type_id="biolink:has_numeric_value", original_attribute_name="information_content", value_type_id="EDAM:data_0006",
-                          value=round(float(ic_val), 1))
+        new_attrib = dict(
+            attribute_type_id="biolink:has_numeric_value",
+            original_attribute_name="information_content",
+            value_type_id="EDAM:data_0006",
+            value=round(float(ic_val), 1),
+        )
     else:
         # else return nothing
         new_attrib = None
@@ -589,32 +549,28 @@ async def create_node(canonical_id, equivalent_ids, types, info_contents):
     eids = equivalent_ids[canonical_id]
 
     # First, we need to create the "id" node.  The identifier is our input canonical id, but we have to get a label
-    labels = list(filter(lambda x: len(x) > 0, [eid['l'] for eid in eids if 'l' in eid]))
+    labels = list(filter(lambda x: len(x) > 0, [eid["l"] for eid in eids if "l" in eid]))
 
     # Note that the id will be from the equivalent ids, not the canonical_id.  This is to handle conflation
     if len(labels) > 0:
-        node = {"id": {"identifier": eids[0]['i'], "label": labels[0]}}
+        node = {"id": {"identifier": eids[0]["i"], "label": labels[0]}}
     else:
         # Sometimes, nothing has a label :(
-        node = {"id": {"identifier": eids[0]['i']}}
+        node = {"id": {"identifier": eids[0]["i"]}}
 
     # now need to reformat the identifier keys.  It could be cleaner but we have to worry about if there is a label
-    node['equivalent_identifiers'] = [{"identifier": eqid["i"], "label": eqid["l"]} if "l" in eqid
-                                      else {"identifier": eqid["i"]} for eqid in eids]
+    node["equivalent_identifiers"] = [{"identifier": eqid["i"], "label": eqid["l"]} if "l" in eqid else {"identifier": eqid["i"]} for eqid in eids]
 
-    node['type'] = types[canonical_id]
+    node["type"] = types[canonical_id]
 
     # add the info content to the node if we got one
     if info_contents[canonical_id] is not None:
-        node['information_content'] = info_contents[canonical_id]
+        node["information_content"] = info_contents[canonical_id]
 
     return node
 
 
-async def get_curie_prefixes(
-        app: FastAPI,
-        semantic_types: Optional[List[str]] = None
-) -> Dict[str, Any]:
+async def get_curie_prefixes(app: FastAPI, semantic_types: Optional[List[str]] = None) -> Dict[str, Any]:
     """
     Get pivot table of semantic type x curie prefix
     """
@@ -625,33 +581,33 @@ async def get_curie_prefixes(
         if semantic_types:
             for item in semantic_types:
                 # get the curies for this type
-                curies = await app.state.redis_connection3.get(item, encoding='utf-8')
+                curies = await app.state.redis_connection3.get(item, encoding="utf-8")
 
                 # did we get any data
                 if not curies:
-                    curies = '{' + f'"{item}"' + ': "Not found"}'
+                    curies = "{" + f'"{item}"' + ': "Not found"}'
 
                 curies = json.loads(curies)
 
                 # set the return data
-                ret_val[item] = {'curie_prefix': curies}
+                ret_val[item] = {"curie_prefix": curies}
         else:
-            types = await app.state.redis_connection3.lrange('semantic_types', 0, -1, encoding='utf-8')
+            types = await app.state.redis_connection3.lrange("semantic_types", 0, -1, encoding="utf-8")
 
             for item in types:
                 # get the curies for this type
-                curies = await app.state.redis_connection3.get(item, encoding='utf-8')
+                curies = await app.state.redis_connection3.get(item, encoding="utf-8")
 
                 # did we get any data
                 if not curies:
-                    curies = '{' + f'"{item}"' + ': "Not found"}'
+                    curies = "{" + f'"{item}"' + ': "Not found"}'
 
                 curies = json.loads(curies)
 
                 # set the return data
-                ret_val[item] = {'curie_prefix': curies}
+                ret_val[item] = {"curie_prefix": curies}
     except Exception as e:
-        logger.error(f'get_curie_prefixes Exception: {e}')
+        logger.error(f"get_curie_prefixes Exception: {e}")
 
     return ret_val
 
@@ -664,33 +620,33 @@ def _merge_node_attributes(node_a: Dict, node_b, merged_count: int) -> Dict:
     """
 
     try:
-        if not ('attributes' in node_b and node_b['attributes']):
+        if not ("attributes" in node_b and node_b["attributes"]):
             return node_a
 
         if merged_count == 0:
-            if 'attributes' in node_a and node_a['attributes']:
+            if "attributes" in node_a and node_a["attributes"]:
                 new_attribute_list = []
-                for attribute in node_a['attributes']:
+                for attribute in node_a["attributes"]:
                     new_dict = {}
                     for k, v in attribute.items():
                         new_dict[f"{k}.1"] = v
                     new_attribute_list.append(new_dict)
 
-                node_a['attributes'] = new_attribute_list
+                node_a["attributes"] = new_attribute_list
 
         # Need to DRY this off
         b_attr_id = merged_count + 2
-        if 'attributes' in node_b and node_b['attributes']:
+        if "attributes" in node_b and node_b["attributes"]:
             new_attribute_list = []
-            for attribute in node_b['attributes']:
+            for attribute in node_b["attributes"]:
                 new_dict = {}
                 for k, v in attribute.items():
                     new_dict[f"{k}.{b_attr_id}"] = v
                 new_attribute_list.append(new_dict)
 
-            node_a['attributes'] = node_a['attributes'] + new_attribute_list
+            node_a["attributes"] = node_a["attributes"] + new_attribute_list
     except Exception as e:
-        logger.error(f'_merge_node_attributes Exception {e}')
+        logger.error(f"_merge_node_attributes Exception {e}")
 
     return node_a
 
@@ -720,11 +676,7 @@ def _hash_attributes(attributes: List[Attribute] = None) -> Union[int, bool]:
                     # TODO list of lists?
                     hashed_value = tuple(attribute.value)
                 elif isinstance(attribute.value, dict):
-                    hashed_value = tuple(
-                        (k, tuple(v))
-                        if isinstance(v, list)
-                        else (k, v)
-                        for k, v in attribute.value.items())
+                    hashed_value = tuple((k, tuple(v)) if isinstance(v, list) else (k, v) for k, v in attribute.value.items())
 
             new_attribute = (
                 attribute.attribute_type_id,
@@ -732,12 +684,12 @@ def _hash_attributes(attributes: List[Attribute] = None) -> Union[int, bool]:
                 attribute.original_attribute_name,
                 attribute.value_url,
                 attribute.attribute_source,
-                attribute.value_type_id if attribute.value_type_id is not None else '',
-                attribute.attribute_source
+                attribute.value_type_id if attribute.value_type_id is not None else "",
+                attribute.attribute_source,
             )
             new_attributes.append(new_attribute)
 
         return hash(frozenset(new_attributes))
     except Exception as e:
-        logger.error(f'_hash_attributes Exception: {e}')
+        logger.error(f"_hash_attributes Exception: {e}")
         return False
