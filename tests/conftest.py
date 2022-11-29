@@ -6,7 +6,7 @@ from testcontainers.compose import DockerCompose
 def session(request):
     print("starting docker container")
 
-    compose = DockerCompose(filepath=".", compose_file_name="docker-compose-test.yml", env_file=".env", build=False, pull=False)
+    compose = DockerCompose(filepath=".", compose_file_name="docker-compose-test.yml", env_file=".env", build=True, pull=True)
     compose.start()
     nn_service_name = compose.get_service_host(service_name="node-norm", port=8080)
     nn_service_port = compose.get_service_port(service_name="node-norm", port=8080)
