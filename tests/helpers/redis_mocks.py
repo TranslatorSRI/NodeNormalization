@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 
-async def mock_get_equivalent_curies(app, curie):
+async def mock_get_equivalent_curies(app, curie, conflation_type = None):
     """
     Mock the data returned by redis
     """
