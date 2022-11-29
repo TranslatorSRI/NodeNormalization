@@ -6,6 +6,10 @@ from pydantic import BaseModel, Field
 
 from typing import List
 
+from typing import Optional
+
+from node_normalizer.model.response import ConflationType
+
 
 class CurieList(BaseModel):
     """Curie list input model"""
@@ -16,10 +20,11 @@ class CurieList(BaseModel):
         min_items=1
     )
 
-    conflate:bool = Field(
-        True,
-        title="Whether to apply conflation"
-    )
+    conflation_type: Optional[ConflationType]
+    # conflate:bool = Field(
+    #     True,
+    #     title="Whether to apply conflation"
+    # )
 
     class Config:
         schema_extra = {
