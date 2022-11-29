@@ -7,9 +7,7 @@ WORKDIR /code
 COPY ./requirements.txt requirements.txt
 COPY ./setup.py setup.py
 COPY ./node_normalizer node_normalizer
-COPY ./config.json config.json
 COPY ./redis_config.yaml redis_config.yaml
-COPY ./load.py load.py
 
 # install requirements
 RUN pip install -r requirements.txt
