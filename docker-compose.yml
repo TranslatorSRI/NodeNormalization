@@ -36,18 +36,12 @@ services:
     expose:
       - 6379
 
-  redis_conflation_type_db:
-    container_name: redis_conflation_type_db
-    image: redis:alpine
-    expose:
-      - 6379
-
   node-norm:
     container_name: node-norm
     image: node-norm
     build:
       context: .
-      dockerfile: Dockerfile-test
+      dockerfile: Dockerfile
     env_file: .env
     expose:
       - 8080
@@ -60,5 +54,4 @@ services:
       - redis_curie_to_bl_type_db
       - redis_info_content_db
       - redis_conflation_db
-      - redis_conflation_type_db
 

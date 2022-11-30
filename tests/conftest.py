@@ -20,6 +20,7 @@ def session(request):
     print(f"callback_url: {callback_url}")
     compose.wait_for(f"{callback_url}")
 
+    print("loading compendia files")
     (stdout, stderr, exit_code) = compose.exec_in_container(
         service_name="node-norm",
         command=[
@@ -31,6 +32,24 @@ def session(request):
             "tests/resources/Gene.txt",
             "-c",
             "tests/resources/Disease.txt",
+            "-c",
+            "tests/resources/Protein.txt",
+            "-r",
+            "redis_config.yaml",
+        ],
+    )
+    print(f"stdout: {stdout}, stderr: {stderr}")
+
+    print("loading conflation files")
+    (stdout, stderr, exit_code) = compose.exec_in_container(
+        service_name="node-norm",
+        command=[
+            "python",
+            "node_normalizer/load_conflation.py",
+            "-c",
+            "tests/resources/GeneProtein.txt",
+            "-s",
+            "gene_protein",
             "-r",
             "redis_config.yaml",
         ],

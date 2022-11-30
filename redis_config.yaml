@@ -52,12 +52,3 @@
     - "host_name": "redis_conflation_db"
       "port": "6379"
   "password": ""
-
-"conflation_type_db":
-  "ssl_enabled": false
-  "is_cluster": false
-  "db": 0
-  "hosts":
-    - "host_name": "redis_conflation_type_db"
-      "port": "6379"
-  "password": ""

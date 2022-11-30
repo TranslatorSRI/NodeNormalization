@@ -37,12 +37,6 @@ services:
     expose:
       - 6379
 
-  redis_conflation_type_db:
-    container_name: redis_conflation_type_db
-    image: redis:alpine
-    expose:
-      - 6379
-
   callback-app:
     container_name: callback-app
     image: jdr0887/callback-app:0.1.0
@@ -71,5 +65,4 @@ services:
       - redis_curie_to_bl_type_db
       - redis_info_content_db
       - redis_conflation_db
-      - redis_conflation_type_db
       - callback-app

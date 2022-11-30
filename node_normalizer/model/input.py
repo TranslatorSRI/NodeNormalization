@@ -8,7 +8,7 @@ from typing import List
 
 from typing import Optional
 
-from node_normalizer.model.response import ConflationType
+from .response import ConflationType
 
 
 class CurieList(BaseModel):
