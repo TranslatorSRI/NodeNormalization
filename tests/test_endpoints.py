@@ -7,11 +7,13 @@ import reasoner_pydantic
 import requests
 from pathlib import Path
 
+HEADERS = {"Content-Type": "application/json", "Accept": "application/json"}
+
 
 def test_get_conflations(session):
     host_url = "http://127.0.0.1:8080/get_allowed_conflations"
     print(f"host_url: {host_url}")
-    response = requests.get(url=host_url, headers={"Content-Type": "application/json", "Accept": "application/json"})
+    response = requests.get(url=host_url, headers=HEADERS)
     print(f"{response.text}")
     assert response.status_code == 200
 
@@ -32,7 +34,7 @@ def test_async_query_callback(session):
 
     async_query = reasoner_pydantic.message.AsyncQuery.parse_obj(basic_query_data)
 
-    response = requests.post(url=host_url, headers={"Content-Type": "application/json", "Accept": "application/json"}, data=async_query.json())
+    response = requests.post(url=host_url, headers=HEADERS, data=async_query.json())
 
     # sleep here to allow the /asyncquery background task to run through
     time.sleep(10)
@@ -54,7 +56,7 @@ def test_message_normalize_endpoint(session):
 
     query = reasoner_pydantic.message.Query.parse_obj(basic_query)
 
-    response = requests.post(url=host_url, headers={"Content-Type": "application/json", "Accept": "application/json"}, data=query.json())
+    response = requests.post(url=host_url, headers=HEADERS, data=query.json())
     assert response.status_code == 200
     response_json = response.json()
 
@@ -69,17 +71,27 @@ def test_message_normalize_endpoint(session):
     )
 
 
+def test_get_semantic_types(session):
+    host_url = "http://127.0.0.1:8080/get_semantic_types"
+    response = requests.get(url=host_url, headers=HEADERS)
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["semantic_types"] is not None
+    # this is utterly idiotic...no idiomatic list contains list?  There has to be a better way to do this.
+    assert all(elem in response_json["semantic_types"]["types"] for elem in ["biolink:Disease", "biolink:Gene", "biolink:Cell", "biolink:Protein"])
+
+
 def test_get_normalized_nodes_not_found(session):
     host_url = "http://127.0.0.1:8080/get_normalized_nodes"
 
     # GET
-    response = requests.get(url=host_url, headers={"Content-Type": "application/json", "Accept": "application/json"}, params={"curie": ["UNKNOWN:000000"]})
+    response = requests.get(url=host_url, headers=HEADERS, params={"curie": ["UNKNOWN:000000"]})
     assert response.status_code == 200
     response_json = response.json()
     assert response_json == {"UNKNOWN:000000": None}
 
     # POST
-    response = requests.post(url=host_url, headers={"Content-Type": "application/json", "Accept": "application/json"}, json={"curies": ["UNKNOWN:000000"]})
+    response = requests.post(url=host_url, headers=HEADERS, json={"curies": ["UNKNOWN:000000"]})
     assert response.status_code == 200
     response_json = response.json()
     assert response_json == {"UNKNOWN:000000": None}
@@ -88,7 +100,7 @@ def test_get_normalized_nodes_not_found(session):
 def test_get_normalized_nodes_one_missing():
     host_url = "http://127.0.0.1:8080/get_normalized_nodes"
 
-    response = requests.get(url=host_url, headers={"Content-Type": "application/json", "Accept": "application/json"}, params={"curie": ["UNKNOWN:000000", "DOID:0110474"]})
+    response = requests.get(url=host_url, headers=HEADERS, params={"curie": ["UNKNOWN:000000", "DOID:0110474"]})
     assert response.status_code == 200
     response_json = response.json()
     assert len(response_json) == 2
@@ -107,13 +119,13 @@ def test_get_normalized_nodes_all_missing():
     host_url = "http://127.0.0.1:8080/get_normalized_nodes"
 
     # GET
-    response = requests.get(url=host_url, headers={"Content-Type": "application/json", "Accept": "application/json"}, params={"curie": ["NCBIGene:ABCD", "NCBIGene:GENE:1017"]})
+    response = requests.get(url=host_url, headers=HEADERS, params={"curie": ["NCBIGene:ABCD", "NCBIGene:GENE:1017"]})
     assert response.status_code == 200
     response_json = response.json()
     assert response_json == {"NCBIGene:ABCD": None, "NCBIGene:GENE:1017": None}
 
     # POST
-    response = requests.post(url=host_url, headers={"Content-Type": "application/json", "Accept": "application/json"}, json={"curies": ["NCBIGene:ABCD", "NCBIGene:GENE:1017"]})
+    response = requests.post(url=host_url, headers=HEADERS, json={"curies": ["NCBIGene:ABCD", "NCBIGene:GENE:1017"]})
     assert response.status_code == 200
     response_json = response.json()
     assert response_json == {"NCBIGene:ABCD": None, "NCBIGene:GENE:1017": None}
@@ -121,7 +133,7 @@ def test_get_normalized_nodes_all_missing():
 
 def test_get_normalized_nodes_merge():
     host_url = "http://127.0.0.1:8080/get_normalized_nodes"
-    response = requests.get(url=host_url, headers={"Content-Type": "application/json", "Accept": "application/json"}, params={"curie": ["MONDO:0005002", "DOID:3812"]})
+    response = requests.get(url=host_url, headers=HEADERS, params={"curie": ["MONDO:0005002", "DOID:3812"]})
     assert response.status_code == 200
     response_json = response.json()
     assert len(response_json) == 2
@@ -133,7 +145,7 @@ def test_get_normalized_nodes_empty():
     host_url = "http://127.0.0.1:8080/get_normalized_nodes"
 
     # GET
-    response = requests.get(url=host_url, headers={"Content-Type": "application/json", "Accept": "application/json"}, params={"curie": []})
+    response = requests.get(url=host_url, headers=HEADERS, params={"curie": []})
     assert response.status_code == 422
     assert response.reason == "Unprocessable Entity"
     response_json = response.json()
@@ -141,7 +153,7 @@ def test_get_normalized_nodes_empty():
     assert response_json["detail"][0]["loc"] == ["query", "curie"]
 
     # POST
-    response = requests.post(url=host_url, headers={"Content-Type": "application/json", "Accept": "application/json"}, json={"curies": []})
+    response = requests.post(url=host_url, headers=HEADERS, json={"curies": []})
     assert response.status_code == 422
     assert response.reason == "Unprocessable Entity"
     response_json = response.json()
@@ -160,7 +172,7 @@ def x_test_real_result(session):
 
     query = reasoner_pydantic.message.Query.parse_obj(ac_out_attributes_data)
 
-    response = requests.post(url=host_url, headers={"Content-Type": "application/json", "Accept": "application/json"}, data=query.json())
+    response = requests.post(url=host_url, headers=HEADERS, data=query.json())
     assert response.status_code == 200
     post_merged_from_api = response.json()
 
@@ -181,7 +193,7 @@ def test_dupe_edge(session):
 
     query = reasoner_pydantic.message.Query.parse_obj(pre_merged_dupe_edge_data)
 
-    response = requests.post(url=host_url, headers={"Content-Type": "application/json", "Accept": "application/json"}, data=query.json())
+    response = requests.post(url=host_url, headers=HEADERS, data=query.json())
     assert response.status_code == 200
     post_merged_from_api = response.json()
 
@@ -199,7 +211,7 @@ def test_input_has_set(session):
 
     query = reasoner_pydantic.message.Query.parse_obj(input_set_data)
 
-    response = requests.post(url=host_url, headers={"Content-Type": "application/json", "Accept": "application/json"}, data=query.json())
+    response = requests.post(url=host_url, headers=HEADERS, data=query.json())
     assert response.status_code == 200
     post_merged_from_api = response.json()
 
@@ -207,4 +219,3 @@ def test_input_has_set(session):
     # There are 2 coming in and no merging, so should be 2 going out
     assert len(result["edge_bindings"]["treats"]) == 2
     assert len(result["node_bindings"]["drug"]) == 2
-
