@@ -7,9 +7,7 @@ WORKDIR /code
 COPY ./requirements.txt requirements.txt
 COPY ./setup.py setup.py
 COPY ./node_normalizer node_normalizer
-COPY ./tests/config.json config.json
-COPY ./tests/redis_config.yaml redis_config.yaml
-COPY ./load.py load.py
+COPY ./redis_config.yaml redis_config.yaml
 COPY ./tests tests
 
 # install requirements

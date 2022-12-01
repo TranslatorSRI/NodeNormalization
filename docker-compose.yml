@@ -1,18 +1,57 @@
 version: "3"
 services:
-  redis:
-    container_name: redis
+  redis_eq_id_to_id_db:
+    container_name: redis_eq_id_to_id_db
     image: redis:alpine
     expose:
       - 6379
-        
-  r3:
-    container_name: r3
-    image: r3
-    build: .
-    env_file:
-      - .env
+
+  redis_id_to_eqids_db:
+    container_name: redis_id_to_eqids_db
+    image: redis:alpine
+    expose:
+      - 6379
+
+  redis_id_to_type_db:
+    container_name: redis_id_to_type_db
+    image: redis:alpine
+    expose:
+      - 6379
+
+  redis_curie_to_bl_type_db:
+    container_name: redis_curie_to_bl_type_db
+    image: redis:alpine
+    expose:
+      - 6379
+
+  redis_info_content_db:
+    container_name: redis_info_content_db
+    image: redis:alpine
+    expose:
+      - 6379
+
+  redis_conflation_db:
+    container_name: redis_conflation_db
+    image: redis:alpine
+    expose:
+      - 6379
+
+  node-norm:
+    container_name: node-norm
+    image: node-norm
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
+    expose:
+      - 8080
     ports:
       - "8080:8080"
     depends_on:
-      - redis
+      - redis_eq_id_to_id_db
+      - redis_id_to_eqids_db
+      - redis_id_to_type_db
+      - redis_curie_to_bl_type_db
+      - redis_info_content_db
+      - redis_conflation_db
+

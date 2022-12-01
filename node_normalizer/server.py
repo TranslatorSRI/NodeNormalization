@@ -14,7 +14,6 @@ import reasoner_pydantic
 from bmt import Toolkit
 from starlette.responses import JSONResponse
 
-from .loader import NodeLoader
 from .apidocs import get_app_info, construct_open_api_schema
 from .model import (
     SemanticTypes,
@@ -23,6 +22,7 @@ from .model import (
     SemanticTypesInput,
     ConflationList,
 )
+from .model.response import ConflationType
 from .normalizer import get_normalized_nodes, get_curie_prefixes, normalize_message
 from .redis_adapter import RedisConnectionFactory
 from .util import LoggingUtil
@@ -31,20 +31,18 @@ logger = LoggingUtil.init_logging()
 
 # Some metadata not implemented see
 # https://github.com/tiangolo/fastapi/pull/1812
-app = FastAPI(**get_app_info())
+# app = FastAPI(**get_app_info())
+
+app = FastAPI(title="NodeNormalizer")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=['*'],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-loader = NodeLoader()
-
-redis_host = os.environ.get("REDIS_HOST", loader.get_config()["redis_host"])
-redis_port = os.environ.get("REDIS_PORT", loader.get_config()["redis_port"])
 TRAPI_VERSION = os.environ.get("TRAPI_VERSION", "1.3")
 
 async_query_tasks = set()
@@ -62,7 +60,7 @@ async def startup_event():
     app.state.redis_connection2 = connection_factory.get_connection(connection_id="id_to_type_db")
     app.state.redis_connection3 = connection_factory.get_connection(connection_id="curie_to_bl_type_db")
     app.state.redis_connection4 = connection_factory.get_connection(connection_id="info_content_db")
-    app.state.redis_connection5 = connection_factory.get_connection(connection_id="gene_protein_db")
+    app.state.redis_connection5 = connection_factory.get_connection(connection_id="conflation_db")
     app.state.toolkit = Toolkit("https://raw.githubusercontent.com/biolink/biolink-model/2.1.0/biolink-model.yaml")
     app.state.ancestor_map = {}
 
@@ -91,11 +89,11 @@ async def shutdown_event():
     summary="Normalizes a TRAPI response object",
     description="Returns the response object with a merged knowledge graph and query graph bindings",
 )
-async def query(query: reasoner_pydantic.Query) -> reasoner_pydantic.Query:
+async def query(query: reasoner_pydantic.Query, conflation_type: Optional[ConflationType] = None) -> reasoner_pydantic.Query:
     """
     Normalizes a TRAPI compliant knowledge graph
     """
-    query.message = await normalize_message(app, query.message)
+    query.message = await normalize_message(app, query.message, conflation_type)
     return query
 
 
@@ -104,21 +102,21 @@ async def query(query: reasoner_pydantic.Query) -> reasoner_pydantic.Query:
     summary="Normalizes a TRAPI response object",
     description="Returns the response object with a merged knowledge graph and query graph bindings",
 )
-async def async_query(async_query: reasoner_pydantic.AsyncQuery):
+async def async_query(async_query: reasoner_pydantic.AsyncQuery, conflation_type: Optional[ConflationType] = None):
     """
     Normalizes a TRAPI compliant knowledge graph
     """
     # need a strong reference to task such that GC doesn't remove it mid execution...https://docs.python.org/3/library/asyncio-task.html#creating-tasks
-    task = asyncio.create_task(async_query_task(async_query))
+    task = asyncio.create_task(async_query_task(async_query, conflation_type))
     async_query_tasks.add(task)
     task.add_done_callback(async_query_tasks.discard)
 
     return JSONResponse(content={"description": f"Query commenced. Will send result to {async_query.callback}"}, status_code=200)
 
 
-async def async_query_task(async_query: reasoner_pydantic.AsyncQuery):
+async def async_query_task(async_query: reasoner_pydantic.AsyncQuery, conflation_type: Optional[ConflationType]):
     try:
-        async_query.message = await normalize_message(app, async_query.message)
+        async_query.message = await normalize_message(app, async_query.message, conflation_type)
         session = requests.Session()
         retries = Retry(
             total=3,
@@ -157,9 +155,7 @@ async def get_conflations() -> ConflationList:
     """
     Get implemented conflations
     """
-    # TODO: build from config instead of hard-coding.
-    conflations = ConflationList(conflations=["GeneProtein"])
-
+    conflations = ConflationList(conflations=list(ConflationType))
     return conflations
 
 
@@ -175,13 +171,13 @@ async def get_normalized_node_handler(
         example=["MESH:D014867", "NCIT:C34373"],
         min_items=1,
     ),
-    conflate: bool = fastapi.Query(True, description="Whether to apply conflation"),
+    conflation_type: Optional[ConflationType] = None,
 ):
     """
     Get value(s) for key(s) using redis MGET
     """
     # no_conflate = request.args.get('dontconflate',['GeneProtein'])
-    normalized_nodes = await get_normalized_nodes(app, curie, conflate)
+    normalized_nodes = await get_normalized_nodes(app, curie, conflation_type)
 
     # If curie contains at least one entry, then the only way normalized_nodes could be blank
     # would be if an error occurred during processing.
@@ -200,7 +196,7 @@ async def get_normalized_node_handler(curies: CurieList):
     """
     Get value(s) for key(s) using redis MGET
     """
-    normalized_nodes = await get_normalized_nodes(app, curies.curies, curies.conflate)
+    normalized_nodes = await get_normalized_nodes(app, curies.curies, curies.conflation_type)
 
     # If curies.curies contains at least one entry, then the only way normalized_nodes could be blank
     # would be if an error occurred during processing.
@@ -257,4 +253,4 @@ async def get_curie_prefixes_handler(
 
 
 # Override open api schema with custom schema
-app.openapi_schema = construct_open_api_schema(app)
+# app.openapi_schema = construct_open_api_schema(app)

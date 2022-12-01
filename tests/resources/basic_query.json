@@ -1,0 +1,30 @@
+{
+  "message": {
+    "query_graph": {
+      "nodes": {
+        "n1": {"ids": ["HGNC:14281"], "categories": ["biolink:Gene"]},
+        "n2": {"ids": ["DOID:0110474"], "categories": ["biolink:Disease"]}
+      },
+      "edges": {
+        "e1": {"subject": "n1", "object": "n2", "predicates": ["biolink:related_to"]}
+      }
+    },
+    "knowledge_graph": {
+      "nodes": {
+        "HGNC:14281": {"name": "CRLF2", "categories": ["biolink:Gene"]},
+        "DOID:0110474": {"name": "autosomal recessive nonsyndromic hearing loss 18B", "categories": ["biolink:Disease"]}
+      },
+      "edges": {
+        "a8575c4e-61a6-428a-bf09-fcb3e8d1644d": {"subject": "HGNC:14281", "object": "DOID:0110474", "predicate": "biolink:related_to"}
+      }
+    },
+    "results": [
+      {
+        "node_bindings": {"n1": [{"id": "HGNC:14281"}], "n2": [{"id": "DOID:0110474"}]},
+        "edge_bindings": {"e1": [{"id": "a8575c4e-61a6-428a-bf09-fcb3e8d1644d"}]}
+      }
+    ]
+  },
+  "logs": null,
+  "status": null
+}
