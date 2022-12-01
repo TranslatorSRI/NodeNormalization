@@ -14,8 +14,9 @@ def test_get_conflations(session):
     host_url = "http://127.0.0.1:8080/get_allowed_conflations"
     print(f"host_url: {host_url}")
     response = requests.get(url=host_url, headers=HEADERS)
-    print(f"{response.text}")
     assert response.status_code == 200
+    response_json = response.json()
+    assert "gene_protein" in response_json['conflations']
 
 
 def test_async_query_callback(session):
