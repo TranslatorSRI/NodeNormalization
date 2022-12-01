@@ -82,8 +82,6 @@ async def shutdown_event():
     await app.state.redis_connection4.wait_closed()
     app.state.redis_connection5.close()
     await app.state.redis_connection5.wait_closed()
-    app.state.redis_connection6.close()
-    await app.state.redis_connection6.wait_closed()
 
 
 @app.post(
