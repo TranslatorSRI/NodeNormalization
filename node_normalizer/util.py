@@ -6,6 +6,7 @@ from collections import namedtuple
 import copy
 from logging.config import dictConfig
 from logging.handlers import RotatingFileHandler
+from fastapi.logger import logger as fastapi_logger
 
 
 # loggers = {}
@@ -24,8 +25,15 @@ class LoggingUtil(object):
                 "node-norm": {"handlers": ["console"], "level": os.getenv("LOG_LEVEL", "ERROR")},
             },
         })
+        # add gunicorn handlers and configure fastapi loggers
         logger = logging.getLogger("node-norm")
-
+        gunicorn_error_logger = logging.getLogger("gunicorn.error")
+        gunicorn_logger = logging.getLogger("gunicorn")
+        uvicorn_access_logger = logging.getLogger("uvicorn.access")
+        uvicorn_access_logger.handlers = gunicorn_error_logger.handlers
+        fastapi_logger.handlers = gunicorn_error_logger.handlers
+        fastapi_logger.setLevel(gunicorn_logger.level)
+        logger.handlers += gunicorn_logger.handlers
         # if there was a file path passed in use it
         if log_file_path is not None:
             # create a rotating file handler, 100mb max per file with a max number of 10 files
