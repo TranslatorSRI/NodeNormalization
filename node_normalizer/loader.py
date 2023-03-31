@@ -11,6 +11,7 @@ import jsonschema
 import os
 from .redis_adapter import RedisConnectionFactory, RedisConnection
 from bmt import Toolkit
+from bmt.util import format as bmt_format
 
 from .util import LoggingUtil
 
@@ -42,14 +43,14 @@ class NodeLoader:
         self.semantic_types: set = set()
         self.source_prefixes: Dict = {}
 
-        self.toolkit = Toolkit("https://raw.githubusercontent.com/biolink/biolink-model/2.1.0/biolink-model.yaml")
+        self.toolkit = Toolkit()
         self.ancestor_map = {}
 
     def get_ancestors(self, input_type):
         if input_type in self.ancestor_map:
             return self.ancestor_map[input_type]
         a = self.toolkit.get_ancestors(input_type)
-        ancs = [self.toolkit.get_element(ai)["class_uri"] for ai in a]
+        ancs = [bmt_format(ai, case="pascal") for ai in a]
         if input_type not in ancs:
             ancs = [input_type] + ancs
         self.ancestor_map[input_type] = ancs
