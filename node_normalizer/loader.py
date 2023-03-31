@@ -42,7 +42,7 @@ class NodeLoader:
         self.semantic_types: set = set()
         self.source_prefixes: Dict = {}
 
-        self.toolkit = Toolkit("https://raw.githubusercontent.com/biolink/biolink-model/2.1.0/biolink-model.yaml")
+        self.toolkit = Toolkit()
         self.ancestor_map = {}
 
     def get_ancestors(self, input_type):
