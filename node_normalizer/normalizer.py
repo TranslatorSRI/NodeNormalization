@@ -460,7 +460,7 @@ async def get_eqids_and_types(
         canonical_nonan: List) -> (List, List):
     if len(canonical_nonan) == 0:
         return [], []
-    batch_size = 2500
+    batch_size = int(os.environ.get("EQ_BATCH_SIZE", 2500))
     eqids = []
     for i in range(0, len(canonical_nonan), batch_size):
         eqids += await app.state.redis_connection1.mget(*canonical_nonan[i:i+batch_size], encoding='utf-8')
