@@ -1,11 +1,12 @@
 """Test node_normalizer server.py"""
 import json
 from node_normalizer.server import app
-from starlette.testclient import TestClient
+from fastapi.testclient import TestClient
 from unittest.mock import Mock, patch
 from .helpers.redis_mocks import mock_get_equivalent_curies, mock_get_ic
 from pathlib import Path
 import os
+from bmt import Toolkit
 
 
 class MockRedis:
@@ -28,7 +29,9 @@ app.state.redis_connection2 = MockRedis({"MONDO:0005002": "biolink:Disease"})
 app.state.redis_connection3 = MockRedis({})
 app.state.redis_connection4 = MockRedis({})
 app.state.redis_connection5 = MockRedis({})
-app.state.ancestor_map = {"biolink:Disease": ["biolink:Disease", "biolink:NamedThing"]}
+#app.state.ancestor_map = {"biolink:Disease": ["biolink:Disease", "biolink:NamedThing"]}
+app.state.toolkit = Toolkit()
+app.state.ancestor_map = {}
 
 
 def test_not_found():
@@ -87,6 +90,7 @@ def test_merge():
     assert len(result) == 2
     assert "MONDO:0005002" in result
     assert "DOID:3812" in result
+    assert result["MONDO:0005002"]["type"][0] == "biolink:Disease"
 
 
 def test_empty():
