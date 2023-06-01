@@ -1,7 +1,6 @@
 name: 'Release a new version to Github Packages'
 
 on:
-    push:
     release:
         types: [published]
 
