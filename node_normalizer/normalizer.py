@@ -19,8 +19,10 @@ def get_ancestors(app, input_type):
         return app.state.ancestor_map[input_type]
     a = app.state.toolkit.get_ancestors(input_type)
     ancs = [bmt_format(ai,case="pascal") for ai in a]
-    if input_type not in ancs:
-        ancs = [input_type] + ancs
+    #if input_type is in ancs, remove it
+    if input_type in ancs:
+        ancs.remove(input_type)
+    ancs = [input_type] + ancs
     app.state.ancestor_map[input_type] = ancs
     return ancs
 
