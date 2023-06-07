@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/TranslatorIIPrototypes/NodeNormalization.svg?branch=master)](https://travis-ci.com/TranslatorIIPrototypes/NodeNormalization)
+[![Publish to GitHub Packages](https://github.com/TranslatorSRI/NodeNormalization/actions/workflows/release.yml/badge.svg)](https://github.com/TranslatorSRI/NodeNormalization/actions/workflows/release.yml)
 
 # NodeNormalization
 
