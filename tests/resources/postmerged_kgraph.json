@@ -121,8 +121,6 @@
             "subject": "NCBIGene:9496",
             "object": "MONDO:0017148",
             "predicate": "biolink:related_to",
-            "attributes": null,
-            "qualifiers": null,
             "sources": [
                 {
                     "resource_id": "infores:fake",
@@ -134,8 +132,6 @@
             "subject": "NCBIGene:9496",
             "object": "MONDO:0013238",
             "predicate": "biolink:related_to",
-            "attributes": null,
-            "qualifiers": null,
             "sources": [
                 {
                     "resource_id": "infores:fake",
@@ -147,8 +143,6 @@
             "subject": "NCBIGene:9496",
             "object": "MONDO:0005002",
             "predicate": "biolink:related_to",
-            "attributes": null,
-            "qualifiers": null,
             "sources": [
                 {
                     "resource_id": "infores:fake",
