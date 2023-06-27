@@ -63,6 +63,7 @@ async def startup_event():
     app.state.redis_connection3 = connection_factory.get_connection(connection_id="curie_to_bl_type_db")
     app.state.redis_connection4 = connection_factory.get_connection(connection_id="info_content_db")
     app.state.redis_connection5 = connection_factory.get_connection(connection_id="gene_protein_db")
+    app.state.redis_connection6 = connection_factory.get_connection(connection_id="chemical_drug_db")
     app.state.toolkit = Toolkit()
     app.state.ancestor_map = {}
 
@@ -84,6 +85,8 @@ async def shutdown_event():
     await app.state.redis_connection4.wait_closed()
     app.state.redis_connection5.close()
     await app.state.redis_connection5.wait_closed()
+    app.state.redis_connection6.close()
+    await app.state.redis_connection6.wait_closed()
 
 
 @app.post(

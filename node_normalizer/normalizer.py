@@ -475,7 +475,8 @@ async def get_eqids_and_types(
 async def get_normalized_nodes(
         app: FastAPI,
         curies: List[Union[CURIE, str]],
-        conflate: bool
+        conflate_gene_protein: bool,
+        conflate_chemical_drug: bool,
 ) -> Dict[str, Optional[str]]:
     """
     Get value(s) for key(s) using redis MGET
@@ -506,9 +507,12 @@ async def get_normalized_nodes(
             eqids, types = await get_eqids_and_types(app, canonical_nonan)
 
             # are we looking for conflated values
-            if conflate:
-                # TODO: filter to just types that have Gene or Protein?  I'm not sure it's worth it when we have pipelining
-                other_ids = await app.state.redis_connection5.mget(*canonical_nonan, encoding='utf8')
+            if conflate_gene_protein or conflate_chemical_drug:
+                other_ids = []
+                if conflate_gene_protein:
+                    other_ids.extend(await app.state.redis_connection5.mget(*canonical_nonan, encoding='utf8'))
+                if conflate_chemical_drug:
+                    other_ids.extend(await app.state.redis_connection6.mget(*canonical_nonan, encoding='utf8'))
 
                 # if there are other ids, then we want to rebuild eqids and types.  That's because even though we have them,
                 # they're not necessarily first.  For instance if what came in and got canonicalized was a protein id
