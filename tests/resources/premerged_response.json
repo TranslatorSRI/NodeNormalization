@@ -1,170 +1,211 @@
 {
-  "message": {
-    "query_graph": {
-      "nodes": {
-        "n1": {
-          "ids": ["HGNC:11603"],
-          "categories": [
-            "biolink:Gene"
-          ]
-        },
-        "n2": {
-          "ids": ["NCBIGene:9496"],
-          "categories": [
-            "biolink:Gene"
-          ]
-        },
-        "n3": {
-          "ids": ["MONDO:0005002"],
-          "categories": [
-            "biolink:Disease"
-          ]
-        },
-        "n4": {
-          "ids": ["DOID:3083"],
-          "categories": [
-            "biolink:Disease"
-          ]
-        },
-        "n5": {
-          "categories": [
-            "biolink:Disease"
-          ]
-        }
-      },
-      "edges": {
-        "e1": {
-          "subject": "n1",
-          "object": "n3"
-        },
-        "e2": {
-          "subject": "n2",
-          "object": "n4",
-          "predicates": ["biolink:related_to"]
-        },
-        "e3": {
-          "subject": "n1",
-          "object": "n5"
-        }
-      }
-    },
-    "knowledge_graph": {
-      "nodes": {
-        "HGNC:11603": {
-          "name": "TBX4",
-          "categories": [
-            "biolink:Gene"
-          ]
-        },
-        "NCBIGene:9496": {
-          "name": "T-box transcription factor 4",
-          "categories": [
-            "biolink:Gene"
-          ]
-        },
-        "MONDO:0005002": {
-          "name": "chronic obstructive pulmonary disease",
-          "categories": [
-            "biolink:Disease"
-          ]
-        },
-        "DOID:3083": {
-          "name": "chronic obstructive pulmonary disease",
-          "categories": [
-            "biolink:Disease"
-          ]
-        },
-        "UMLS:CN202575": {
-          "name": "heritable pulmonary arterial hypertension",
-          "categories": [
-            "biolink:Disease"
-          ]
-        }
-      },
-      "edges": {
-        "a8575c4e-61a6-428a-bf09-fcb3e8d1644d": {
-          "subject": "HGNC:11603",
-          "object": "MONDO:0005002",
-          "predicate": "biolink:related_to"
-        },
-        "2d38345a-e9bf-4943-accb-dccba351dd04": {
-          "subject": "NCBIGene:9496",
-          "object": "DOID:3083",
-          "predicate": "biolink:related_to"
-        },
-        "044a7916-fba9-4b4f-ae48-f0815b0b222d": {
-          "subject": "HGNC:11603",
-          "object": "UMLS:CN202575",
-          "predicate": "biolink:related_to"
-        }
-      }
-    },
-    "results": [
-      {
-        "node_bindings": {
-          "n1": [
-            {
-              "id": "HGNC:11603"
+    "message": {
+        "query_graph": {
+            "nodes": {
+                "n1": {
+                    "ids": [
+                        "HGNC:11603"
+                    ],
+                    "categories": [
+                        "biolink:Gene"
+                    ]
+                },
+                "n2": {
+                    "ids": [
+                        "NCBIGene:9496"
+                    ],
+                    "categories": [
+                        "biolink:Gene"
+                    ]
+                },
+                "n3": {
+                    "ids": [
+                        "MONDO:0005002"
+                    ],
+                    "categories": [
+                        "biolink:Disease"
+                    ]
+                },
+                "n4": {
+                    "ids": [
+                        "DOID:3083"
+                    ],
+                    "categories": [
+                        "biolink:Disease"
+                    ]
+                },
+                "n5": {
+                    "categories": [
+                        "biolink:Disease"
+                    ]
+                }
+            },
+            "edges": {
+                "e1": {
+                    "subject": "n1",
+                    "object": "n3"
+                },
+                "e2": {
+                    "subject": "n2",
+                    "object": "n4",
+                    "predicates": [
+                        "biolink:related_to"
+                    ]
+                },
+                "e3": {
+                    "subject": "n1",
+                    "object": "n5"
+                }
             }
-          ],
-          "n3": [
-            {
-              "id": "MONDO:0005002"
-            }
-          ]
         },
-        "edge_bindings": {
-          "e1": [
-            {
-              "id": "a8575c4e-61a6-428a-bf09-fcb3e8d1644d"
+        "knowledge_graph": {
+            "nodes": {
+                "HGNC:11603": {
+                    "categories": [
+                        "biolink:Gene"
+                    ],
+                    "name": "TBX4"
+                },
+                "NCBIGene:9496": {
+                    "categories": [
+                        "biolink:Gene"
+                    ],
+                    "name": "T-box transcription factor 4"
+                },
+                "MONDO:0005002": {
+                    "categories": [
+                        "biolink:Disease"
+                    ],
+                    "name": "chronic obstructive pulmonary disease"
+                },
+                "DOID:3083": {
+                    "categories": [
+                        "biolink:Disease"
+                    ],
+                    "name": "chronic obstructive pulmonary disease"
+                },
+                "UMLS:CN202575": {
+                    "categories": [
+                        "biolink:Disease"
+                    ],
+                    "name": "heritable pulmonary arterial hypertension"
+                }
+            },
+            "edges": {
+                "a8575c4e-61a6-428a-bf09-fcb3e8d1644d": {
+                    "subject": "HGNC:11603",
+                    "object": "MONDO:0005002",
+                    "predicate": "biolink:related_to",
+                    "sources": [
+                        {
+                            "resource_id": "infores:fake",
+                            "resource_role": "primary_knowledge_source"
+                        }
+                    ]
+                },
+                "2d38345a-e9bf-4943-accb-dccba351dd04": {
+                    "subject": "NCBIGene:9496",
+                    "object": "DOID:3083",
+                    "predicate": "biolink:related_to",
+                    "sources": [
+                        {
+                            "resource_id": "infores:fake",
+                            "resource_role": "primary_knowledge_source"
+                        }
+                    ]
+                },
+                "044a7916-fba9-4b4f-ae48-f0815b0b222d": {
+                    "subject": "HGNC:11603",
+                    "object": "UMLS:CN202575",
+                    "predicate": "biolink:related_to",
+                    "sources": [
+                        {
+                            "resource_id": "infores:fake",
+                            "resource_role": "primary_knowledge_source"
+                        }
+                    ]
+                }
             }
-          ]
-        }
-      },
-      {
-        "node_bindings": {
-          "n2": [
-            {
-              "id": "NCBIGene:9496"
-            }
-          ],
-          "n4": [
-            {
-              "id": "DOID:3083"
-            }
-          ]
         },
-        "edge_bindings": {
-          "e2": [
+        "results": [
             {
-              "id": "2d38345a-e9bf-4943-accb-dccba351dd04"
-            }
-          ]
-        }
-      },
-      {
-        "node_bindings": {
-          "n1": [
+                "node_bindings": {
+                    "n1": [
+                        {
+                            "id": "HGNC:11603"
+                        }
+                    ],
+                    "n3": [
+                        {
+                            "id": "MONDO:0005002"
+                        }
+                    ]
+                },
+                "analyses": [
+                    {
+                        "resource_id": "infores:fake",
+                        "edge_bindings": {
+                            "e1": [
+                                {
+                                    "id": "a8575c4e-61a6-428a-bf09-fcb3e8d1644d"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
             {
-              "id": "HGNC:11603"
-            }
-          ],
-          "n5": [
+                "node_bindings": {
+                    "n2": [
+                        {
+                            "id": "NCBIGene:9496"
+                        }
+                    ],
+                    "n4": [
+                        {
+                            "id": "DOID:3083"
+                        }
+                    ]
+                },
+                "analyses": [
+                    {
+                        "resource_id": "infores:fake",
+                        "edge_bindings": {
+                            "e2": [
+                                {
+                                    "id": "2d38345a-e9bf-4943-accb-dccba351dd04"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
             {
-              "id": "UMLS:CN202575"
+                "node_bindings": {
+                    "n1": [
+                        {
+                            "id": "HGNC:11603"
+                        }
+                    ],
+                    "n5": [
+                        {
+                            "id": "UMLS:CN202575"
+                        }
+                    ]
+                },
+                "analyses": [
+                    {
+                        "resource_id": "infores:fake",
+                        "edge_bindings": {
+                            "e3": [
+                                {
+                                    "id": "044a7916-fba9-4b4f-ae48-f0815b0b222d"
+                                }
+                            ]
+                        }
+                    }
+                ]
             }
-          ]
-        },
-        "edge_bindings": {
-          "e3": [
-            {
-              "id": "044a7916-fba9-4b4f-ae48-f0815b0b222d"
-            }
-          ]
-        }
-      }
-    ]
-  },
-  "logs": null,
-  "status": null
+        ]
+    }
 }

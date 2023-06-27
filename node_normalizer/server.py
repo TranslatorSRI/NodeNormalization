@@ -90,6 +90,9 @@ async def shutdown_event():
     "/query",
     summary="Normalizes a TRAPI response object",
     description="Returns the response object with a merged knowledge graph and query graph bindings",
+    response_model=reasoner_pydantic.Query,
+    response_model_exclude_none=True,
+    response_model_exclude_unset=True
 )
 async def query(query: reasoner_pydantic.Query) -> reasoner_pydantic.Query:
     """
