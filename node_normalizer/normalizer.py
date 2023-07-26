@@ -415,7 +415,7 @@ async def get_equivalent_curies(
     try:
 
         # Get the equivalent list primary key identifier
-        value = await get_normalized_nodes(app, [curie], True)
+        value = await get_normalized_nodes(app, [curie], True, True)
 
         # did we get a valid response
         if value is None:
