@@ -201,7 +201,7 @@ class NodeLoader:
                             continue
 
         except Exception as e:
-            logger.error(f"Exception thrown in convert_to_KGX(): {''.join(traceback.format_exception(e))}")
+            logger.error(f"Exception thrown in convert_to_KGX(): {''.join(traceback.format_exc())}")
             ret_val = False
 
         # return to the caller
@@ -280,7 +280,7 @@ class NodeLoader:
                 logger.error(f"Error: 1 or more data files were incorrect")
                 ret_val = False
         except Exception as e:
-            logger.error(f"Exception thrown in load(): {''.join(traceback.format_exception(e))}")
+            logger.error(f"Exception thrown in load(): {''.join(traceback.format_exc())}")
             raise e
 
         # return to the caller

@@ -53,7 +53,7 @@ async def normalize_message(app: FastAPI, message: Message) -> Message:
 
         return ret
     except Exception as e:
-        exception_str = "".join(traceback.format_exception(e))
+        exception_str = "".join(traceback.format_exc())
         logger.error(f'Exception: {exception_str}')
 
 
@@ -130,7 +130,7 @@ async def normalize_results(app,
                 merged_result['node_bindings'][node_code] = merged_node_bindings
 
         except Exception as e:
-            exception_str = "".join(traceback.format_exception(e))
+            exception_str = "".join(traceback.format_exc())
             logger.error(f'Exception: {exception_str}')
 
         edge_binding_seen = set()
@@ -163,7 +163,7 @@ async def normalize_results(app,
             hashed_result = json.dumps(merged_result, sort_keys=True)
 
         except Exception as e:  # TODO determine exception(s) to catch
-            exception_str = "".join(traceback.format_exception(e))
+            exception_str = "".join(traceback.format_exc())
             logger.error(f'Exception: {exception_str}')
             hashed_result = False
 
@@ -217,7 +217,7 @@ async def normalize_qgraph(app: FastAPI, qgraph: QueryGraph) -> QueryGraph:
                 merged_nodes[node_code]['ids'] = list(primary_ids)
                 node_code_map[node_code] = list(primary_ids)
         except Exception as e:
-            exception_str = "".join(traceback.format_exception(e))
+            exception_str = "".join(traceback.format_exc())
             logger.error(f'Exception: {exception_str}')
 
     return QueryGraph.parse_obj({
@@ -393,7 +393,7 @@ async def normalize_kgraph(
             merged_edge['object'] = primary_object
             merged_kgraph['edges'][edge_id] = merged_edge
     except Exception as e:
-        exception_str = "".join(traceback.format_exception(e))
+        exception_str = "".join(traceback.format_exc())
         logger.error(f'Exception: {exception_str}')
 
     return KnowledgeGraph.parse_obj(merged_kgraph), node_id_map, edge_id_map
@@ -429,7 +429,7 @@ async def get_equivalent_curies(
             return default_return
 
     except Exception as e:
-        exception_str = "".join(traceback.format_exception(e))
+        exception_str = "".join(traceback.format_exc())
         logger.error(f'Exception: {exception_str}')
         return default_return
 
@@ -563,7 +563,7 @@ async def get_normalized_nodes(
         }
 
     except Exception as e:
-        exception_str = "".join(traceback.format_exception(e))
+        exception_str = "".join(traceback.format_exc())
         logger.error(f'Exception: {exception_str}')
 
     return normal_nodes
@@ -681,7 +681,7 @@ async def get_curie_prefixes(
                 # set the return data
                 ret_val[item] = {'curie_prefix': curies}
     except Exception as e:
-        exception_str = "".join(traceback.format_exception(e))
+        exception_str = "".join(traceback.format_exc())
         logger.error(f'Exception: {exception_str}')
 
     return ret_val
@@ -721,7 +721,7 @@ def _merge_node_attributes(node_a: Dict, node_b, merged_count: int) -> Dict:
 
             node_a['attributes'] = node_a['attributes'] + new_attribute_list
     except Exception as e:
-        exception_str = "".join(traceback.format_exception(e))
+        exception_str = "".join(traceback.format_exc())
         logger.error(f'Exception: {exception_str}')
 
     return node_a
@@ -771,6 +771,6 @@ def _hash_attributes(attributes: List[Attribute] = None) -> Union[int, bool]:
 
         return hash(frozenset(new_attributes))
     except Exception as e:
-        exception_str = "".join(traceback.format_exception(e))
+        exception_str = "".join(traceback.format_exc())
         logger.error(f'Exception: {exception_str}')
         return False
