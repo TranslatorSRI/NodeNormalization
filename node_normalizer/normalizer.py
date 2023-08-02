@@ -482,7 +482,8 @@ async def get_eqids_and_types(
 async def get_normalized_nodes(
         app: FastAPI,
         curies: List[Union[CURIE, str]],
-        conflate: bool
+        conflate: bool,
+        include_descriptions: bool = False,
 ) -> Dict[str, Optional[str]]:
     """
     Get value(s) for key(s) using redis MGET
@@ -558,7 +559,7 @@ async def get_normalized_nodes(
 
         # output the final result
         normal_nodes = {
-            input_curie: await create_node(canonical_id, dereference_ids, dereference_types, info_contents)
+            input_curie: await create_node(canonical_id, dereference_ids, dereference_types, info_contents, include_descriptions=include_descriptions)
             for input_curie, canonical_id in zip(curies, canonical_ids)
         }
 

@@ -176,12 +176,13 @@ async def get_normalized_node_handler(
         min_items=1,
     ),
     conflate: bool = fastapi.Query(True, description="Whether to apply conflation"),
+    description: bool = fastapi.Query(False, description="Whether to apply return curie descriptions when possible"),
 ):
     """
     Get value(s) for key(s) using redis MGET
     """
     # no_conflate = request.args.get('dontconflate',['GeneProtein'])
-    normalized_nodes = await get_normalized_nodes(app, curie, conflate)
+    normalized_nodes = await get_normalized_nodes(app, curie, conflate, include_descriptions= description)
 
     # If curie contains at least one entry, then the only way normalized_nodes could be blank
     # would be if an error occurred during processing.
@@ -200,7 +201,7 @@ async def get_normalized_node_handler(curies: CurieList):
     """
     Get value(s) for key(s) using redis MGET
     """
-    normalized_nodes = await get_normalized_nodes(app, curies.curies, curies.conflate)
+    normalized_nodes = await get_normalized_nodes(app, curies.curies, curies.conflate, curies.description)
 
     # If curies.curies contains at least one entry, then the only way normalized_nodes could be blank
     # would be if an error occurred during processing.
