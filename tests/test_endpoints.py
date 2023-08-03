@@ -131,7 +131,7 @@ class TestServer:
 
         result = postmerged_from_api["message"]["results"][0]
         # There are 2 coming in and no merging, so should be 2 going out
-        assert len(result["edge_bindings"]["treats"]) == 2
+        assert len(result["analyses"][0]["edge_bindings"]["treats"]) == 2
         assert len(result["node_bindings"]["drug"]) == 2
 
 
