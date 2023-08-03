@@ -1,133 +1,128 @@
 {
-  "message": {
-    "query_graph": {
-      "nodes": {
-        "n0": {
-          "ids": ["NODE_1"],
-          "categories": ["biolink:Disease"],
-          "is_set": false,
-          "constraints": []
+    "message": {
+        "query_graph": {
+            "nodes": {
+                "n0": {
+                    "ids": [
+                        "NODE_1"
+                    ],
+                    "categories": [
+                        "biolink:Disease"
+                    ],
+                    "is_set": false,
+                    "constraints": []
+                },
+                "n1": {
+                    "ids": [
+                        "NODE_2"
+                    ],
+                    "categories": [
+                        "biolink:ChemicalSubstance"
+                    ],
+                    "is_set": false,
+                    "constraints": [],
+                    "set": true
+                }
+            },
+            "edges": {
+                "e01": {
+                    "subject": "n0",
+                    "object": "n1",
+                    "predicates": [
+                        "biolink:correlated_with"
+                    ]
+                }
+            }
         },
-        "n1": {
-          "ids": ["NODE_2"],
-          "categories": ["biolink:ChemicalSubstance"],
-          "is_set": false,
-          "set": true,
-          "constraints": []
-        }
-      },
-      "edges": {
-        "e01": {
-          "subject": "n0",
-          "object": "n1",
-          "predicates": ["biolink:correlated_with"],
-          "attribute_constraints": [],
-          "qualifier_constraints": [],
-          "knowledge_type": null
-        }
-      }
-    },
-    "knowledge_graph": {
-      "nodes": {
-        "NODE_1": {
-          "categories": [
-            "biolink:D",
-            "biolink:I",
-            "biolink:S",
-            "biolink:E",
-            "biolink:A",
-            "biolink:S",
-            "biolink:E"
-          ],
-          "name": null,
-          "attributes": null
+        "knowledge_graph": {
+            "nodes": {
+                "NODE_1": {
+                    "categories": [
+                        "biolink:A",
+                        "biolink:D",
+                        "biolink:S",
+                        "biolink:E",
+                        "biolink:I"
+                    ]
+                },
+                "NODE_2": {
+                    "categories": [
+                        "biolink:ChemicalSubstance"
+                    ],
+                    "name": "AvgDailyOzoneExposure,AvgDailyOzoneExposure_StudyAvg,AvgDailyOzoneExposure_StudyMax,MaxDailyOzoneExposure,MaxDailyOzoneExposure_StudyAvg,MaxDailyOzoneExposure_StudyMax,AvgDailyOzoneExposure_qcut,AvgDailyOzoneExposure_StudyAvg_qcut,AvgDailyOzoneExposure_StudyMax_qcut,MaxDailyOzoneExposure_qcut,MaxDailyOzoneExposure_StudyAvg_qcut,MaxDailyOzoneExposure_StudyMax_qcut,MaxDailyOzoneExposure_2,MaxDailyOzoneExposure_2_qcut",
+                    "attributes": [
+                        {
+                            "attribute_type_id": "EDAM:data_0006",
+                            "value": [
+                                "PUBCHEM:24823",
+                                "SCTID:40057008",
+                                "NODE_2",
+                                "ENVO:01000537"
+                            ],
+                            "original_attribute_name": "equivalent_identifiers"
+                        }
+                    ]
+                }
+            },
+            "edges": {
+                "EDGE_1": {
+                    "subject": "NODE_1",
+                    "object": "NODE_2",
+                    "predicate": "biolink:correlated_with",
+                    "sources": [
+                        {
+                            "resource_id": "infores:fake",
+                            "resource_role": "primary_knowledge_source"
+                        }
+                    ],
+                    "attributes": [
+                        {
+                            "attribute_type_id": "MetaInformation",
+                            "value": "https://icees.renci.org:16339/knowledge_graph_one_hop?reasoner=true",
+                            "original_attribute_name": "provenance"
+                        }
+                    ]
+                }
+            }
         },
-        "NODE_2": {
-          "categories": [
-            "biolink:ChemicalSubstance"
-          ],
-          "name": "AvgDailyOzoneExposure,AvgDailyOzoneExposure_StudyAvg,AvgDailyOzoneExposure_StudyMax,MaxDailyOzoneExposure,MaxDailyOzoneExposure_StudyAvg,MaxDailyOzoneExposure_StudyMax,AvgDailyOzoneExposure_qcut,AvgDailyOzoneExposure_StudyAvg_qcut,AvgDailyOzoneExposure_StudyMax_qcut,MaxDailyOzoneExposure_qcut,MaxDailyOzoneExposure_StudyAvg_qcut,MaxDailyOzoneExposure_StudyMax_qcut,MaxDailyOzoneExposure_2,MaxDailyOzoneExposure_2_qcut",
-          "attributes": [
+        "results": [
             {
-              "attribute_type_id": "EDAM:data_0006",
-              "value": [
-                "PUBCHEM:24823",
-                "SCTID:40057008",
-                "NODE_2",
-                "ENVO:01000537"
-              ],
-              "description": null,
-              "original_attribute_name": "equivalent_identifiers",
-              "value_url": null,
-              "attribute_source": null,
-              "value_type_id": null,
-              "attributes": null
+                "node_bindings": {
+                    "n0": [
+                        {
+                            "id": "NODE_1"
+                        }
+                    ],
+                    "n1": [
+                        {
+                            "id": "NODE_2",
+                            "properties": [
+                                "application"
+                            ],
+                            "p_values": [
+                                6.846079020423244e-10
+                            ],
+                            "coalescence_method": "property_enrichment"
+                        }
+                    ]
+                },
+                "analyses": [
+                    {
+                        "resource_id": "infores:fake",
+                        "edge_bindings": {
+                            "e01": [
+                                {
+                                    "id": "EDGE_1",
+                                    "predicate": "same_predicate",
+                                    "a_key": [
+                                        "a_value"
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ]
             }
-          ]
-        }
-      },
-      "edges": {
-        "EDGE_1": {
-          "subject": "NODE_1",
-          "object": "NODE_2",
-          "predicate": "biolink:correlated_with",
-          "attributes": [
-            {
-              "attribute_type_id": "MetaInformation",
-              "value": "https://icees.renci.org:16339/knowledge_graph_one_hop?reasoner=true",
-              "original_attribute_name": "provenance",
-              "value_url": null,
-              "description": null,
-              "attribute_source": null,
-              "value_type_id": null,
-              "attributes": null
-            }
-          ],
-          "qualifiers": null
-        }
-      }
-    },
-    "results": [
-      {
-        "node_bindings": {
-          "n0": [
-            {
-              "id": "NODE_1",
-              "query_id": null,
-              "attributes": null
-            }
-          ],
-          "n1": [
-            {
-              "id": "NODE_2",
-              "coalescence_method": "property_enrichment",
-              "p_values": [
-                6.846079020423244e-10
-              ],
-              "properties": [
-                "application"
-              ],
-              "query_id": null,
-              "attributes": null
-            }
-          ]
-        },
-        "edge_bindings": {
-          "e01": [
-            {
-              "id": "EDGE_1",
-              "a_key": ["a_value"],
-              "predicate": "same_predicate",
-              "attributes": null
-            }
-          ]
-        },
-        "score": null
-      }
-    ]
-  },
-  "logs": null,
-  "status": null,
-  "log_level": null,
-  "workflow": null
+        ]
+    }
 }

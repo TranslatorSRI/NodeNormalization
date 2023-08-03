@@ -5,6 +5,8 @@ services:
     image: redis:alpine
     expose:
       - 6379
+    ports:
+      - 6379:6379
         
   r3:
     container_name: r3

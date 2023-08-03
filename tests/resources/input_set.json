@@ -33,8 +33,18 @@
       },
       "edges":
       {
-        "edge1": {"subject": "MONDO:0005002", "object":  "PUBCHEM.COMPOUND:2468", "predicate": "biolink:treats"},
-        "edge2": {"subject": "MONDO:0005002", "object":  "PUBCHEM.COMPOUND:3488", "predicate": "biolink:treats"}
+        "edge1": {"subject": "MONDO:0005002", "object":  "PUBCHEM.COMPOUND:2468", "predicate": "biolink:treats", "sources": [
+          {
+            "resource_id": "infores:fake",
+            "resource_role": "primary_knowledge_source"
+          }
+        ]},
+        "edge2": {"subject": "MONDO:0005002", "object":  "PUBCHEM.COMPOUND:3488", "predicate": "biolink:treats", "sources": [
+          {
+            "resource_id": "infores:fake",
+            "resource_role": "primary_knowledge_source"
+          }
+        ]}
       }
     },
     "results":
@@ -57,10 +67,14 @@
             ]
           }
         ]},
-        "edge_bindings":
-        {
-          "treats": [{"id":"edge1"},{ "id":"edge2"}]
-        }
+        "analyses": [
+          {
+            "resource_id": "infores:fake",
+            "edge_bindings": {
+              "treats": [{"id":"edge1"},{ "id":"edge2"}]
+            }
+          }
+        ]
       }
     ]
   }
