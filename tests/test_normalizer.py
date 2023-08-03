@@ -2,6 +2,8 @@
 import json
 import pytest
 
+from fastapi.encoders import jsonable_encoder
+
 from copy import deepcopy
 
 from deepdiff import DeepDiff
@@ -134,7 +136,7 @@ class TestNormalizer:
 
         edges: dict = {}
         for code, edge in postmerged_from_api.edges.items():
-            edges.update({code: edge.dict()})
+            edges.update({code: jsonable_encoder(edge.dict(exclude_unset=True, exclude_none=True))})
 
         post = {"nodes": nodes, "edges": edges}
 

@@ -72,7 +72,7 @@ async def normalize_results(app,
     for result in results:
         merged_result = {
             'node_bindings': {},
-            'edge_bindings': {}
+            'analyses': []
         }
 
         node_binding_seen = set()
@@ -136,31 +136,36 @@ async def normalize_results(app,
         edge_binding_seen = set()
 
         try:
-            for edge_code, edge_bindings in result.edge_bindings.items():
-                merged_edge_bindings = []
-                for e_bind in edge_bindings:
-                    merged_binding = e_bind.dict()
-                    merged_binding['id'] = edge_id_map[e_bind.id]
+            for analysis in result.analyses:
+                for edge_code, edge_bindings in analysis.edge_bindings.items():
+                    merged_edge_bindings = []
+                    for e_bind in edge_bindings:
+                        merged_binding = e_bind.dict()
+                        merged_binding['id'] = edge_id_map[e_bind.id]
 
-                    edge_binding_hash = frozenset([
-                        (k, freeze(v))
-                        for k, v in merged_binding.items()
-                    ])
+                        edge_binding_hash = frozenset([
+                            (k, freeze(v))
+                            for k, v in merged_binding.items()
+                        ])
 
-                    if edge_binding_hash in edge_binding_seen:
-                        continue
-                    else:
-                        edge_binding_seen.add(edge_binding_hash)
-                        merged_edge_bindings.append(merged_binding)
+                        if edge_binding_hash in edge_binding_seen:
+                            continue
+                        else:
+                            edge_binding_seen.add(edge_binding_hash)
+                            merged_edge_bindings.append(merged_binding)
 
-                merged_result['edge_bindings'][edge_code] = merged_edge_bindings
+                    analysis.edge_bindings[edge_code] = merged_edge_bindings
+                    merged_result['analyses'].append(analysis.dict())
         except Exception as e:
             logger.exception(e)
 
         try:
             # This used to have some list comprehension based on types.  But in TRAPI 1.1 the list/dicts get pretty deep.
             # This is simpler, and the sort_keys argument makes sure we get a constant result.
-            hashed_result = json.dumps(merged_result, sort_keys=True)
+            #THis is for regular json
+            #hashed_result = json.dumps(merged_result, sort_keys=True)
+            #This is for orjson
+            hashed_result = json.dumps(merged_result, option=json.OPT_SORT_KEYS)
 
         except Exception as e:  # TODO determine exception(s) to catch
             exception_str = "".join(traceback.format_exc())

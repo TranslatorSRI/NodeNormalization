@@ -10,6 +10,8 @@ from unittest.mock import Mock, patch
 from deepdiff import DeepDiff
 import fastapi
 
+from reasoner_pydantic import Response
+
 # Need to add to sources root to avoid linter warnings
 from .helpers.redis_mocks import mock_get_equivalent_curies
 from .helpers.redis_mocks import mock_get_ic
@@ -48,8 +50,12 @@ class TestServer:
         with open(premerged_response, "r") as pre:
             premerged_data = json.load(pre)
 
+        #validate
+        isvalid=Response.parse_obj(premerged_data)
+
         with open(postmerged_response, "r") as post:
             postmerged_from_file = json.load(post)
+        isvalid=Response.parse_obj(postmerged_from_file)
 
         response = self.test_client.post("/query", json=premerged_data)
         postmerged_from_api = json.loads(response.text)
@@ -125,7 +131,7 @@ class TestServer:
 
         result = postmerged_from_api["message"]["results"][0]
         # There are 2 coming in and no merging, so should be 2 going out
-        assert len(result["edge_bindings"]["treats"]) == 2
+        assert len(result["analyses"][0]["edge_bindings"]["treats"]) == 2
         assert len(result["node_bindings"]["drug"]) == 2
 
 
