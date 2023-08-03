@@ -41,6 +41,17 @@
 							"gubernacular bulb"
 						],
 						"pattern": "^.*$"
+					},
+					"d": {
+						"$id": "#root/equivalent_identifiers/items/description",
+						"title": "Description",
+						"type": "array",
+						"items": {"type": "string"},
+						"default": [],
+						"examples": [
+							"gubernacular bulb"
+						],
+						"pattern": "^.*$"
 					}
 				}
 			}

@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import traceback
 from pathlib import Path
 from itertools import islice
 from datetime import datetime
@@ -200,7 +201,7 @@ class NodeLoader:
                             continue
 
         except Exception as e:
-            logger.error(f"Exception thrown in convert_to_KGX(): {e}")
+            logger.error(f"Exception thrown in convert_to_KGX(): {''.join(traceback.format_exc())}")
             ret_val = False
 
         # return to the caller
@@ -279,7 +280,7 @@ class NodeLoader:
                 logger.error(f"Error: 1 or more data files were incorrect")
                 ret_val = False
         except Exception as e:
-            logger.error(f"Exception thrown in load(): {e}")
+            logger.error(f"Exception thrown in load(): {''.join(traceback.format_exc())}")
             raise e
 
         # return to the caller
@@ -295,7 +296,7 @@ class NodeLoader:
 
         types_prefixes_pipeline = types_prefixes_redis.pipeline()
         # capture all keys except semenatic_types , as that would be the one that will contain the sum of all semantic types
-        meta_data_keys = list(filter(lambda key: key != "semantic_types", meta_data_keys[0]))
+        meta_data_keys = list(filter(lambda key: key != "semantic_types", meta_data_keys))
 
         # get actual data
         for meta_data_key in meta_data_keys:
@@ -306,7 +307,7 @@ class NodeLoader:
         all_meta_data = {}
         for meta_data_key, meta_datum in zip(meta_data_keys, meta_data):
             if meta_datum:
-                all_meta_data[meta_data_key.decode("utf-8")] = json.loads(meta_datum.decode("utf-8"))
+                all_meta_data[meta_data_key] = json.loads(meta_datum.decode("utf-8"))
         sources_prefix = {}
         for meta_data_key, data in all_meta_data.items():
             prefix_counts = data["source_prefixes"]

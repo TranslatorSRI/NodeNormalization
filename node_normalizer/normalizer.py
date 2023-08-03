@@ -2,6 +2,7 @@ import orjson as json
 import logging
 import os
 import uuid
+import traceback
 from typing import List, Dict, Optional, Any, Set, Tuple, Union
 from uuid import UUID
 from bmt.util import format as bmt_format
@@ -52,7 +53,8 @@ async def normalize_message(app: FastAPI, message: Message) -> Message:
 
         return ret
     except Exception as e:
-        logger.error(f'normalize_message Exception: {e}')
+        exception_str = "".join(traceback.format_exc())
+        logger.error(f'Exception: {exception_str}')
 
 
 async def normalize_results(app,
@@ -128,7 +130,8 @@ async def normalize_results(app,
                 merged_result['node_bindings'][node_code] = merged_node_bindings
 
         except Exception as e:
-            logger.exception(e)
+            exception_str = "".join(traceback.format_exc())
+            logger.error(f'Exception: {exception_str}')
 
         edge_binding_seen = set()
 
@@ -160,7 +163,8 @@ async def normalize_results(app,
             hashed_result = json.dumps(merged_result, sort_keys=True)
 
         except Exception as e:  # TODO determine exception(s) to catch
-            logger.error(f'normalize_results Exception: {e}')
+            exception_str = "".join(traceback.format_exc())
+            logger.error(f'Exception: {exception_str}')
             hashed_result = False
 
         if hashed_result is not False:
@@ -213,7 +217,8 @@ async def normalize_qgraph(app: FastAPI, qgraph: QueryGraph) -> QueryGraph:
                 merged_nodes[node_code]['ids'] = list(primary_ids)
                 node_code_map[node_code] = list(primary_ids)
         except Exception as e:
-            logger.error(f'normalize_qgraph Exception: {e}')
+            exception_str = "".join(traceback.format_exc())
+            logger.error(f'Exception: {exception_str}')
 
     return QueryGraph.parse_obj({
         'nodes': merged_nodes,
@@ -388,7 +393,8 @@ async def normalize_kgraph(
             merged_edge['object'] = primary_object
             merged_kgraph['edges'][edge_id] = merged_edge
     except Exception as e:
-        logger.error(f'normalize_kgraph Exception: {e}')
+        exception_str = "".join(traceback.format_exc())
+        logger.error(f'Exception: {exception_str}')
 
     return KnowledgeGraph.parse_obj(merged_kgraph), node_id_map, edge_id_map
 
@@ -423,7 +429,8 @@ async def get_equivalent_curies(
             return default_return
 
     except Exception as e:
-        logger.error(f'get_equivalent_curies Exception: {e}')
+        exception_str = "".join(traceback.format_exc())
+        logger.error(f'Exception: {exception_str}')
         return default_return
 
     # return the curie normalization data
@@ -459,7 +466,7 @@ async def get_info_content(
 
 async def get_eqids_and_types(
         app: FastAPI,
-        canonical_nonan: List) -> (List, List):
+        canonical_nonan: List) -> Tuple[List, List]:
     if len(canonical_nonan) == 0:
         return [], []
     batch_size = int(os.environ.get("EQ_BATCH_SIZE", 2500))
@@ -556,7 +563,8 @@ async def get_normalized_nodes(
         }
 
     except Exception as e:
-        logger.error(f'Exception: {e}')
+        exception_str = "".join(traceback.format_exc())
+        logger.error(f'Exception: {exception_str}')
 
     return normal_nodes
 
@@ -585,7 +593,7 @@ async def get_info_content_attribute(app, canonical_nonan) -> dict:
     return new_attrib
 
 
-async def create_node(canonical_id, equivalent_ids, types, info_contents):
+async def create_node(canonical_id, equivalent_ids, types, info_contents, include_descriptions=True):
     """Construct the output format given the compressed redis data"""
     # It's possible that we didn't find a canonical_id
     if canonical_id is None:
@@ -604,10 +612,26 @@ async def create_node(canonical_id, equivalent_ids, types, info_contents):
         # Sometimes, nothing has a label :(
         node = {"id": {"identifier": eids[0]['i']}}
 
-    # now need to reformat the identifier keys.  It could be cleaner but we have to worry about if there is a label
-    node['equivalent_identifiers'] = [{"identifier": eqid["i"], "label": eqid["l"]} if "l" in eqid
-                                      else {"identifier": eqid["i"]} for eqid in eids]
+    # if descriptions are enabled look for the first available description and use that 
+    if include_descriptions:
+        description = list(
+            map(
+                lambda x: x[0],
+                filter(lambda x: len(x) > 0 , [eid['d'] for eid in eids if 'd' in eid])
+                )
+        )[0]
+        node["id"]["description"] = description
 
+    # now need to reformat the identifier keys.  It could be cleaner but we have to worry about if there is a label
+    node["equivalent_identifiers"] = []
+    for eqid in eids:
+        eq_item = {"identifier": eqid["i"]}
+        if "l" in eqid:
+            eq_item["label"] = eqid["l"]
+        # if descriptions is enabled and exist add them to each eq_id entry
+        if include_descriptions and "d" in eqid and len(eqid["d"]):
+            eq_item["description"] = eqid["d"][0]
+        node["equivalent_identifiers"].append(eq_item)
     node['type'] = types[canonical_id]
 
     # add the info content to the node if we got one
@@ -657,7 +681,8 @@ async def get_curie_prefixes(
                 # set the return data
                 ret_val[item] = {'curie_prefix': curies}
     except Exception as e:
-        logger.error(f'get_curie_prefixes Exception: {e}')
+        exception_str = "".join(traceback.format_exc())
+        logger.error(f'Exception: {exception_str}')
 
     return ret_val
 
@@ -696,7 +721,8 @@ def _merge_node_attributes(node_a: Dict, node_b, merged_count: int) -> Dict:
 
             node_a['attributes'] = node_a['attributes'] + new_attribute_list
     except Exception as e:
-        logger.error(f'_merge_node_attributes Exception {e}')
+        exception_str = "".join(traceback.format_exc())
+        logger.error(f'Exception: {exception_str}')
 
     return node_a
 
@@ -745,5 +771,6 @@ def _hash_attributes(attributes: List[Attribute] = None) -> Union[int, bool]:
 
         return hash(frozenset(new_attributes))
     except Exception as e:
-        logger.error(f'_hash_attributes Exception: {e}')
+        exception_str = "".join(traceback.format_exc())
+        logger.error(f'Exception: {exception_str}')
         return False
