@@ -623,13 +623,14 @@ async def create_node(canonical_id, equivalent_ids, types, info_contents, includ
 
     # if descriptions are enabled look for the first available description and use that 
     if include_descriptions:
-        description = list(
+        descriptions = list(
             map(
                 lambda x: x[0],
-                filter(lambda x: len(x) > 0 , [eid['d'] for eid in eids if 'd' in eid])
+                filter(lambda x: len(x) > 0, [eid['d'] for eid in eids if 'd' in eid])
                 )
-        )[0]
-        node["id"]["description"] = description
+        )
+        if len(descriptions) > 0:
+            node["id"]["description"] = descriptions[0]
 
     # now need to reformat the identifier keys.  It could be cleaner but we have to worry about if there is a label
     node["equivalent_identifiers"] = []
