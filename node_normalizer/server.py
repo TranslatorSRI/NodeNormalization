@@ -176,7 +176,7 @@ async def get_normalized_node_handler(
         min_items=1,
     ),
     conflate: bool = fastapi.Query(True, description="Whether to apply conflation"),
-    description: bool = fastapi.Query(False, description="Whether to apply return curie descriptions when possible"),
+    description: bool = fastapi.Query(False, description="Whether to return curie descriptions when possible"),
 ):
     """
     Get value(s) for key(s) using redis MGET
