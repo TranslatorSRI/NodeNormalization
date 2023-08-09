@@ -553,7 +553,7 @@ async def get_normalized_nodes(
                 #   result to the correct query for each conflation method.
                 dereference_others = collections.defaultdict(set)
                 for canon, oids in zip(itertools.cycle(canonical_nonan), other_ids):
-                    dereference_others[canon].add(oids)
+                    dereference_others[canon].update(oids)
 
                 all_other_ids = sum(other_ids, [])
                 eqids2, types2 = await get_eqids_and_types(app, all_other_ids)
