@@ -1,3 +1,6 @@
+import collections
+import itertools
+
 import orjson as json
 import logging
 import os
@@ -523,8 +526,6 @@ async def get_normalized_nodes(
             if conflate_gene_protein or conflate_chemical_drug:
                 other_ids = []
 
-                logger.error(f"Initial: {other_ids}")
-
                 if conflate_gene_protein:
                     other_ids.extend(await app.state.redis_connection5.mget(*canonical_nonan, encoding='utf8'))
 
@@ -539,7 +540,20 @@ async def get_normalized_nodes(
                 # they're not necessarily first.  For instance if what came in and got canonicalized was a protein id
                 # and we want gene first, then we're relying on the order of the other_ids to put it back in the right place.
                 other_ids = [json.loads(oids) if oids else [] for oids in other_ids]
-                dereference_others = dict(zip(canonical_nonan, other_ids))
+
+                # Until we added conflate_chemical_drug, canonical_nonan and other_ids would always have the same
+                # length, so we could figure out mappings from one to the other just by doing:
+                #   dereference_others = dict(zip(canonical_nonan, other_ids))
+                # Now that we have (potentially multiple) results to associate with each identifier, we need
+                # something a bit more sophisticated.
+                # - We use a defaultdict with set so that we can deduplicate identifiers here.
+                # - We use itertools.cycle() because len(canonical_nonan) will be <= len(other_ids), but we can be sure
+                #   that each conflation method will return a list of identifiers (e.g. if gene_conflation returns nothing
+                #   for two queries, other_ids = [[], [], ...]. By cycling through canonical_nonan, we can assign each
+                #   result to the correct query for each conflation method.
+                dereference_others = collections.defaultdict(set)
+                for canon, oids in zip(itertools.cycle(canonical_nonan), other_ids):
+                    dereference_others[canon].add(oids)
 
                 all_other_ids = sum(other_ids, [])
                 eqids2, types2 = await get_eqids_and_types(app, all_other_ids)
