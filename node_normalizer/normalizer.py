@@ -551,9 +551,9 @@ async def get_normalized_nodes(
                 #   that each conflation method will return a list of identifiers (e.g. if gene_conflation returns nothing
                 #   for two queries, other_ids = [[], [], ...]. By cycling through canonical_nonan, we can assign each
                 #   result to the correct query for each conflation method.
-                dereference_others = collections.defaultdict(set)
+                dereference_others = collections.defaultdict(list)
                 for canon, oids in zip(itertools.cycle(canonical_nonan), other_ids):
-                    dereference_others[canon].update(oids)
+                    dereference_others[canon].extend(oids)
 
                 all_other_ids = sum(other_ids, [])
                 eqids2, types2 = await get_eqids_and_types(app, all_other_ids)
