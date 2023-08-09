@@ -522,10 +522,18 @@ async def get_normalized_nodes(
             # are we looking for conflated values
             if conflate_gene_protein or conflate_chemical_drug:
                 other_ids = []
+
+                print(f"Initial: {other_ids}")
+
                 if conflate_gene_protein:
                     other_ids.extend(await app.state.redis_connection5.mget(*canonical_nonan, encoding='utf8'))
+
+                print(f"After conflate_gene_protein: {other_ids}")
+
                 if conflate_chemical_drug:
                     other_ids.extend(await app.state.redis_connection6.mget(*canonical_nonan, encoding='utf8'))
+
+                print(f"After conflate_chemical_drug: {other_ids}")
 
                 # if there are other ids, then we want to rebuild eqids and types.  That's because even though we have them,
                 # they're not necessarily first.  For instance if what came in and got canonicalized was a protein id
@@ -535,6 +543,10 @@ async def get_normalized_nodes(
 
                 all_other_ids = sum(other_ids, [])
                 eqids2, types2 = await get_eqids_and_types(app, all_other_ids)
+
+                print(f"other_ids = {other_ids}")
+                print(f"dereference_others = {dereference_others}")
+                print(f"all_other_ids = {all_other_ids}")
 
                 final_eqids = []
                 final_types = []
