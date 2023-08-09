@@ -21,11 +21,17 @@ class CurieList(BaseModel):
         title="Whether to apply conflation"
     )
 
+    description: bool = Field(
+        False,
+        title="Whether to return curie formal descriptions whenever possible"
+    )
+
     class Config:
         schema_extra = {
             "example": {
                 "curies": ['MESH:D014867', 'NCIT:C34373'],
-                "conflate": True
+                "conflate": True,
+                "description": False,
             }
         }
 
