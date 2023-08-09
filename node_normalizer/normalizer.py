@@ -530,7 +530,7 @@ async def get_normalized_nodes(
                 # if there are other ids, then we want to rebuild eqids and types.  That's because even though we have them,
                 # they're not necessarily first.  For instance if what came in and got canonicalized was a protein id
                 # and we want gene first, then we're relying on the order of the other_ids to put it back in the right place.
-                other_ids = [json.loads(oids) if oids is not None else [] for oids in other_ids]
+                other_ids = [json.loads(oids) if oids else [] for oids in other_ids]
                 dereference_others = dict(zip(canonical_nonan, other_ids))
 
                 all_other_ids = sum(other_ids, [])
