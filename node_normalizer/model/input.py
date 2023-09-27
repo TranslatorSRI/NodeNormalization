@@ -12,18 +12,23 @@ class CurieList(BaseModel):
 
     curies: List[str] = Field(
         ...,  # Ellipsis means field is required
-        title='list of nodes formatted as curies',
+        title='List of CURIEs to normalize',
         min_items=1
     )
 
     conflate:bool = Field(
         True,
-        title="Whether to apply conflation"
+        title="Whether to apply gene/protein conflation"
     )
 
     description: bool = Field(
         False,
-        title="Whether to return curie formal descriptions whenever possible"
+        title="Whether to return CURIE descriptions when possible"
+    )
+
+    drug_chemical_conflate: bool = Field(
+        False,
+        title="Whether to apply drug/chemical conflation"
     )
 
     class Config:
@@ -32,6 +37,7 @@ class CurieList(BaseModel):
                 "curies": ['MESH:D014867', 'NCIT:C34373'],
                 "conflate": True,
                 "description": False,
+                "drug_chemical_conflate": False,
             }
         }
 
