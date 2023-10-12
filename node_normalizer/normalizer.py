@@ -488,8 +488,14 @@ async def get_eqids_and_types(
         eqids += await app.state.redis_connection1.mget(*canonical_nonan[i:i+batch_size], encoding='utf-8')
     eqids = [json.loads(value) if value is not None else None for value in eqids]
     types = await app.state.redis_connection2.mget(*canonical_nonan, encoding='utf-8')
-    types = [get_ancestors(app, t) for t in types]
-    return eqids, types
+    types_with_ancestors = []
+    for index, typ in enumerate(types):
+        if not typ:
+            logging.error(f"No type information found for '{canonical_nonan[index]}' with eqids: {eqids[index]}.")
+            types_with_ancestors.append(None)
+        else:
+            types_with_ancestors.append(get_ancestors(app, typ))
+    return eqids, types_with_ancestors
 
 
 async def get_normalized_nodes(
@@ -638,6 +644,10 @@ async def create_node(canonical_id, equivalent_ids, types, info_contents, includ
     """Construct the output format given the compressed redis data"""
     # It's possible that we didn't find a canonical_id
     if canonical_id is None:
+        return None
+
+    # If we have 'None' in the canonical types, something went horribly wrong. Return None.
+    if None in types[canonical_id]:
         return None
 
     # OK, now we should have id's in the format [ {"i": "MONDO:12312", "l": "Scrofula"}, {},...]
