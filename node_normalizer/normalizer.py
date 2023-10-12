@@ -588,8 +588,10 @@ async def get_normalized_nodes(
                         t = []
 
                     for other in dereference_others[canonical_id]:
-                        e += deref_others_eqs[other]
-                        t += deref_others_typ[other]
+                        if deref_others_eqs[other]:
+                            e += deref_others_eqs[other]
+                        if deref_others_typ[other]:
+                            t += deref_others_typ[other]
 
                     final_eqids.append(e)
                     final_types.append(uniquify_list(t))
@@ -644,6 +646,10 @@ async def create_node(canonical_id, equivalent_ids, types, info_contents, includ
     """Construct the output format given the compressed redis data"""
     # It's possible that we didn't find a canonical_id
     if canonical_id is None:
+        return None
+
+    # If we have 'None' in the equivalent IDs, something has gone horrible wrong. Return None.
+    if None in equivalent_ids[canonical_id]:
         return None
 
     # If we have 'None' in the canonical types, something went horribly wrong (specifically: we couldn't
