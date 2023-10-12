@@ -646,7 +646,8 @@ async def create_node(canonical_id, equivalent_ids, types, info_contents, includ
     if canonical_id is None:
         return None
 
-    # If we have 'None' in the canonical types, something went horribly wrong. Return None.
+    # If we have 'None' in the canonical types, something went horribly wrong (specifically: we couldn't
+    # find the type information for all the eqids for this clique). Return None.
     if None in types[canonical_id]:
         return None
 
