@@ -486,7 +486,7 @@ async def get_eqids_and_types(
     eqids = []
     for i in range(0, len(canonical_nonan), batch_size):
         eqids += await app.state.redis_connection1.mget(*canonical_nonan[i:i+batch_size], encoding='utf-8')
-    eqids = [json.loads(value) if value is not None else None for value in eqids]
+    eqids = [json.loads(value) if value is not None else [None] for value in eqids]
     types = await app.state.redis_connection2.mget(*canonical_nonan, encoding='utf-8')
     types_with_ancestors = []
     for index, typ in enumerate(types):
