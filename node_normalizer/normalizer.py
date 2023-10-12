@@ -492,7 +492,7 @@ async def get_eqids_and_types(
     for index, typ in enumerate(types):
         if not typ:
             logging.error(f"No type information found for '{canonical_nonan[index]}' with eqids: {eqids[index]}.")
-            types_with_ancestors.append(None)
+            types_with_ancestors.append([None])
         else:
             types_with_ancestors.append(get_ancestors(app, typ))
     return eqids, types_with_ancestors
@@ -588,10 +588,8 @@ async def get_normalized_nodes(
                         t = []
 
                     for other in dereference_others[canonical_id]:
-                        if deref_others_eqs[other]:
-                            e += deref_others_eqs[other]
-                        if deref_others_typ[other]:
-                            t += deref_others_typ[other]
+                        e += deref_others_eqs[other]
+                        t += deref_others_typ[other]
 
                     final_eqids.append(e)
                     final_types.append(uniquify_list(t))
