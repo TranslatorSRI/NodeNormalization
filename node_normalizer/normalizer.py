@@ -650,11 +650,13 @@ async def create_node(canonical_id, equivalent_ids, types, info_contents, includ
 
     # If we have 'None' in the equivalent IDs, something has gone horrible wrong. Return None.
     if None in equivalent_ids[canonical_id]:
+        logging.error(f"No equivalent IDs found for canonical ID {canonical_id} among eqids: {equivalent_ids}")
         return None
 
     # If we have 'None' in the canonical types, something went horribly wrong (specifically: we couldn't
     # find the type information for all the eqids for this clique). Return None.
     if None in types[canonical_id]:
+        logging.error(f"No types found for canonical ID {canonical_id} among types: {types}")
         return None
 
     # OK, now we should have id's in the format [ {"i": "MONDO:12312", "l": "Scrofula"}, {},...]
