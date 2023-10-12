@@ -34,6 +34,11 @@
             "types": ["biolink:Gene", "biolink:Protein"],
             "file": "GeneProtein.txt",
             "redis_db": "gene_protein_db"
+        },
+        {
+            "types": ["biolink:ChemicalEntity", "biolink:Drug"],
+            "file": "ChemicalEntityDrug.txt",
+            "redis_db": "chemical_drug_db"
         }
     ]
 }

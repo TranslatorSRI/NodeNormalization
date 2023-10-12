@@ -1,3 +1,6 @@
+import collections
+import itertools
+
 import orjson as json
 import logging
 import os
@@ -426,7 +429,7 @@ async def get_equivalent_curies(
     try:
 
         # Get the equivalent list primary key identifier
-        value = await get_normalized_nodes(app, [curie], True)
+        value = await get_normalized_nodes(app, [curie], True, True)
 
         # did we get a valid response
         if value is None:
@@ -487,8 +490,9 @@ async def get_eqids_and_types(
 async def get_normalized_nodes(
         app: FastAPI,
         curies: List[Union[CURIE, str]],
-        conflate: bool,
-        include_descriptions: bool = False,
+        conflate_gene_protein: bool,
+        conflate_chemical_drug: bool,
+        include_descriptions: bool = False
 ) -> Dict[str, Optional[str]]:
     """
     Get value(s) for key(s) using redis MGET
@@ -519,18 +523,44 @@ async def get_normalized_nodes(
             eqids, types = await get_eqids_and_types(app, canonical_nonan)
 
             # are we looking for conflated values
-            if conflate:
-                # TODO: filter to just types that have Gene or Protein?  I'm not sure it's worth it when we have pipelining
-                other_ids = await app.state.redis_connection5.mget(*canonical_nonan, encoding='utf8')
+            if conflate_gene_protein or conflate_chemical_drug:
+                other_ids = []
+
+                if conflate_gene_protein:
+                    other_ids.extend(await app.state.redis_connection5.mget(*canonical_nonan, encoding='utf8'))
+
+                # logger.error(f"After conflate_gene_protein: {other_ids}")
+
+                if conflate_chemical_drug:
+                    other_ids.extend(await app.state.redis_connection6.mget(*canonical_nonan, encoding='utf8'))
+
+                # logger.error(f"After conflate_chemical_drug: {other_ids}")
 
                 # if there are other ids, then we want to rebuild eqids and types.  That's because even though we have them,
                 # they're not necessarily first.  For instance if what came in and got canonicalized was a protein id
                 # and we want gene first, then we're relying on the order of the other_ids to put it back in the right place.
-                other_ids = [json.loads(oids) if oids is not None else [] for oids in other_ids]
-                dereference_others = dict(zip(canonical_nonan, other_ids))
+                other_ids = [json.loads(oids) if oids else [] for oids in other_ids]
+
+                # Until we added conflate_chemical_drug, canonical_nonan and other_ids would always have the same
+                # length, so we could figure out mappings from one to the other just by doing:
+                #   dereference_others = dict(zip(canonical_nonan, other_ids))
+                # Now that we have (potentially multiple) results to associate with each identifier, we need
+                # something a bit more sophisticated.
+                # - We use a defaultdict with set so that we can deduplicate identifiers here.
+                # - We use itertools.cycle() because len(canonical_nonan) will be <= len(other_ids), but we can be sure
+                #   that each conflation method will return a list of identifiers (e.g. if gene_conflation returns nothing
+                #   for two queries, other_ids = [[], [], ...]. By cycling through canonical_nonan, we can assign each
+                #   result to the correct query for each conflation method.
+                dereference_others = collections.defaultdict(list)
+                for canon, oids in zip(itertools.cycle(canonical_nonan), other_ids):
+                    dereference_others[canon].extend(oids)
 
                 all_other_ids = sum(other_ids, [])
                 eqids2, types2 = await get_eqids_and_types(app, all_other_ids)
+
+                # logger.error(f"other_ids = {other_ids}")
+                # logger.error(f"dereference_others = {dereference_others}")
+                # logger.error(f"all_other_ids = {all_other_ids}")
 
                 final_eqids = []
                 final_types = []
@@ -620,13 +650,14 @@ async def create_node(canonical_id, equivalent_ids, types, info_contents, includ
 
     # if descriptions are enabled look for the first available description and use that 
     if include_descriptions:
-        description = list(
+        descriptions = list(
             map(
                 lambda x: x[0],
-                filter(lambda x: len(x) > 0 , [eid['d'] for eid in eids if 'd' in eid])
+                filter(lambda x: len(x) > 0, [eid['d'] for eid in eids if 'd' in eid])
                 )
-        )[0]
-        node["id"]["description"] = description
+        )
+        if len(descriptions) > 0:
+            node["id"]["description"] = descriptions[0]
 
     # now need to reformat the identifier keys.  It could be cleaner but we have to worry about if there is a label
     node["equivalent_identifiers"] = []

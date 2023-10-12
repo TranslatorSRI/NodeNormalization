@@ -63,6 +63,7 @@ async def startup_event():
     app.state.redis_connection3 = connection_factory.get_connection(connection_id="curie_to_bl_type_db")
     app.state.redis_connection4 = connection_factory.get_connection(connection_id="info_content_db")
     app.state.redis_connection5 = connection_factory.get_connection(connection_id="gene_protein_db")
+    app.state.redis_connection6 = connection_factory.get_connection(connection_id="chemical_drug_db")
     app.state.toolkit = Toolkit()
     app.state.ancestor_map = {}
 
@@ -84,6 +85,8 @@ async def shutdown_event():
     await app.state.redis_connection4.wait_closed()
     app.state.redis_connection5.close()
     await app.state.redis_connection5.wait_closed()
+    app.state.redis_connection6.close()
+    await app.state.redis_connection6.wait_closed()
 
 
 @app.post(
@@ -178,14 +181,15 @@ async def get_normalized_node_handler(
         example=["MESH:D014867", "NCIT:C34373"],
         min_items=1,
     ),
-    conflate: bool = fastapi.Query(True, description="Whether to apply conflation"),
-    description: bool = fastapi.Query(False, description="Whether to return curie descriptions when possible"),
+    conflate: bool = fastapi.Query(True, description="Whether to apply gene/protein conflation"),
+    drug_chemical_conflate: bool = fastapi.Query(False, description="Whether to apply drug/chemical conflation"),
+    description: bool = fastapi.Query(False, description="Whether to return curie descriptions when possible")
 ):
     """
     Get value(s) for key(s) using redis MGET
     """
     # no_conflate = request.args.get('dontconflate',['GeneProtein'])
-    normalized_nodes = await get_normalized_nodes(app, curie, conflate, include_descriptions= description)
+    normalized_nodes = await get_normalized_nodes(app, curie, conflate, drug_chemical_conflate, include_descriptions=description)
 
     # If curie contains at least one entry, then the only way normalized_nodes could be blank
     # would be if an error occurred during processing.
@@ -204,7 +208,7 @@ async def get_normalized_node_handler(curies: CurieList):
     """
     Get value(s) for key(s) using redis MGET
     """
-    normalized_nodes = await get_normalized_nodes(app, curies.curies, curies.conflate, curies.description)
+    normalized_nodes = await get_normalized_nodes(app, curies.curies, curies.conflate, curies.drug_chemical_conflate, curies.description)
 
     # If curies.curies contains at least one entry, then the only way normalized_nodes could be blank
     # would be if an error occurred during processing.
