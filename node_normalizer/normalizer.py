@@ -588,6 +588,7 @@ async def get_normalized_nodes(
                         t = []
 
                     for other in dereference_others[canonical_id]:
+                        logging.error(f"e = {e}, other = {other}, deref_others_eqs = {deref_others_eqs}")
                         e += deref_others_eqs[other]
                         t += deref_others_typ[other]
 
