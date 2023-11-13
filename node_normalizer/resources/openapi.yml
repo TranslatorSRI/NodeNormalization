@@ -7,10 +7,10 @@ info:
     name: Chris Bizon
     x-id: https://github.com/cbizon
     x-role: responsible developer
-  description: 'Node normalization takes a CURIE, and returns: <ol> <li>The preferred
+  description: 'Node Normalization takes a CURIE, and returns: <ol> <li>The preferred
     CURIE for this entity <li>All other known equivalent identifiers for the entity
     <li>Semantic types for the entity as defined by the <a href="https://biolink.github.io/biolink-model/">BioLink
-    Model</a> </ol> The data served by Node Normalization is created by <a href="https://github.com/TranslatorIIPrototypes/Babel">Babel</a>,
+    Model</a> </ol> The data served by Node Normalization is created by <a href="https://github.com/TranslatorSRI/Babel">Babel</a>,
     which attempts to find identifier equivalences, and makes sure that CURIE prefixes
     are BioLink Model Compliant.  To determine whether Node Normalization is likely
     to be useful, check /get_semantic_types, which lists the BioLink semantic types
