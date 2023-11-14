@@ -27,6 +27,7 @@ jobs:
               with:
                 images:
                     ghcr.io/${{ github.repository }}-data-loading
+            # This will leave authentication information, but that shouldn't be relevant here.
             - name: Login to ghcr
               uses: docker/login-action@v1
               with:
