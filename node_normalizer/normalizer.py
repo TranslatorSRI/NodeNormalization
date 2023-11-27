@@ -98,7 +98,7 @@ async def normalize_results(app,
 
                     # did we get a good attribute dict
                     if ic_attrib:
-                        if 'attributes' in merged_binding:
+                        if 'attributes' in merged_binding and merged_binding['attributes'] is not None:
                             merged_binding['attributes'].append(ic_attrib)
                         else:
                             merged_binding['attributes'] = [ic_attrib]
