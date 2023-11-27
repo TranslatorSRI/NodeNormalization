@@ -43,16 +43,21 @@ async def normalize_message(app: FastAPI, message: Message) -> Message:
         if message.query_graph is not None:
             merged_qgraph = await normalize_qgraph(app, message.query_graph)
             ret.query_graph = merged_qgraph
+        logger.debug(f"Merged Qgraph: {merged_qgraph}")
 
         logger.debug(f"message.knowledge_graph is None: {message.knowledge_graph is None}")
         if message.knowledge_graph is not None:
             merged_kgraph, node_id_map, edge_id_map = await normalize_kgraph(app, message.knowledge_graph)
             ret.knowledge_graph = merged_kgraph
+        logger.debug(f"Merged Kgraph: {merged_kgraph}")
+        logger.debug(f"node_id_map: {node_id_map}")
+        logger.debug(f"edge_id_map: {edge_id_map}")
 
         logger.debug(f"message.results is None: {message.results is None}")
         if message.results is not None:
             merged_results = await normalize_results(app, message.results, node_id_map, edge_id_map)
             ret.results = merged_results
+        logger.debug(f"Merged Results: {merged_results}")
 
         return ret
     except Exception as e:
