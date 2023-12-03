@@ -669,6 +669,12 @@ async def create_node(canonical_id, equivalent_ids, types, info_contents, includ
         if include_descriptions and "d" in eqid and len(eqid["d"]):
             eq_item["description"] = eqid["d"][0]
         node["equivalent_identifiers"].append(eq_item)
+
+    # We need to remove `biolink:Entity` from the types returned.
+    # (See explanation at https://github.com/TranslatorSRI/NodeNormalization/issues/173)
+    if 'biolink:Entity' in types[canonical_id]:
+        types[canonical_id].remove('biolink:Entity')
+
     node['type'] = types[canonical_id]
 
     # add the info content to the node if we got one
