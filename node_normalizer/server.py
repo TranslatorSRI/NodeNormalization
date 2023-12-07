@@ -234,7 +234,7 @@ async def get_semantic_types_handler() -> SemanticTypes:
 
     # get the distinct list of Biolink model types in the correct format
     # https://github.com/TranslatorSRI/NodeNormalization/issues/29
-    ret_val = SemanticTypes(semantic_types={"types": types})
+    ret_val = SemanticTypes(semantic_types={"types": list(set(types))})
 
     # return the data to the caller
     return ret_val
