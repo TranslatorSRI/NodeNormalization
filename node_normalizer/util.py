@@ -8,6 +8,9 @@ from logging.config import dictConfig
 from logging.handlers import RotatingFileHandler
 from fastapi.logger import logger as fastapi_logger
 
+# Some constants.
+BIOLINK_NAMED_THING = "biolink:NamedThing"
+
 
 # loggers = {}
 class LoggingUtil(object):

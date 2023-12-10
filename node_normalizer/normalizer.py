@@ -13,7 +13,7 @@ from bmt.util import format as bmt_format
 from fastapi import FastAPI
 from reasoner_pydantic import KnowledgeGraph, Message, QueryGraph, Result, CURIE, Attribute
 
-from .util import LoggingUtil, uniquify_list
+from .util import LoggingUtil, uniquify_list, BIOLINK_NAMED_THING
 
 # logger = LoggingUtil.init_logging(__name__, level=logging.INFO, format='medium', logFilePath=os.path.dirname(__file__), logFileLevel=logging.INFO)
 logger = LoggingUtil.init_logging()
@@ -491,8 +491,9 @@ async def get_eqids_and_types(
     types_with_ancestors = []
     for index, typ in enumerate(types):
         if not typ:
-            logging.error(f"No type information found for '{canonical_nonan[index]}' with eqids: {eqids[index]}.")
-            types_with_ancestors.append([None])
+            logging.error(f"No type information found for '{canonical_nonan[index]}' with eqids: {eqids[index]}, "
+                          f"replacing with {BIOLINK_NAMED_THING}")
+            types_with_ancestors.append([BIOLINK_NAMED_THING])
         else:
             types_with_ancestors.append(get_ancestors(app, typ))
     return eqids, types_with_ancestors
