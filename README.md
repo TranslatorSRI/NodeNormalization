@@ -131,3 +131,18 @@ Kubernetes configurations and helm charts for this project can be found at:
 ```
     https://github.com/helxplatform/translator-devops/helm/r3
 ```  
+
+## Configuration
+
+NodeNorm can be configured by setting environmental variables:
+
+* `SERVER_NAME`: The name of this server (defaults to `infores:sri-node-normalizer`)
+* `SERVER_ROOT`: The server root (defaults to `/`)
+* `LOG_LEVEL`: The log level (defaults to `ERROR`)
+* `TRAPI_VERSION`: The TRAPI version this version of NodeNorm supports.
+* `MATURITY_VALUE`: How mature is this NameRes (defaults to `maturity`, e.g. `development`)
+* `LOCATION_VALUE`: Where is this NameRes setup (defaults to `location`, e.g. `RENCI`)
+* `EQ_BATCH_SIZE`: The size of the `get_eqids_and_types()` batch size (defaults to `2500`)
+* `OTEL_ENABLED`: Turn on Open TELemetry (default: `'false'`) -- only `'true'` will turn this on.
+    * `JAEGER_HOST` and `JAEGER_PORT`: Hostname and port for the Jaegar instance to provide telemetry to.
+    * `JAEGER_SERVICE_NAME`: The name of this service (defaults to the value of `SERVER_NAME`)
