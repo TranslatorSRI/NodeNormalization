@@ -648,10 +648,13 @@ async def create_node(canonical_id, equivalent_ids, types, info_contents, includ
     if canonical_id is None:
         return None
 
-    # If we have 'None' in the equivalent IDs, something has gone horrible wrong. Return None.
+    # If we have 'None' in the equivalent IDs, skip it so we don't confuse things further down the line.
     if None in equivalent_ids[canonical_id]:
-        logging.error(f"No equivalent IDs found for canonical ID {canonical_id} among eqids: {equivalent_ids}")
-        return None
+        logging.warning(f"Skipping None in canonical ID {canonical_id} among eqids: {equivalent_ids}")
+        equivalent_ids[canonical_id] = [x for x in equivalent_ids[canonical_id] if x is not None]
+        if not equivalent_ids[canonical_id]:
+            logging.warning(f"No non-None values found for ID {canonical_id} among filtered eqids: {equivalent_ids}")
+            return None
 
     # If we have 'None' in the canonical types, something went horribly wrong (specifically: we couldn't
     # find the type information for all the eqids for this clique). Return None.
