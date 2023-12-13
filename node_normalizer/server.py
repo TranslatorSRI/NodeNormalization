@@ -2,6 +2,7 @@
 import asyncio
 import os
 import traceback
+import logging, warnings
 
 from pathlib import Path
 from typing import List, Optional, Dict
@@ -266,3 +267,38 @@ async def get_curie_prefixes_handler(
 
 # Override open api schema with custom schema
 app.openapi_schema = construct_open_api_schema(app)
+
+# Set up opentelemetry if enabled.
+if os.environ.get('OTEL_ENABLED', 'false') == 'true':
+    from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+    from opentelemetry import trace
+    from opentelemetry.exporter.jaeger.thrift import JaegerExporter
+    from opentelemetry.sdk.resources import SERVICE_NAME, Resource
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor
+    # from opentelemetry.sdk.trace.export import ConsoleSpanExporter
+
+    from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+
+    # httpx connections need to be open a little longer by the otel decorators
+    # but some libs display warnings of resource being unclosed.
+    # these supresses such warnings.
+    logging.captureWarnings(capture=True)
+    warnings.filterwarnings("ignore", category=ResourceWarning)
+    plater_service_name = os.environ.get('SERVER_NAME', 'infores:sri-node-normalizer')
+    assert plater_service_name and isinstance(plater_service_name, str)
+
+    jaeger_exporter = JaegerExporter(
+        agent_host_name=os.environ.get("JAEGER_HOST", "localhost"),
+        agent_port=int(os.environ.get("JAEGER_PORT", "6831")),
+    )
+    resource = Resource(attributes={
+        SERVICE_NAME: os.environ.get("JAEGER_SERVICE_NAME", plater_service_name),
+    })
+    provider = TracerProvider(resource=resource)
+    # processor = BatchSpanProcessor(ConsoleSpanExporter())
+    processor = BatchSpanProcessor(jaeger_exporter)
+    provider.add_span_processor(processor)
+    trace.set_tracer_provider(provider)
+    FastAPIInstrumentor.instrument_app(app, tracer_provider=provider, excluded_urls="docs,openapi.json")
+    HTTPXClientInstrumentor().instrument()

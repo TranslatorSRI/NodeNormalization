@@ -19,3 +19,9 @@ uvloop==0.17.0
 gunicorn==20.1.0
 orjson==3.8.10
 httpx==0.23.0
+
+# To support Open Telemetry
+opentelemetry-sdk==1.21.0
+opentelemetry-exporter-jaeger==1.21.0
+opentelemetry-instrumentation-fastapi==0.42b0
+opentelemetry-instrumentation-httpx==0.42b0
