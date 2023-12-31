@@ -30,22 +30,6 @@ EXAMPLE_QUERY_DRUG_TREATS_ESSENTIAL_HYPERTENSION = {
         },
         "knowledge_graph": {
             "nodes": {
-                "DRUGBANK:DB00275": {
-                    "categories": ["biolink:Drug"],
-                    "name": "Olmesartan",
-                },
-                "MONDO:0001134": {
-                    "categories": ["biolink:Disease"],
-                    "name": "essential hypertension",
-                },
-                "DRUGBANK:DB00876": {
-                    "categories": ["biolink:Drug"],
-                    "name": "Eprosartan",
-                },
-                "DRUGBANK:DB00177": {
-                    "categories": ["biolink:Drug"],
-                    "name": "Valsartan",
-                },
                 "DRUGBANK:DB00966": {
                     "categories": ["biolink:Drug"],
                     "name": "Telmisartan",
@@ -56,102 +40,6 @@ EXAMPLE_QUERY_DRUG_TREATS_ESSENTIAL_HYPERTENSION = {
                 },
             },
             "edges": {
-                "e0": {
-                    "subject": "DRUGBANK:DB00275",
-                    "object": "MONDO:0001134",
-                    "predicate": "biolink:treats",
-                    "sources": [
-                        {
-                            "resource_id": "infores:openpredict",
-                            "resource_role": "primary_knowledge_source",
-                        },
-                        {
-                            "resource_id": "infores:cohd",
-                            "resource_role": "supporting_data_source",
-                        },
-                    ],
-                    "attributes": [
-                        {
-                            "description": "model_id",
-                            "attribute_type_id": "EDAM:data_1048",
-                            "value": "openpredict_baseline",
-                        },
-                        {
-                            "attribute_type_id": "biolink:agent_type",
-                            "value": "computational_model",
-                            "attribute_source": "infores:openpredict",
-                        },
-                        {
-                            "attribute_type_id": "biolink:knowledge_level",
-                            "value": "prediction",
-                            "attribute_source": "infores:openpredict",
-                        },
-                    ],
-                },
-                "e1": {
-                    "subject": "DRUGBANK:DB00876",
-                    "object": "MONDO:0001134",
-                    "predicate": "biolink:treats",
-                    "sources": [
-                        {
-                            "resource_id": "infores:openpredict",
-                            "resource_role": "primary_knowledge_source",
-                        },
-                        {
-                            "resource_id": "infores:cohd",
-                            "resource_role": "supporting_data_source",
-                        },
-                    ],
-                    "attributes": [
-                        {
-                            "description": "model_id",
-                            "attribute_type_id": "EDAM:data_1048",
-                            "value": "openpredict_baseline",
-                        },
-                        {
-                            "attribute_type_id": "biolink:agent_type",
-                            "value": "computational_model",
-                            "attribute_source": "infores:openpredict",
-                        },
-                        {
-                            "attribute_type_id": "biolink:knowledge_level",
-                            "value": "prediction",
-                            "attribute_source": "infores:openpredict",
-                        },
-                    ],
-                },
-                "e2": {
-                    "subject": "DRUGBANK:DB00177",
-                    "object": "MONDO:0001134",
-                    "predicate": "biolink:treats",
-                    "sources": [
-                        {
-                            "resource_id": "infores:openpredict",
-                            "resource_role": "primary_knowledge_source",
-                        },
-                        {
-                            "resource_id": "infores:cohd",
-                            "resource_role": "supporting_data_source",
-                        },
-                    ],
-                    "attributes": [
-                        {
-                            "description": "model_id",
-                            "attribute_type_id": "EDAM:data_1048",
-                            "value": "openpredict_baseline",
-                        },
-                        {
-                            "attribute_type_id": "biolink:agent_type",
-                            "value": "computational_model",
-                            "attribute_source": "infores:openpredict",
-                        },
-                        {
-                            "attribute_type_id": "biolink:knowledge_level",
-                            "value": "prediction",
-                            "attribute_source": "infores:openpredict",
-                        },
-                    ],
-                },
                 "e3": {
                     "subject": "DRUGBANK:DB00966",
                     "object": "MONDO:0001134",
@@ -219,48 +107,6 @@ EXAMPLE_QUERY_DRUG_TREATS_ESSENTIAL_HYPERTENSION = {
             },
         },
         "results": [
-            {
-                "node_bindings": {
-                    "n0": [{"id": "DRUGBANK:DB00275"}],
-                    "n1": [{"id": "MONDO:0001134"}],
-                },
-                "analyses": [
-                    {
-                        "resource_id": "infores:openpredict",
-                        "score": "0.8515367495059102",
-                        "scoring_method": "Model confidence between 0 and 1",
-                        "edge_bindings": {"e01": [{"id": "e0"}]},
-                    }
-                ],
-            },
-            {
-                "node_bindings": {
-                    "n0": [{"id": "DRUGBANK:DB00876"}],
-                    "n1": [{"id": "MONDO:0001134"}],
-                },
-                "analyses": [
-                    {
-                        "resource_id": "infores:openpredict",
-                        "score": "0.8361819712989409",
-                        "scoring_method": "Model confidence between 0 and 1",
-                        "edge_bindings": {"e01": [{"id": "e1"}]},
-                    }
-                ],
-            },
-            {
-                "node_bindings": {
-                    "n0": [{"id": "DRUGBANK:DB00177"}],
-                    "n1": [{"id": "MONDO:0001134"}],
-                },
-                "analyses": [
-                    {
-                        "resource_id": "infores:openpredict",
-                        "score": "0.8154221336665431",
-                        "scoring_method": "Model confidence between 0 and 1",
-                        "edge_bindings": {"e01": [{"id": "e2"}]},
-                    }
-                ],
-            },
             {
                 "node_bindings": {
                     "n0": [{"id": "DRUGBANK:DB00966"}],
