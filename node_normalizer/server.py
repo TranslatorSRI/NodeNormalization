@@ -5,12 +5,12 @@ import traceback
 import logging, warnings
 
 from pathlib import Path
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Annotated
 from fastapi.middleware.cors import CORSMiddleware
 import requests
 from requests.adapters import HTTPAdapter, Retry
 import fastapi
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Body, Query
 import reasoner_pydantic
 from bmt import Toolkit
 from starlette.responses import JSONResponse
@@ -27,6 +27,7 @@ from .model import (
 from .normalizer import get_normalized_nodes, get_curie_prefixes, normalize_message
 from .redis_adapter import RedisConnectionFactory
 from .util import LoggingUtil
+from .examples import EXAMPLE_QUERY_DRUG_TREATS_ESSENTIAL_HYPERTENSION
 
 logger = LoggingUtil.init_logging()
 
@@ -98,7 +99,10 @@ async def shutdown_event():
     response_model_exclude_none=True,
     response_model_exclude_unset=True
 )
-async def query(query: reasoner_pydantic.Query) -> reasoner_pydantic.Query:
+async def query(query: Annotated[reasoner_pydantic.Query, Body(openapi_examples={"Drugs that treat essential hypertension": {
+    "summary": "A result from a query for drugs that treat essential hypertension.",
+    "value": EXAMPLE_QUERY_DRUG_TREATS_ESSENTIAL_HYPERTENSION,
+}})]) -> reasoner_pydantic.Query:
     """
     Normalizes a TRAPI compliant knowledge graph
     """
