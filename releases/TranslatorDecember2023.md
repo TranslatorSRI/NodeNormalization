@@ -1,4 +1,4 @@
-# NodeNorm Translator October 2023 Release
+# NodeNorm Translator December 2023 Release
 
 - Babel: [2023nov5](https://stars.renci.org/var/babel_outputs/2023nov5/)
 - NodeNorm: [v2.3.5](https://github.com/TranslatorSRI/NodeNormalization/releases/tag/v2.3.5)
