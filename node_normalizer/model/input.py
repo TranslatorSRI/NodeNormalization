@@ -53,6 +53,6 @@ class SemanticTypesInput(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "semantic_types": ['biolink:ChemicalSubstance', 'biolink:AnatomicalEntity']
+                "semantic_types": ['biolink:ChemicalEntity', 'biolink:AnatomicalEntity']
             }
         }

@@ -252,7 +252,8 @@ async def get_semantic_types_handler() -> SemanticTypes:
     description="Returns the curies and their hit count for a semantic type(s).",
 )
 async def get_curie_prefixes_handler(
-    semantic_type: Optional[List[str]] = fastapi.Query([], description="e.g. chemical_substance, anatomical_entity")
+    semantic_type: Optional[List[str]] = fastapi.Query([], description="e.g. biolink:ChemicalEntity, "
+                                                                       "biolink:AnatomicalEntity")
 ) -> Dict[str, CuriePivot]:
     return await get_curie_prefixes(app, semantic_type)
 

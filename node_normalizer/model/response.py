@@ -15,8 +15,8 @@ class SemanticTypes(BaseModel):
             "example": {
                 "semantic_types": {
                     "types": [
-                        "cellular_component",
-                        "named_thing",
+                        "biolink:CellularComponent",
+                        "biolink:NamedThing",
                         "etc."
                     ]
                 }
