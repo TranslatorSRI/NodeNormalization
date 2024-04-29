@@ -3,7 +3,7 @@
 - Babel: [2023nov5](https://stars.renci.org/var/babel_outputs/2023nov5/)
 - NodeNorm: [v2.3.5](https://github.com/TranslatorSRI/NodeNormalization/releases/tag/v2.3.5)
 
-Next release: _None as yet_
+Next release: [May 2024](TranslatorMay2024.md)
 
 ## New features
 * Updated TRAPI message normalization code to TRAPI 1.4
