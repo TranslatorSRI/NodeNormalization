@@ -696,10 +696,14 @@ async def create_node(canonical_id, equivalent_ids, types, info_contents, includ
     eids = equivalent_ids[canonical_id]
 
     # As per https://github.com/TranslatorSRI/Babel/issues/158, we select the first label from any
-    # identifier _except_ where one of the types is in PREFERRED_NAME_BOOST_PREFIXES, in which case
+    # identifier _except_ where one of the types is in preferred_name_boost_prefixes, in which case
     # we prefer the prefixes listed there.
     labels = list(filter(lambda x: len(x) > 0, [eid['l'] for eid in eids if 'l' in eid]))
-    for typ in types[canonical_id]:
+
+    # Note that types[canonical_id] goes from most specific to least specific, so we
+    # need to reverse it in order to apply preferred_name_boost_prefixes for the most
+    # specific type.
+    for typ in types[canonical_id][::-1]:
         if typ in config['preferred_name_boost_prefixes']:
             # This is the most specific matching type, so we use this.
             labels = map(lambda identifier: identifier.get('l', ''),
