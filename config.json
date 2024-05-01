@@ -40,5 +40,17 @@
             "file": "ChemicalEntityDrug.txt",
             "redis_db": "chemical_drug_db"
         }
-    ]
+    ],
+    "preferred_name_boost_prefixes": {
+        "biolink:ChemicalEntity": [
+            "DRUGBANK",
+            "GTOPDB",
+            "DrugCentral",
+            "CHEMBL.COMPOUND",
+            "RXCUI",
+            "CHEBI",
+            "HMDB",
+            "PUBCHEM.COMPOUND"
+        ]
+    }
 }
