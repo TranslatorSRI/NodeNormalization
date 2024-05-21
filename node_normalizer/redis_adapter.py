@@ -1,4 +1,3 @@
-
 from dataclasses import dataclass, field
 import rediscluster
 from rediscluster import RedisCluster
@@ -54,6 +53,9 @@ class RedisConnection:
         """
         Create redis connection.
         """
+        # redis_instance contains the password, so this should definitely not be
+        # printed except during debugging!
+        # print(f"Creating connection to Redis instance {redis_instance} ...")
         self = RedisConnection()
         other_params = {}
         if redis_instance.password:

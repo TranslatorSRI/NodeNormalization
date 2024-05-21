@@ -1,6 +1,8 @@
 import collections
 import itertools
+from pathlib import Path
 
+import json as builtin_json
 import orjson as json
 import logging
 import os
@@ -17,6 +19,34 @@ from .util import LoggingUtil, uniquify_list, BIOLINK_NAMED_THING
 
 # logger = LoggingUtil.init_logging(__name__, level=logging.INFO, format='medium', logFilePath=os.path.dirname(__file__), logFileLevel=logging.INFO)
 logger = LoggingUtil.init_logging()
+
+# Load configuration from config.json.
+with open(Path(__file__).parents[1] / "config.json", "r") as configf:
+    config = builtin_json.load(configf)
+
+
+def sort_identifiers_with_boosted_prefixes(identifiers, prefixes):
+    """
+    Given a list of identifiers (with `identifier` and `label` keys), sort them using
+    the following rules:
+    - Any identifier that has a prefix in prefixes is sorted based on its order in prefixes.
+    - Any identifier that does not have a prefix in prefixes is left in place.
+
+    Copied from https://github.com/TranslatorSRI/Babel/blob/0c3f3aed1bb1647f1ca101ba905dc241797fdfc9/src/babel_utils.py#L315-L333
+
+    :param identifiers: A list of identifiers to sort. This is a list of dictionaries
+        containing `identifier` and `label` keys, and possible others that we ignore.
+    :param prefixes: A list of prefixes, in the order in which they should be boosted.
+        We assume that CURIEs match these prefixes if they are in the form `{prefix}:...`.
+    :return: The list of identifiers sorted as described above.
+    """
+
+    # Thanks to JetBrains AI.
+    return sorted(
+        identifiers,
+        key=lambda identifier: prefixes.index(identifier['i'].split(':', 1)[0]) if identifier['i'].split(':', 1)[0] in prefixes else len(prefixes)
+    )
+
 
 def get_ancestors(app, input_type):
     if input_type in app.state.ancestor_map:
@@ -665,8 +695,29 @@ async def create_node(canonical_id, equivalent_ids, types, info_contents, includ
     # OK, now we should have id's in the format [ {"i": "MONDO:12312", "l": "Scrofula"}, {},...]
     eids = equivalent_ids[canonical_id]
 
-    # First, we need to create the "id" node.  The identifier is our input canonical id, but we have to get a label
+    # As per https://github.com/TranslatorSRI/Babel/issues/158, we select the first label from any
+    # identifier _except_ where one of the types is in preferred_name_boost_prefixes, in which case
+    # we prefer the prefixes listed there.
     labels = list(filter(lambda x: len(x) > 0, [eid['l'] for eid in eids if 'l' in eid]))
+
+    # Note that types[canonical_id] goes from most specific to least specific, so we
+    # need to reverse it in order to apply preferred_name_boost_prefixes for the most
+    # specific type.
+    for typ in types[canonical_id][::-1]:
+        if typ in config['preferred_name_boost_prefixes']:
+            # This is the most specific matching type, so we use this.
+            labels = map(lambda identifier: identifier.get('l', ''),
+                                  sort_identifiers_with_boosted_prefixes(
+                                      eids,
+                                      config['preferred_name_boost_prefixes'][typ]
+                                  ))
+            break
+
+    # Filter out unsuitable labels.
+    labels = [l for l in labels if
+              l and                               # Ignore blank or empty names.
+              not l.startswith('CHEMBL')          # Some CHEMBL names are just the identifier again.
+              ]
 
     # Note that the id will be from the equivalent ids, not the canonical_id.  This is to handle conflation
     if len(labels) > 0:
