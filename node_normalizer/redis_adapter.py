@@ -104,6 +104,17 @@ class RedisConnection:
             self.connector: aioredis.commands.Redis
             return await self.connector.get(key, encoding=encoding)
 
+    async def dbsize(self):
+        """
+        :return: The number of keys in this Redis database.
+        """
+        if isinstance(self.connector, RedisCluster):
+            self.connector: RedisCluster
+            return self.connector.dbsize()
+        elif isinstance(self.connector, aioredis.commands.Redis):
+            self.connector: aioredis.commands.Redis
+            return await self.connector.dbsize()
+
     def close(self):
         """
         Close underlying connection.

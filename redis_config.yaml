@@ -6,43 +6,52 @@
     # list of cluster member ips and ports
     - "host_name": "127.0.0.1"
       "port": "6379"
-  "password": ""
+  "password": "OKZkJava1U"
 
 "id_to_eqids_db":
   "ssl_enabled": false
   "is_cluster": false
-  "db": 1
+  "db": 0
   "hosts":
     - "host_name": "127.0.0.1"
-      "port": "6379"
-  "password": ""
+      "port": "6380"
+  "password": "RUB9eoXnUB"
 
 "id_to_type_db":
   "ssl_enabled": false
   "is_cluster": false
-  "db": 2
+  "db": 0
   "hosts":
     - "host_name": "127.0.0.1"
-      "port": "6379"
-  "password": ""
+      "port": "6381"
+  "password": "DBgaFZWovT"
 
 "curie_to_bl_type_db":
   "ssl_enabled": false
   "is_cluster": false
-  "db": 3
+  "db": 0
   "hosts":
     - "host_name": "127.0.0.1"
-      "port": "6379"
-  "password": ""
+      "port": "6382"
+  "password": "nejZl9sIqI"
 
 "gene_protein_db":
   "ssl_enabled": false
   "is_cluster": false
-  "db": 4
+  "db": 0
   "hosts":
     - "host_name": "127.0.0.1"
-      "port": "6379"
-  "password": ""
+      "port": "6383"
+  "password": "cSAE78yKQl"
+
+"info_content_db":
+  "ssl_enabled": false
+  "is_cluster": false
+  "db": 0
+  "hosts":
+    - "host_name": "127.0.0.1"
+      "port": "6384"
+  "password": "Dt31lWC9t4"
 
 "chemical_drug_db":
   "ssl_enabled": false
@@ -50,14 +59,5 @@
   "db": 0
   "hosts":
     - "host_name": "127.0.0.1"
-      "port": "6379"
-  "password": ""
-
-"info_content_db":
-  "ssl_enabled": false
-  "is_cluster": false
-  "db": 5
-  "hosts":
-    - "host_name": "127.0.0.1"
-      "port": "6379"
-  "password": ""
+      "port": "6385"
+  "password": "u8mYGopHF9"
