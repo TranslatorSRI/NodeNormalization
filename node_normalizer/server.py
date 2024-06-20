@@ -12,6 +12,8 @@ from requests.adapters import HTTPAdapter, Retry
 import fastapi
 from fastapi import FastAPI, HTTPException, Body, Query
 import reasoner_pydantic
+import yaml
+from pydantic import BaseModel
 from bmt import Toolkit
 from starlette.responses import JSONResponse
 
@@ -91,6 +93,65 @@ async def shutdown_event():
     await app.state.gene_protein_db.wait_closed()
     app.state.chemical_drug_db.close()
     await app.state.chemical_drug_db.wait_closed()
+
+
+@app.get(
+    "/status",
+    summary="Status information on this NodeNorm instance",
+    description="Returns information about this NodeNorm instance and the databases it is connected to."
+)
+async def status_get() -> Dict:
+    """ Return status information about this NodeNorm instance as well as its databases. """
+    return await status()
+
+
+async def status() -> Dict:
+    """ Return status information about this NodeNorm instance as well as its databases. """
+    redis_config_file = Path(__file__).parent.parent / "redis_config.yaml"
+    with open(redis_config_file, 'r') as rcfile:
+        # Load rcfile as a YAML file using safe loading.
+        redis_config = yaml.safe_load(rcfile)
+
+    return {
+        "status": "running",
+        "databases": {
+            "eq_id_to_id_db": {
+                "dbname": "id-id",
+                "count": await app.state.redis_connection0.dbsize(),
+                "is_cluster": redis_config['eq_id_to_id_db'].get('is_cluster', 'false')
+            },
+            "id_to_eqids_db": {
+                "dbname": "id-eq-id",
+                "count": await app.state.redis_connection1.dbsize(),
+                "is_cluster": redis_config['id_to_eqids_db'].get('is_cluster', 'false')
+            },
+            "id_to_type_db": {
+                "dbname": "id-categories",
+                "count": await app.state.redis_connection2.dbsize(),
+                "is_cluster": redis_config['id_to_type_db'].get('is_cluster', 'false')
+            },
+            "curie_to_bl_type_db": {
+                "dbname": "semantic-count",
+                "count": await app.state.redis_connection3.dbsize(),
+                "is_cluster": redis_config['curie_to_bl_type_db'].get('is_cluster', 'false')
+            },
+            "info_content_db": {
+                "dbname": "info-content",
+                "count": await app.state.redis_connection4.dbsize(),
+                "is_cluster": redis_config['info_content_db'].get('is_cluster', 'false')
+            },
+            "gene_protein_db": {
+                "dbname": "conflation-db",
+                "count": await app.state.redis_connection5.dbsize(),
+                "is_cluster": redis_config['gene_protein_db'].get('is_cluster', 'false')
+            },
+            "chemical_drug_db": {
+                "dbname": "chemical-drug-db",
+                "count": await app.state.redis_connection6.dbsize(),
+                "is_cluster": redis_config['chemical_drug_db'].get('is_cluster', 'false')
+            }
+        },
+    }
 
 
 @app.post(
