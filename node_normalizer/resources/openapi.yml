@@ -26,7 +26,7 @@ info:
       - Standards Reference Implementation Team
     infores: "infores:sri-node-normalizer"
   x-trapi:
-    version: 1.4.0
+    version: 1.5.0
     operations:
       - annotate_nodes
 
