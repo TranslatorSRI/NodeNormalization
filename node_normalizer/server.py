@@ -47,7 +47,6 @@ loader = NodeLoader()
 
 redis_host = os.environ.get("REDIS_HOST", loader.get_config()["redis_host"])
 redis_port = os.environ.get("REDIS_PORT", loader.get_config()["redis_port"])
-TRAPI_VERSION = os.environ.get("TRAPI_VERSION", "1.5")
 
 async_query_tasks = set()
 
