@@ -27,5 +27,13 @@ class SemanticTypes(BaseModel):
 class CuriePivot(BaseModel):
     curie_prefix: Dict[str, str]
 
+
 class ConflationList(BaseModel):
     conflations: List
+
+
+class SetIDResponse(BaseModel):
+    curies: List[str]
+    conflations: List[str]
+    normalized_curies: List[str]
+    sha256hash: str
