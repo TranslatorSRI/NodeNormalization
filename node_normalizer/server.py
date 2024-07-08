@@ -26,6 +26,7 @@ from .model import (
     SetIDResponse,
 )
 from .normalizer import get_normalized_nodes, get_curie_prefixes, normalize_message
+from .set_id import generate_set_id
 from .redis_adapter import RedisConnectionFactory
 from .util import LoggingUtil
 from .examples import EXAMPLE_QUERY_DRUG_TREATS_ESSENTIAL_HYPERTENSION
@@ -168,8 +169,7 @@ async def get_conflations() -> ConflationList:
     """
     Get implemented conflations
     """
-    # TODO: build from config instead of hard-coding.
-    conflations = ConflationList(conflations=["GeneProtein"])
+    conflations = ConflationList(conflations=["GeneProtein", "DrugChemical"])
 
     return conflations
 
@@ -239,10 +239,9 @@ async def get_set_id(
         [],
         description="Set of conflations to apply",
         example=["GeneProtein", "DrugChemical"],
-        default=[]
     )
-):
-    pass
+) -> SetIDResponse:
+    return await generate_set_id(app, curie, conflation)
 
 
 @app.get(
