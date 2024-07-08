@@ -232,7 +232,7 @@ async def get_set_id(
     curie: List[str] = fastapi.Query(
         [],
         description="Set of curies to normalize",
-        example=["MESH:D014867", "NCIT:C34373"],
+        example=["MESH:D014867", "NCIT:C34373", "CHEBI:15377", "RUBBISH:1234"],
         min_items=1,
     ),
     conflation: List[str] = fastapi.Query(
