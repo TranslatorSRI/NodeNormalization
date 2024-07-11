@@ -11,7 +11,16 @@ from .model import SetIDResponse
 from .normalizer import get_normalized_nodes
 
 
-async def generate_set_id(app, curies, conflations) -> SetIDResponse:
+async def generate_setid(app, curies, conflations) -> SetIDResponse:
+    """
+    Generate a SetID for a set of curies.
+
+    :param app: The NodeNorm app (used to access the databases).
+    :param curies: A list of curies to generate a set ID for.
+    :param conflations: A list of conflations to apply.
+    :return:
+    """
+
     # Step 0. Prepare the SetIDResponse by filling it with the arguments.
     response = SetIDResponse(
         curies=curies,
@@ -21,6 +30,8 @@ async def generate_set_id(app, curies, conflations) -> SetIDResponse:
     # Step 1. Normalize the curies given the conflation settings.
     gene_protein_conflation = "GeneProtein" in conflations
     drug_chemical_conflation = "DrugChemical" in conflations
+    assert all(item in ['GeneProtein', 'DrugConflation'] for item in conflations), "Conflations provided to " + \
+        f"generate_setid() are {conflations}, but only 'GeneProtein' and 'DrugChemical' are allowed."
 
     # We use get_normalized_nodes() to normalize all the CURIEs for us.
     normalization_results = await get_normalized_nodes(

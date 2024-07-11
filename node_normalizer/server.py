@@ -26,7 +26,7 @@ from .model import (
     SetIDResponse,
 )
 from .normalizer import get_normalized_nodes, get_curie_prefixes, normalize_message
-from .set_id import generate_set_id
+from .set_id import generate_setid
 from .redis_adapter import RedisConnectionFactory
 from .util import LoggingUtil
 from .examples import EXAMPLE_QUERY_DRUG_TREATS_ESSENTIAL_HYPERTENSION
@@ -241,7 +241,7 @@ async def get_setid(
         example=["GeneProtein", "DrugChemical"],
     )
 ) -> SetIDResponse:
-    return await generate_set_id(app, curie, conflation)
+    return await generate_setid(app, curie, conflation)
 
 
 @app.get(
