@@ -44,6 +44,15 @@
       "port": "6379"
   "password": ""
 
+"chemical_drug_db":
+  "ssl_enabled": false
+  "is_cluster": false
+  "db": 0
+  "hosts":
+    - "host_name": "127.0.0.1"
+      "port": "6379"
+  "password": ""
+
 "info_content_db":
   "ssl_enabled": false
   "is_cluster": false
