@@ -31,6 +31,8 @@ async def generate_set_id(app, curies, conflations) -> SetIDResponse:
     curies_normalized_already = set()
     normalized_curies = []
     for curie in curies:
+        # CURIE must be a string.
+        curie = str(curie)
         if curie in normalization_results and normalization_results[curie] is not None:
             result = normalization_results[curie]
             if 'id' in result and 'identifier' in result['id']:

@@ -64,11 +64,21 @@ def test_setid_basic():
     expected_setids = [
         {
             'curie': ['DOID:3812', 'MONDO:0005002', 'MONDO:0005003', ''],
+            'curies': ['DOID:3812', 'MONDO:0005002', 'MONDO:0005003', ''],
             'normalized_curies': ['', 'MONDO:0005002', 'MONDO:0005003'],
             'normalized_string': '||MONDO:0005002||MONDO:0005003',
             'sha256hash': 'b0f633a8752fcf2bdfdeded274d39e99521b688964a2204308eb41ac4e55a922',
             'base64': 'fHxNT05ETzowMDA1MDAyfHxNT05ETzowMDA1MDAz',
             'base64zlib': 'eJyrqfH193PxtzIwMDA1MDCqQeEaAwCHqQgO'
+        },
+        {
+            'curie': ['!#lk1l4', '09s90ma!:391nasa01AAa', 10.31, 9018, -913],
+            'curies': ['!#lk1l4', '09s90ma!:391nasa01AAa', '10.31', '9018', '-913'],
+            'normalized_curies': ['!#lk1l4', '-913', '09s90ma!:391nasa01AAa', '10.31', '9018'],
+            'normalized_string': '!#lk1l4||-913||09s90ma!:391nasa01AAa||10.31||9018',
+            'sha256hash': '6be8cf0bd4ad7e9501816eb36194468e13e0be521a072e0fe0cdec22dca6604a',
+            'base64': 'ISNsazFsNHx8LTkxM3x8MDlzOTBtYSE6MzkxbmFzYTAxQUFhfHwxMC4zMXx8OTAxOA==',
+            'base64zlib': 'eJxTVM7JNswxqanRtTQ0rqkxsCy2NMhNVLQytjTMSyxONDB0dEysqTE00DM2rKmxNDC0AABqJg5O'
         }
     ]
 
@@ -77,7 +87,7 @@ def test_setid_basic():
             'curie': expected_setid['curie']
         })
         result = response.json()
-        assert result['curies'] == expected_setid['curie']
+        assert result['curies'] == expected_setid['curies']
         assert result['normalized_curies'] == expected_setid['normalized_curies']
         assert result['normalized_string'] == expected_setid['normalized_string']
         assert result['sha256hash'] == expected_setid['sha256hash']
