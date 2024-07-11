@@ -5,6 +5,8 @@ import gzip
 import hashlib
 import logging
 
+import zlib
+
 from .model import SetIDResponse
 from .normalizer import get_normalized_nodes
 
@@ -60,18 +62,16 @@ async def generate_set_id(app, curies, conflations) -> SetIDResponse:
     if not sorted_normalized_curies:
         return response
 
-    # We convert the list of normalized CURIEs into a unique hash. The simplest way to do this would be to use a hashing
-    # function, but we might someday want this to be reversible (see
-    # https://github.com/TranslatorSRI/NodeNormalization/issues/256#issuecomment-2197465751), so let's try using base64
-    # encoding + gzip instead.
+    # We convert the list of normalized CURIEs into a string, and then a unique hash.
     normalized_string = "||".join(sorted_normalized_curies)
-    response.base64 = base64.b64encode(normalized_string.encode('utf-8')).decode('utf-8')
-
-    # This approach won't work because gzip adds a timestamp.
-    compressed_normalized_string = gzip.compress(normalized_string.encode('utf-8'))
-    response.base64gzipped = base64.b64encode(compressed_normalized_string).decode('utf-8')
-
-# Let's generate a hash too, why not.
+    response.normalized_string = normalized_string
     response.sha256hash = hashlib.sha256(normalized_string.encode('utf-8')).hexdigest()
+
+    # We might someday want this to be reversible (see
+    # https://github.com/TranslatorSRI/NodeNormalization/issues/256#issuecomment-2197465751), so let's try using
+    # base64 encoding + gzip instead. Unfortunately,
+    response.base64 = base64.b64encode(normalized_string.encode('utf-8')).decode('utf-8')
+    compressed_normalized_string = zlib.compress(normalized_string.encode('utf-8'))
+    response.base64zlib = base64.b64encode(compressed_normalized_string).decode('utf-8')
 
     return response

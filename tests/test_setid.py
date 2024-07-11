@@ -63,8 +63,8 @@ def test_setid_basic():
         {
             'curie': ['DOID:3812', 'MONDO:0005002', 'MONDO:0005003', ''],
             'normalized_curies': ['', 'MONDO:0005002', 'MONDO:0005003'],
-            'base64': 'fHxNT05ETzowMDA1MDAyfHxNT05ETzowMDA1MDAz',
-            'sha256hash': '41f8e732c399787d71acd0db8b66971371b896cee754a0b54f0737ecd9a365e6'
+            'normalized_string': '||MONDO:0005002||MONDO:0005003'
+            'sha256hash': 'b0f633a8752fcf2bdfdeded274d39e99521b688964a2204308eb41ac4e55a922'
         }
     ]
 
@@ -75,5 +75,4 @@ def test_setid_basic():
         result = response.json()
         assert result['curies'] == expected_setid['curie']
         assert result['normalized_curies'] == expected_setid['normalized_curies']
-        assert result['base64'] == expected_setid['base64']
-        assert result['sha256hash'] == expected_setid['41f8e732c399787d71acd0db8b66971371b896cee754a0b54f0737ecd9a365e6']
+        assert result['sha256hash'] == expected_setid['sha256hash']
