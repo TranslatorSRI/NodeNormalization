@@ -495,7 +495,7 @@ async def get_info_content(
         return {}
 
     # call redis and get the value
-    info_contents = await app.state.redis_connection4.mget(*canonical_nonan, encoding='utf8')
+    info_contents = await app.state.info_content_db.mget(*canonical_nonan, encoding='utf8')
 
     # get this into a list
     info_contents = [round(float(ic_ids), 1) if ic_ids is not None else None for ic_ids in info_contents]
@@ -515,9 +515,9 @@ async def get_eqids_and_types(
     batch_size = int(os.environ.get("EQ_BATCH_SIZE", 2500))
     eqids = []
     for i in range(0, len(canonical_nonan), batch_size):
-        eqids += await app.state.redis_connection1.mget(*canonical_nonan[i:i+batch_size], encoding='utf-8')
+        eqids += await app.state.id_to_eqids_db.mget(*canonical_nonan[i:i + batch_size], encoding='utf-8')
     eqids = [json.loads(value) if value is not None else [None] for value in eqids]
-    types = await app.state.redis_connection2.mget(*canonical_nonan, encoding='utf-8')
+    types = await app.state.id_to_type_db.mget(*canonical_nonan, encoding='utf-8')
     types_with_ancestors = []
     for index, typ in enumerate(types):
         if not typ:
@@ -552,7 +552,7 @@ async def get_normalized_nodes(
 
     upper_curies = [c.upper() for c in curies]
     try:
-        canonical_ids = await app.state.redis_connection0.mget(*upper_curies, encoding='utf-8')
+        canonical_ids = await app.state.eq_id_to_id_db.mget(*upper_curies, encoding='utf-8')
         canonical_nonan = [canonical_id for canonical_id in canonical_ids if canonical_id is not None]
         info_contents = {}
 
@@ -569,12 +569,12 @@ async def get_normalized_nodes(
                 other_ids = []
 
                 if conflate_gene_protein:
-                    other_ids.extend(await app.state.redis_connection5.mget(*canonical_nonan, encoding='utf8'))
+                    other_ids.extend(await app.state.gene_protein_db.mget(*canonical_nonan, encoding='utf8'))
 
                 # logger.error(f"After conflate_gene_protein: {other_ids}")
 
                 if conflate_chemical_drug:
-                    other_ids.extend(await app.state.redis_connection6.mget(*canonical_nonan, encoding='utf8'))
+                    other_ids.extend(await app.state.chemical_drug_db.mget(*canonical_nonan, encoding='utf8'))
 
                 # logger.error(f"After conflate_chemical_drug: {other_ids}")
 
@@ -657,7 +657,7 @@ async def get_info_content_attribute(app, canonical_nonan) -> dict:
     :return:
     """
     # get the information content value
-    ic_val = await app.state.redis_connection4.get(canonical_nonan, encoding='utf8')
+    ic_val = await app.state.info_content_db.get(canonical_nonan, encoding='utf8')
 
     # did we get a good value
     if ic_val is not None:
@@ -776,7 +776,7 @@ async def get_curie_prefixes(
         if semantic_types:
             for item in semantic_types:
                 # get the curies for this type
-                curies = await app.state.redis_connection3.get(item, encoding='utf-8')
+                curies = await app.state.curie_to_bl_type_db.get(item, encoding='utf-8')
 
                 # did we get any data
                 if not curies:
@@ -787,11 +787,11 @@ async def get_curie_prefixes(
                 # set the return data
                 ret_val[item] = {'curie_prefix': curies}
         else:
-            types = await app.state.redis_connection3.lrange('semantic_types', 0, -1, encoding='utf-8')
+            types = await app.state.curie_to_bl_type_db.lrange('semantic_types', 0, -1, encoding='utf-8')
 
             for item in types:
                 # get the curies for this type
-                curies = await app.state.redis_connection3.get(item, encoding='utf-8')
+                curies = await app.state.curie_to_bl_type_db.get(item, encoding='utf-8')
 
                 # did we get any data
                 if not curies:

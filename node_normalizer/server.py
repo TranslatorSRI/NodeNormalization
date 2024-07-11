@@ -58,13 +58,13 @@ async def startup_event():
     """
     redis_config_file = Path(__file__).parent.parent / "redis_config.yaml"
     connection_factory = await RedisConnectionFactory.create_connection_pool(redis_config_file)
-    app.state.redis_connection0 = connection_factory.get_connection(connection_id="eq_id_to_id_db")
-    app.state.redis_connection1 = connection_factory.get_connection(connection_id="id_to_eqids_db")
-    app.state.redis_connection2 = connection_factory.get_connection(connection_id="id_to_type_db")
-    app.state.redis_connection3 = connection_factory.get_connection(connection_id="curie_to_bl_type_db")
-    app.state.redis_connection4 = connection_factory.get_connection(connection_id="info_content_db")
-    app.state.redis_connection5 = connection_factory.get_connection(connection_id="gene_protein_db")
-    app.state.redis_connection6 = connection_factory.get_connection(connection_id="chemical_drug_db")
+    app.state.eq_id_to_id_db = connection_factory.get_connection(connection_id="eq_id_to_id_db")
+    app.state.id_to_eqids_db = connection_factory.get_connection(connection_id="id_to_eqids_db")
+    app.state.id_to_type_db = connection_factory.get_connection(connection_id="id_to_type_db")
+    app.state.curie_to_bl_type_db = connection_factory.get_connection(connection_id="curie_to_bl_type_db")
+    app.state.info_content_db = connection_factory.get_connection(connection_id="info_content_db")
+    app.state.gene_protein_db = connection_factory.get_connection(connection_id="gene_protein_db")
+    app.state.chemical_drug_db = connection_factory.get_connection(connection_id="chemical_drug_db")
     app.state.toolkit = Toolkit()
     app.state.ancestor_map = {}
 
@@ -74,20 +74,20 @@ async def shutdown_event():
     """
     Shut down Redis connection
     """
-    app.state.redis_connection0.close()
-    await app.state.redis_connection0.wait_closed()
-    app.state.redis_connection1.close()
-    await app.state.redis_connection1.wait_closed()
-    app.state.redis_connection2.close()
-    await app.state.redis_connection2.wait_closed()
-    app.state.redis_connection3.close()
-    await app.state.redis_connection3.wait_closed()
-    app.state.redis_connection4.close()
-    await app.state.redis_connection4.wait_closed()
-    app.state.redis_connection5.close()
-    await app.state.redis_connection5.wait_closed()
-    app.state.redis_connection6.close()
-    await app.state.redis_connection6.wait_closed()
+    app.state.eq_id_to_id_db.close()
+    await app.state.eq_id_to_id_db.wait_closed()
+    app.state.id_to_eqids_db.close()
+    await app.state.id_to_eqids_db.wait_closed()
+    app.state.id_to_type_db.close()
+    await app.state.id_to_type_db.wait_closed()
+    app.state.curie_to_bl_type_db.close()
+    await app.state.curie_to_bl_type_db.wait_closed()
+    app.state.info_content_db.close()
+    await app.state.info_content_db.wait_closed()
+    app.state.gene_protein_db.close()
+    await app.state.gene_protein_db.wait_closed()
+    app.state.chemical_drug_db.close()
+    await app.state.chemical_drug_db.wait_closed()
 
 
 @app.post(
@@ -230,7 +230,7 @@ async def get_normalized_node_handler(curies: CurieList):
 )
 async def get_semantic_types_handler() -> SemanticTypes:
     # look for all biolink semantic types
-    types = await app.state.redis_connection3.lrange("semantic_types", 0, -1, encoding="utf-8")
+    types = await app.state.curie_to_bl_type_db.lrange("semantic_types", 0, -1, encoding="utf-8")
 
     # did we get any data
     if not types:
