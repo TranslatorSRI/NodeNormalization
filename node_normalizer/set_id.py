@@ -17,8 +17,8 @@ async def generate_setid(app, curies, conflations) -> SetIDResponse:
 
     :param app: The NodeNorm app (used to access the databases).
     :param curies: A list of curies to generate a set ID for.
-    :param conflations: A list of conflations to apply.
-    :return:
+    :param conflations: A list of conflations to apply. Must be one or both of 'GeneProtein' and 'DrugChemical'.
+    :return: A SetIDResponse with the Set ID.
     """
 
     # Step 0. Prepare the SetIDResponse by filling it with the arguments.
