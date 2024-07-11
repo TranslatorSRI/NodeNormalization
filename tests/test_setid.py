@@ -59,14 +59,21 @@ def test_setid_basic():
     """
     client = TestClient(app)
 
-    expected_setid = [
+    expected_setids = [
         {
             'curie': ['DOID:3812', 'MONDO:0005002', 'MONDO:0005003', ''],
-            'normalized_curies': ['MONDO:0005002', 'MONDO:0005003']
+            'normalized_curies': ['', 'MONDO:0005002', 'MONDO:0005003'],
+            'base64': 'fHxNT05ETzowMDA1MDAyfHxNT05ETzowMDA1MDAz',
+            'sha256hash': '41f8e732c399787d71acd0db8b66971371b896cee754a0b54f0737ecd9a365e6'
         }
     ]
 
-    response = client.get("/get_setid", params={
-        ''
-    })
-    result = response.json()
+    for expected_setid in expected_setids:
+        response = client.get("/get_setid", params={
+            'curie': expected_setid['curie']
+        })
+        result = response.json()
+        assert result['curies'] == expected_setid['curie']
+        assert result['normalized_curies'] == expected_setid['normalized_curies']
+        assert result['base64'] == expected_setid['base64']
+        assert result['sha256hash'] == expected_setid['41f8e732c399787d71acd0db8b66971371b896cee754a0b54f0737ecd9a365e6']
