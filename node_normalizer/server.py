@@ -224,11 +224,11 @@ async def get_normalized_node_handler(curies: CurieList):
 
 
 @app.get(
-    "/get_set_id",
+    "/get_setid",
     response_model=SetIDResponse,
     summary="Normalize and deduplicate a set of identifiers and return a single hash that represents this set."
 )
-async def get_set_id(
+async def get_setid(
     curie: List[str] = fastapi.Query(
         [],
         description="Set of curies to normalize",
