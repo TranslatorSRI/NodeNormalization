@@ -28,16 +28,18 @@ app.state.id_to_eqids_db = MockRedis(
 app.state.id_to_type_db = MockRedis({"MONDO:0005002": "biolink:Disease"})
 app.state.curie_to_bl_type_db = MockRedis({})
 app.state.info_content_db = MockRedis({})
-app.state.gene_protein_db = MockRedis({})
-#app.state.ancestor_map = {"biolink:Disease": ["biolink:Disease", "biolink:NamedThing"]}
 app.state.toolkit = Toolkit()
 app.state.ancestor_map = {}
 
+# TODO: add test for conflations.
 
 def test_setid_empty():
+    """
+    Make sure we get a sensible response if we call setid without any parameters.
+    """
     client = TestClient(app)
     response = client.get("/get_setid")
-    result = json.loads(response.text)
+    result = response.json()
     assert result == {
         "detail":
             [
@@ -49,3 +51,22 @@ def test_setid_empty():
                 }
             ]
     }
+
+
+def test_setid_basic():
+    """
+    Some basic tests to make sure normalization works as expected.
+    """
+    client = TestClient(app)
+
+    expected_setid = [
+        {
+            'curie': ['DOID:3812', 'MONDO:0005002', 'MONDO:0005003', ''],
+            'normalized_curies': ['MONDO:0005002', 'MONDO:0005003']
+        }
+    ]
+
+    response = client.get("/get_setid", params={
+        ''
+    })
+    result = response.json()

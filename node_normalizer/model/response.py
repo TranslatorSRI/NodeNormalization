@@ -36,5 +36,6 @@ class SetIDResponse(BaseModel):
     curies: List[str]
     conflations: List[str]
     normalized_curies: Optional[List[str]]
-    base64hash: Optional[str]
+    base64: Optional[str]
+    base64gzipped: Optional[str]
     sha256hash: Optional[str]

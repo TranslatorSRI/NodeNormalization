@@ -1,6 +1,7 @@
 # set_id.py
 # Code related to generating IDs for sets (as in https://github.com/TranslatorSRI/NodeNormalization/issues/256).
 import base64
+import gzip
 import hashlib
 import logging
 
@@ -62,11 +63,14 @@ async def generate_set_id(app, curies, conflations) -> SetIDResponse:
     # We convert the list of normalized CURIEs into a unique hash. The simplest way to do this would be to use a hashing
     # function, but we might someday want this to be reversible (see
     # https://github.com/TranslatorSRI/NodeNormalization/issues/256#issuecomment-2197465751), so let's try using base64
-    # encoding instead.
-    normalized_string = "|".join(sorted_normalized_curies)
-    response.base64hash = base64.b64encode(normalized_string.encode('utf-8')).decode('utf-8')
+    # encoding + gzip instead.
+    normalized_string = "||".join(sorted_normalized_curies)
+    response.base64 = base64.b64encode(normalized_string.encode('utf-8')).decode('utf-8')
+    compressed_normalized_string = gzip.compress(normalized_string.encode('utf-8'))
+    response.base64gzipped = base64.b64encode(compressed_normalized_string).decode('utf-8')
+    # You can use https://codebeautify.org/gzip-decompress-online to convert this back into a string.
 
-    # Let's generate a hash too, why not.
+# Let's generate a hash too, why not.
     response.sha256hash = hashlib.sha256(normalized_string.encode('utf-8')).hexdigest()
 
     return response
