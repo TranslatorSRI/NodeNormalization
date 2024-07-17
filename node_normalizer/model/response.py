@@ -35,8 +35,10 @@ class ConflationList(BaseModel):
 class SetIDResponse(BaseModel):
     curies: List[str]
     conflations: List[str]
+    error: Optional[str]
     normalized_curies: Optional[List[str]]
     normalized_string: Optional[str]
+    setid: Optional[str]
     base64: Optional[str]
     base64zlib: Optional[str]
     sha256hash: Optional[str]

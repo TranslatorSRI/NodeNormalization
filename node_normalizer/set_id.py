@@ -30,8 +30,10 @@ async def generate_setid(app, curies, conflations) -> SetIDResponse:
     # Step 1. Normalize the curies given the conflation settings.
     gene_protein_conflation = "GeneProtein" in conflations
     drug_chemical_conflation = "DrugChemical" in conflations
-    assert all(item in ['GeneProtein', 'DrugConflation'] for item in conflations), "Conflations provided to " + \
-        f"generate_setid() are {conflations}, but only 'GeneProtein' and 'DrugChemical' are allowed."
+    if not all(item in ['GeneProtein', 'DrugChemical'] for item in conflations):
+        response.error = "Conflations provided to " + \
+            f"generate_setid() are {conflations}, but only 'GeneProtein' and 'DrugChemical' are allowed."
+        return response
 
     # We use get_normalized_nodes() to normalize all the CURIEs for us.
     normalization_results = await get_normalized_nodes(

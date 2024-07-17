@@ -1,13 +1,8 @@
 """Test node_normalizer server.py"""
 import json
-import random
 
 from node_normalizer.server import app
 from fastapi.testclient import TestClient
-from unittest.mock import Mock, patch
-from .helpers.redis_mocks import mock_get_equivalent_curies, mock_get_ic
-from pathlib import Path
-import os
 from bmt import Toolkit
 
 
@@ -35,6 +30,7 @@ app.state.ancestor_map = {}
 
 # TODO: add test for conflations.
 
+
 def test_setid_empty():
     """
     Make sure we get a sensible response if we call setid without any parameters.
@@ -53,6 +49,20 @@ def test_setid_empty():
                 }
             ]
     }
+
+
+def test_setid_incorrect_conflation():
+    """
+    Make sure we get a sensible response if we call setid without any parameters.
+    """
+    client = TestClient(app)
+    response = client.get("/get_setid", params={
+        'curie': ['DOID:3812', 'MONDO:0005002', 'MONDO:0005003'],
+        'conflation': ['GeneProtein', 'DrugChemic']
+    })
+    result = response.json()
+    assert "only 'GeneProtein' and 'DrugChemical' are allowed" in result['error']
+    assert result['setid'] is None
 
 
 def test_setid_basic():
