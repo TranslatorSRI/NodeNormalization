@@ -4,11 +4,15 @@ import base64
 import gzip
 import hashlib
 import logging
+import uuid
 
 import zlib
 
 from .model import SetIDResponse
 from .normalizer import get_normalized_nodes
+
+# UUID namespace for SetIDs
+uuid_namespace_setid = uuid.UUID('14ef168c-14cb-4979-8442-da6aaca55572')
 
 
 async def generate_setid(app, curies, conflations) -> SetIDResponse:
@@ -77,16 +81,21 @@ async def generate_setid(app, curies, conflations) -> SetIDResponse:
     if not sorted_normalized_curies:
         return response
 
-    # We convert the list of normalized CURIEs into a string, and then a unique hash.
     normalized_string = "||".join(sorted_normalized_curies)
     response.normalized_string = normalized_string
-    response.sha256hash = hashlib.sha256(normalized_string.encode('utf-8')).hexdigest()
 
-    # We might someday want this to be reversible (see
-    # https://github.com/TranslatorSRI/NodeNormalization/issues/256#issuecomment-2197465751), so let's try using
-    # base64 encoding + gzip instead. Unfortunately,
-    response.base64 = base64.b64encode(normalized_string.encode('utf-8')).decode('utf-8')
-    compressed_normalized_string = zlib.compress(normalized_string.encode('utf-8'))
-    response.base64zlib = base64.b64encode(compressed_normalized_string).decode('utf-8')
+    # There are several options we've tried here:
+    # - SHA224 hash -- but this is too long.
+    # response.sha224hash = hashlib.sha224(normalized_string.encode('utf-8')).hexdigest()
+
+    # - base64+zip, so it would be reversible, which might be something we want at some point
+    #   (https://github.com/TranslatorSRI/NodeNormalization/issues/256#issuecomment-2197465751),
+    #   but that is also too long.
+    # response.base64 = base64.b64encode(normalized_string.encode('utf-8')).decode('utf-8')
+    # compressed_normalized_string = zlib.compress(normalized_string.encode('utf-8'))
+    # response.base64zlib = base64.b64encode(compressed_normalized_string).decode('utf-8')
+
+    # - UUID v5 identifiers with a custom namespace.
+    response.setid = 'uuid:' + str(uuid.uuid5(uuid_namespace_setid, normalized_string))
 
     return response
