@@ -232,7 +232,7 @@ async def get_setid(
     curie: List[str] = fastapi.Query(
         [],
         description="Set of curies to normalize",
-        example=["MESH:D014867", "NCIT:C34373", "CHEBI:15377", "RUBBISH:1234"],
+        example=["MESH:D014867", "NCIT:C34373", "UNII:63M8RYN44N", "RUBBISH:1234"],
         min_items=1,
     ),
     conflation: List[str] = fastapi.Query(
