@@ -16,19 +16,28 @@ class MockRedis:
 
 # Id -> Canonical
 app.state.eq_id_to_id_db = MockRedis(
-    {"DOID:3812": "MONDO:0005002", "MONDO:0005002": "MONDO:0005002"}
+    {"DOID:3812": "MONDO:0005002", "MONDO:0005002": "MONDO:0005002", "UNII:63M8RYN44N": "PUBCHEM.COMPOUND:10129877"}
 )
 # Canonical->Equiv
-app.state.id_to_eqids_db = MockRedis(
-    {"MONDO:0005002": json.dumps([{"i": "MONDO:0005002"}, {"i": "DOID:3812"}])}
-)
-app.state.id_to_type_db = MockRedis({"MONDO:0005002": "biolink:Disease"})
+app.state.id_to_eqids_db = MockRedis({
+    "MONDO:0005002": json.dumps([{"i": "MONDO:0005002"}, {"i": "DOID:3812"}]),
+    "PUBCHEM.COMPOUND:10129877": json.dumps([{"i": "PUBCHEM.COMPOUND:10129877", "l": "WATER O 15"}, {"i": "UNII:63M8RYN44N", "l": "WATER O-15"}]),
+    "CHEBI:15377": json.dumps([{"i": "CHEBI:15377", "l": "WATER"}]),
+})
+app.state.id_to_type_db = MockRedis({
+    "MONDO:0005002": "biolink:Disease",
+    "PUBCHEM.COMPOUND:10129877": "biolink:SmallMolecule",
+    "CHEBI:15377": "biolink:SmallMolecule",
+})
+app.state.chemical_drug_db = MockRedis({
+    "PUBCHEM.COMPOUND:10129877": json.dumps(["CHEBI:15377", "PUBCHEM.COMPOUND:10129877"]),
+    "CHEBI:15377": json.dumps(["CHEBI:15377", "PUBCHEM.COMPOUND:10129877"]),
+})
+app.state.gene_protein_db = MockRedis({})
 app.state.curie_to_bl_type_db = MockRedis({})
 app.state.info_content_db = MockRedis({})
 app.state.toolkit = Toolkit()
 app.state.ancestor_map = {}
-
-# TODO: add test for conflations.
 
 
 def test_setid_empty():
@@ -73,14 +82,24 @@ def test_setid_basic():
 
     expected_setids = [
         {
-            'curie': ['DOID:3812', 'MONDO:0005002', 'MONDO:0005003', ''],
-            'curies': ['DOID:3812', 'MONDO:0005002', 'MONDO:0005003', ''],
-            'normalized_curies': ['', 'MONDO:0005002', 'MONDO:0005003'],
-            'normalized_string': '||MONDO:0005002||MONDO:0005003',
-            'setid': 'uuid:fa89b48e-22d0-53c2-8e1a-e32e1fac6f4c'
+            'curie': ['DOID:3812', 'MONDO:0005002', 'MONDO:0005003', 'UNII:63M8RYN44N', ''],
+            'conflation': ['GeneProtein'],
+            'curies': ['DOID:3812', 'MONDO:0005002', 'MONDO:0005003', 'UNII:63M8RYN44N', ''],
+            'normalized_curies': ['', 'MONDO:0005002', 'MONDO:0005003', 'PUBCHEM.COMPOUND:10129877'],
+            'normalized_string': '||MONDO:0005002||MONDO:0005003||PUBCHEM.COMPOUND:10129877',
+            'setid': 'uuid:08da0da0-4b47-55e6-b9b2-73ead9921494'
+        },
+        {
+            'curie': ['DOID:3812', 'MONDO:0005002', 'MONDO:0005003', 'UNII:63M8RYN44N', ''],
+            'conflation': ['GeneProtein', 'DrugChemical'],
+            'curies': ['DOID:3812', 'MONDO:0005002', 'MONDO:0005003', 'UNII:63M8RYN44N', ''],
+            'normalized_curies': ['', 'CHEBI:15377', 'MONDO:0005002', 'MONDO:0005003'],
+            'normalized_string': '||CHEBI:15377||MONDO:0005002||MONDO:0005003',
+            'setid': 'uuid:4b54135a-a151-561b-8b25-8a5a5b710700'
         },
         {
             'curie': ['!#lk1l4', '09s90ma!:391nasa01AAa', 10.31, 9018, -913],
+            'conflation': ['GeneProtein', 'DrugChemical'],
             'curies': ['!#lk1l4', '09s90ma!:391nasa01AAa', '10.31', '9018', '-913'],
             'normalized_curies': ['!#lk1l4', '-913', '09s90ma!:391nasa01AAa', '10.31', '9018'],
             'normalized_string': '!#lk1l4||-913||09s90ma!:391nasa01AAa||10.31||9018',
@@ -90,10 +109,12 @@ def test_setid_basic():
 
     for expected_setid in expected_setids:
         response = client.get("/get_setid", params={
-            'curie': expected_setid['curie']
+            'curie': expected_setid['curie'],
+            'conflation': expected_setid['conflation'],
         })
         result = response.json()
         assert result['curies'] == expected_setid['curies']
+        assert result['error'] is None
         assert result['normalized_curies'] == expected_setid['normalized_curies']
         assert result['normalized_string'] == expected_setid['normalized_string']
         assert result['setid'] == expected_setid['setid']
