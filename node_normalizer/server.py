@@ -23,8 +23,10 @@ from .model import (
     CurieList,
     SemanticTypesInput,
     ConflationList,
+    SetIDResponse,
 )
 from .normalizer import get_normalized_nodes, get_curie_prefixes, normalize_message
+from .set_id import generate_setid
 from .redis_adapter import RedisConnectionFactory
 from .util import LoggingUtil
 from .examples import EXAMPLE_QUERY_DRUG_TREATS_ESSENTIAL_HYPERTENSION
@@ -167,8 +169,7 @@ async def get_conflations() -> ConflationList:
     """
     Get implemented conflations
     """
-    # TODO: build from config instead of hard-coding.
-    conflations = ConflationList(conflations=["GeneProtein"])
+    conflations = ConflationList(conflations=["GeneProtein", "DrugChemical"])
 
     return conflations
 
@@ -220,6 +221,27 @@ async def get_normalized_node_handler(curies: CurieList):
         raise HTTPException(detail="Error occurred during processing.", status_code=500)
 
     return normalized_nodes
+
+
+@app.get(
+    "/get_setid",
+    response_model=SetIDResponse,
+    summary="Normalize and deduplicate a set of identifiers and return a single hash that represents this set."
+)
+async def get_setid(
+    curie: List[str] = fastapi.Query(
+        [],
+        description="Set of curies to normalize",
+        example=["MESH:D014867", "NCIT:C34373", "UNII:63M8RYN44N", "RUBBISH:1234"],
+        min_items=1,
+    ),
+    conflation: List[str] = fastapi.Query(
+        [],
+        description="Set of conflations to apply",
+        example=["GeneProtein", "DrugChemical"],
+    )
+) -> SetIDResponse:
+    return await generate_setid(app, curie, conflation)
 
 
 @app.get(
