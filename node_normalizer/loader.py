@@ -12,7 +12,7 @@ import jsonschema
 import os
 from .redis_adapter import RedisConnectionFactory, RedisConnection
 from bmt import Toolkit
-from bmt.util import format as bmt_format
+from bmt.utils import format_element as bmt_format
 
 from .util import LoggingUtil
 
@@ -51,7 +51,7 @@ class NodeLoader:
         if input_type in self.ancestor_map:
             return self.ancestor_map[input_type]
         a = self.toolkit.get_ancestors(input_type)
-        ancs = [bmt_format(ai, case="pascal") for ai in a]
+        ancs = [bmt_format(ai) for ai in a]
         if input_type not in ancs:
             ancs = [input_type] + ancs
         self.ancestor_map[input_type] = ancs
