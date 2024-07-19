@@ -1,7 +1,7 @@
 openapi: 3.0.2
 info:
   title: Node Normalization
-  version: 2.3.14
+  version: 2.3.15
   contact:
     email: bizon@renci.org
     name: Chris Bizon
