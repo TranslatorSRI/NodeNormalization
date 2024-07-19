@@ -49,7 +49,7 @@ class NodeLoader:
         if input_type in self.ancestor_map:
             return self.ancestor_map[input_type]
         a = self.toolkit.get_ancestors(input_type)
-        ancs = [bmt_format(ai, case="pascal") for ai in a]
+        ancs = [bmt_format(ai) for ai in a]
         if input_type not in ancs:
             ancs = [input_type] + ancs
         self.ancestor_map[input_type] = ancs

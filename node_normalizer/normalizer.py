@@ -10,7 +10,7 @@ import uuid
 import traceback
 from typing import List, Dict, Optional, Any, Set, Tuple, Union
 from uuid import UUID
-from bmt.util import format as bmt_format
+from bmt.utils import format_element as bmt_format
 
 from fastapi import FastAPI
 from reasoner_pydantic import KnowledgeGraph, Message, QueryGraph, Result, CURIE, Attribute
@@ -52,7 +52,7 @@ def get_ancestors(app, input_type):
     if input_type in app.state.ancestor_map:
         return app.state.ancestor_map[input_type]
     a = app.state.toolkit.get_ancestors(input_type)
-    ancs = [bmt_format(ai,case="pascal") for ai in a]
+    ancs = [bmt_format(ai) for ai in a]
     #if input_type is in ancs, remove it
     if input_type in ancs:
         ancs.remove(input_type)
