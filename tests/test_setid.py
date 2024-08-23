@@ -80,8 +80,8 @@ def test_setid_basic():
     """
     client = TestClient(app)
 
-    expected_setids = [
-        {
+    expected_setids = {
+        '1': {
             'curie': ['DOID:3812', 'MONDO:0005002', 'MONDO:0005003', 'UNII:63M8RYN44N', ''],
             'conflation': ['GeneProtein'],
             'curies': ['DOID:3812', 'MONDO:0005002', 'MONDO:0005003', 'UNII:63M8RYN44N', ''],
@@ -89,7 +89,7 @@ def test_setid_basic():
             'normalized_string': '||MONDO:0005002||MONDO:0005003||PUBCHEM.COMPOUND:10129877',
             'setid': 'uuid:08da0da0-4b47-55e6-b9b2-73ead9921494'
         },
-        {
+        '2': {
             'curie': ['DOID:3812', 'MONDO:0005002', 'MONDO:0005003', 'UNII:63M8RYN44N', ''],
             'conflation': ['GeneProtein', 'DrugChemical'],
             'curies': ['DOID:3812', 'MONDO:0005002', 'MONDO:0005003', 'UNII:63M8RYN44N', ''],
@@ -97,7 +97,7 @@ def test_setid_basic():
             'normalized_string': '||CHEBI:15377||MONDO:0005002||MONDO:0005003',
             'setid': 'uuid:4b54135a-a151-561b-8b25-8a5a5b710700'
         },
-        {
+        '3': {
             'curie': ['!#lk1l4', '09s90ma!:391nasa01AAa', 10.31, 9018, -913],
             'conflation': ['GeneProtein', 'DrugChemical'],
             'curies': ['!#lk1l4', '09s90ma!:391nasa01AAa', '10.31', '9018', '-913'],
@@ -105,15 +105,27 @@ def test_setid_basic():
             'normalized_string': '!#lk1l4||-913||09s90ma!:391nasa01AAa||10.31||9018',
             'setid': 'uuid:2fe78021-4a98-53cc-b911-a55962575095'
         }
-    ]
+    }
 
-    for expected_setid in expected_setids:
+    for key, expected_setid in expected_setids:
         response = client.get("/get_setid", params={
             'curie': expected_setid['curie'],
             'conflation': expected_setid['conflation'],
         })
         result = response.json()
         assert result['curies'] == expected_setid['curies']
+        assert result['error'] is None
+        assert result['normalized_curies'] == expected_setid['normalized_curies']
+        assert result['normalized_string'] == expected_setid['normalized_string']
+        assert result['setid'] == expected_setid['setid']
+
+    # Test all of them at once using the 'POST' interface.
+    setid_query = {k: {'curies': v['curie'], 'conflations': v['conflation']} for k, v in expected_setids.items()}
+    response = client.post("/get_setid", json=setid_query)
+    results = response.json()
+    for key, result in results:
+        expected_setid = expected_setids[key]
+
         assert result['error'] is None
         assert result['normalized_curies'] == expected_setid['normalized_curies']
         assert result['normalized_string'] == expected_setid['normalized_string']
