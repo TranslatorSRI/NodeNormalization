@@ -267,6 +267,8 @@ async def get_setid(
                                                     }
                                                 })
 ) -> Dict[str, SetIDResponse]:
+    # I'm guessing there's some way of doing this so that the generate_setid()s run in parallel, but I don't know how.
+    # I'll figure it out if needed.
     return {k: await generate_setid(app, q.curies, q.conflations) for k, q in sets.items()}
 
 
