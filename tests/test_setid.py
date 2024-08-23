@@ -107,7 +107,7 @@ def test_setid_basic():
         }
     ]
 
-    for key, expected_setid in expected_setids.items():
+    for expected_setid in expected_setids:
         response = client.get("/get_setid", params={
             'curie': expected_setid['curie'],
             'conflation': expected_setid['conflation'],
@@ -120,7 +120,7 @@ def test_setid_basic():
         assert result['setid'] == expected_setid['setid']
 
     # Test all of them at once using the 'POST' interface.
-    setid_query = [{'curies': v['curie'], 'conflations': v['conflation']} for k, v in expected_setids.items()]
+    setid_query = [{'curies': e['curie'], 'conflations': e['conflation']} for e in expected_setids]
     response = client.post("/get_setid", json=setid_query)
     results = response.json()
     for index, result in enumerate(results):
