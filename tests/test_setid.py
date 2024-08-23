@@ -107,7 +107,7 @@ def test_setid_basic():
         }
     }
 
-    for key, expected_setid in expected_setids:
+    for key, expected_setid in expected_setids.items():
         response = client.get("/get_setid", params={
             'curie': expected_setid['curie'],
             'conflation': expected_setid['conflation'],
@@ -123,7 +123,7 @@ def test_setid_basic():
     setid_query = {k: {'curies': v['curie'], 'conflations': v['conflation']} for k, v in expected_setids.items()}
     response = client.post("/get_setid", json=setid_query)
     results = response.json()
-    for key, result in results:
+    for key, result in results.items():
         expected_setid = expected_setids[key]
 
         assert result['error'] is None
