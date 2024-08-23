@@ -24,6 +24,7 @@ from .model import (
     SemanticTypesInput,
     ConflationList,
     SetIDResponse,
+    SetIDQuery,
 )
 from .normalizer import get_normalized_nodes, get_curie_prefixes, normalize_message
 from .set_id import generate_setid
@@ -246,6 +247,27 @@ async def get_setid(
     )
 ) -> SetIDResponse:
     return await generate_setid(app, curie, conflation)
+
+
+@app.post(
+    "/get_setid",
+    response_model=Dict[str, SetIDResponse],
+    summary="Normalize and deduplicate a set of identifiers and return a single hash that represents this set."
+)
+async def get_setid(
+    sets: Dict[str, SetIDQuery] = fastapi.Body({},
+                                                description="Set of identifiers to normalize",
+                                                example={
+                                                    "set1": {
+                                                        "curies": ["MESH:D014867", "NCIT:C34373"],
+                                                    },
+                                                    "set2": {
+                                                        "curies": ["NCIT:C34373", "MESH:D014867", "UNII:63M8RYN44N", "RUBBISH:1234" ],
+                                                        "conflations": ["GeneProtein", "DrugChemical"]
+                                                    }
+                                                })
+) -> Dict[str, SetIDResponse]:
+    return {k: await generate_setid(app, q.curies, q.conflations) for k, q in sets.items()}
 
 
 @app.get(
