@@ -163,7 +163,7 @@ async def async_query_task(async_query: reasoner_pydantic.AsyncQuery):
 @app.get(
     "/get_allowed_conflations",
     summary="Get the available conflations",
-    description="The returned strings can be included in an option to /g_nodes",
+    description="The returned strings can be included in an option to /get_normalized_nodes",
 )
 async def get_conflations() -> ConflationList:
     """
