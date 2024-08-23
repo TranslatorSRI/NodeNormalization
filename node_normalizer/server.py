@@ -255,7 +255,7 @@ async def get_setid(
     summary="Normalize and deduplicate a set of identifiers and return a single hash that represents this set."
 )
 async def get_setid(
-    sets: Dict[str, SetIDQuery] = fastapi.Body({},
+    sets: List[SetIDQuery] = fastapi.Body([],
                                                 description="Set of identifiers to normalize",
                                                 example=[
                                                     {
@@ -266,7 +266,7 @@ async def get_setid(
                                                         "conflations": ["GeneProtein", "DrugChemical"]
                                                     }
                                                 ])
-) -> Dict[str, SetIDResponse]:
+) -> List[SetIDResponse]:
     # I'm guessing there's some way of doing this so that the generate_setid()s run in parallel, but I don't know how.
     # I'll figure it out if needed.
     return [await generate_setid(app, q.curies, q.conflations) for q in sets]
