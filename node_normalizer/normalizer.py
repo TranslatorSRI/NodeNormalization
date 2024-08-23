@@ -526,6 +526,11 @@ async def get_eqids_and_types(
             types_with_ancestors.append([BIOLINK_NAMED_THING])
         else:
             types_with_ancestors.append(get_ancestors(app, typ))
+
+        # Every equivalent identifier here has the same type.
+        for eqid in eqids[index]:
+            eqid.update({'t': [typ]})
+
     return eqids, types_with_ancestors
 
 
@@ -534,7 +539,8 @@ async def get_normalized_nodes(
         curies: List[Union[CURIE, str]],
         conflate_gene_protein: bool,
         conflate_chemical_drug: bool,
-        include_descriptions: bool = False
+        include_descriptions: bool = False,
+        include_individual_types: bool = True
 ) -> Dict[str, Optional[str]]:
     """
     Get value(s) for key(s) using redis MGET
@@ -637,7 +643,9 @@ async def get_normalized_nodes(
 
         # output the final result
         normal_nodes = {
-            input_curie: await create_node(canonical_id, dereference_ids, dereference_types, info_contents, include_descriptions=include_descriptions)
+            input_curie: await create_node(canonical_id, dereference_ids, dereference_types, info_contents,
+                                           include_descriptions=include_descriptions,
+                                           include_individual_types=include_individual_types)
             for input_curie, canonical_id in zip(curies, canonical_ids)
         }
 
@@ -672,7 +680,8 @@ async def get_info_content_attribute(app, canonical_nonan) -> dict:
     return new_attrib
 
 
-async def create_node(canonical_id, equivalent_ids, types, info_contents, include_descriptions=True):
+async def create_node(canonical_id, equivalent_ids, types, info_contents, include_descriptions=True,
+                      include_individual_types=False):
     """Construct the output format given the compressed redis data"""
     # It's possible that we didn't find a canonical_id
     if canonical_id is None:
@@ -746,6 +755,9 @@ async def create_node(canonical_id, equivalent_ids, types, info_contents, includ
         # if descriptions is enabled and exist add them to each eq_id entry
         if include_descriptions and "d" in eqid and len(eqid["d"]):
             eq_item["description"] = eqid["d"][0]
+        # if individual types have been requested, add them too.
+        if include_individual_types and 't' in eqid:
+            eq_item["type"] = eqid['t'][-1]
         node["equivalent_identifiers"].append(eq_item)
 
     # We need to remove `biolink:Entity` from the types returned.

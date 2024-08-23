@@ -163,7 +163,7 @@ async def async_query_task(async_query: reasoner_pydantic.AsyncQuery):
 @app.get(
     "/get_allowed_conflations",
     summary="Get the available conflations",
-    description="The returned strings can be included in an option to /get_normalized_nodes",
+    description="The returned strings can be included in an option to /g_nodes",
 )
 async def get_conflations() -> ConflationList:
     """
@@ -188,13 +188,16 @@ async def get_normalized_node_handler(
     ),
     conflate: bool = fastapi.Query(True, description="Whether to apply gene/protein conflation"),
     drug_chemical_conflate: bool = fastapi.Query(False, description="Whether to apply drug/chemical conflation"),
-    description: bool = fastapi.Query(False, description="Whether to return curie descriptions when possible")
+    description: bool = fastapi.Query(False, description="Whether to return curie descriptions when possible"),
+    individual_types: bool = fastapi.Query(False, description="Whether to return individual types for equivalent identifiers")
 ):
     """
     Get value(s) for key(s) using redis MGET
     """
     # no_conflate = request.args.get('dontconflate',['GeneProtein'])
-    normalized_nodes = await get_normalized_nodes(app, curie, conflate, drug_chemical_conflate, include_descriptions=description)
+    normalized_nodes = await get_normalized_nodes(app, curie, conflate, drug_chemical_conflate,
+                                                  include_descriptions=description,
+                                                  include_individual_types=individual_types)
 
     # If curie contains at least one entry, then the only way normalized_nodes could be blank
     # would be if an error occurred during processing.
@@ -213,7 +216,8 @@ async def get_normalized_node_handler(curies: CurieList):
     """
     Get value(s) for key(s) using redis MGET
     """
-    normalized_nodes = await get_normalized_nodes(app, curies.curies, curies.conflate, curies.drug_chemical_conflate, curies.description)
+    normalized_nodes = await get_normalized_nodes(app, curies.curies, curies.conflate, curies.drug_chemical_conflate,
+                                                  curies.description, include_individual_types=curies.individual_types)
 
     # If curies.curies contains at least one entry, then the only way normalized_nodes could be blank
     # would be if an error occurred during processing.

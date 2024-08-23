@@ -31,6 +31,11 @@ class CurieList(BaseModel):
         title="Whether to apply drug/chemical conflation"
     )
 
+    individual_types: bool = Field(
+        False,
+        title="Whether to return individual types for equivalent identifiers"
+    )
+
     class Config:
         schema_extra = {
             "example": {
