@@ -1,5 +1,6 @@
 from node_normalizer.loader import NodeLoader
 import asyncio
+import sys
 
 
 async def load_redis():
@@ -14,7 +15,8 @@ async def load_redis():
         print('Failed to load node normalization data.')
     else:
         print('Success')
+    return success
 
 
 if __name__ == '__main__':
-    asyncio.run(load_redis())
+    sys.exit(asyncio.run(load_redis()))
