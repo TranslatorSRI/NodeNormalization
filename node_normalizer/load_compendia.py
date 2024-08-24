@@ -17,7 +17,7 @@ logger = util.LoggingUtil.init_logging()
 redis_config_path = Path(__file__).parent.parent / "redis_config.yaml"
 connection_factory: redis_adapter.RedisConnectionFactory = await redis_adapter.RedisConnectionFactory.create_connection_pool(redis_config_path)
 
-BIOLINK_VERSION = os.getenv("BIOLINK_VERSION", "2.1.0")
+BIOLINK_VERSION = os.getenv("BIOLINK_VERSION", "v4.2.2")
 toolkit = bmt.Toolkit(f"https://raw.githubusercontent.com/biolink/biolink-model/{BIOLINK_VERSION}/biolink-model.yaml")
 
 # class NodeLoader:
