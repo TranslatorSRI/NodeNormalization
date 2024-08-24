@@ -7,7 +7,7 @@ async def load_redis():
     loader = NodeLoader()
 
     # call to load redis instances with normalized node data
-    success: bool = await loader.load(1_000)
+    success: bool = await loader.load(100_000)
 
     # check the return
     if not success:
