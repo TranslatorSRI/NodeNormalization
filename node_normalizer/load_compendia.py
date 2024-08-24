@@ -299,7 +299,7 @@ async def load_compendium(compendium_filename: str, block_size: int, dry_run: bo
                     id2type_pipeline.set(identifier, instance["type"])
 
                     # if there is information content add it to the cache
-                    if "ic" in instance:
+                    if "ic" in instance and instance["ic"] is not None:
                         info_content_pipeline.set(identifier, instance["ic"])
 
                 if not dry_run and line_counter % block_size == 0:
