@@ -526,6 +526,9 @@ class NodeLoader:
 
                     logger.info(f"{line_counter} {compendium_filename} total lines processed")
 
+                if line_counter == 0:
+                    raise RuntimeError(f"Compendium file {compendium_filename} is empty.")
+
                 print(f"Done loading {compendium_filename}...")
         except Exception as e:
             logger.error(f"Exception thrown in load_compendium({compendium_filename}), line {line_counter}: {e}")
