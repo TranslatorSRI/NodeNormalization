@@ -118,36 +118,43 @@ async def status() -> Dict:
             "eq_id_to_id_db": {
                 "dbname": "id-id",
                 "count": await app.state.eq_id_to_id_db.dbsize(),
+                "used_memory_rss_human": await app.state.eq_id_to_id_db.used_memory_rss_human(),
                 "is_cluster": redis_config['eq_id_to_id_db'].get('is_cluster', 'false')
             },
             "id_to_eqids_db": {
                 "dbname": "id-eq-id",
                 "count": await app.state.id_to_eqids_db.dbsize(),
+                "used_memory_rss_human": await app.state.id_to_eqids_db.used_memory_rss_human(),
                 "is_cluster": redis_config['id_to_eqids_db'].get('is_cluster', 'false')
             },
             "id_to_type_db": {
                 "dbname": "id-categories",
                 "count": await app.state.id_to_type_db.dbsize(),
+                "used_memory_rss_human": await app.state.id_to_type_db.used_memory_rss_human(),
                 "is_cluster": redis_config['id_to_type_db'].get('is_cluster', 'false')
             },
             "curie_to_bl_type_db": {
                 "dbname": "semantic-count",
                 "count": await app.state.curie_to_bl_type_db.dbsize(),
+                "used_memory_rss_human": await app.state.curie_to_bl_type_db.used_memory_rss_human(),
                 "is_cluster": redis_config['curie_to_bl_type_db'].get('is_cluster', 'false')
             },
             "info_content_db": {
                 "dbname": "info-content",
                 "count": await app.state.info_content_db.dbsize(),
+                "used_memory_rss_human": await app.state.info_content_db.used_memory_rss_human(),
                 "is_cluster": redis_config['info_content_db'].get('is_cluster', 'false')
             },
             "gene_protein_db": {
                 "dbname": "conflation-db",
                 "count": await app.state.gene_protein_db.dbsize(),
+                "used_memory_rss_human": await app.state.gene_protein_db.used_memory_rss_human(),
                 "is_cluster": redis_config['gene_protein_db'].get('is_cluster', 'false')
             },
             "chemical_drug_db": {
                 "dbname": "chemical-drug-db",
                 "count": await app.state.chemical_drug_db.dbsize(),
+                "used_memory_rss_human": await app.state.chemical_drug_db.used_memory_rss_human(),
                 "is_cluster": redis_config['chemical_drug_db'].get('is_cluster', 'false')
             }
         },
