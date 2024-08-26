@@ -17,7 +17,7 @@ logger = util.LoggingUtil.init_logging()
 redis_config_path = Path(__file__).parent.parent / "redis_config.yaml"
 connection_factory: redis_adapter.RedisConnectionFactory = await redis_adapter.RedisConnectionFactory.create_connection_pool(redis_config_path)
 
-BIOLINK_VERSION = os.getenv("BIOLINK_VERSION", "2.1.0")
+BIOLINK_VERSION = os.getenv("BIOLINK_VERSION", "v4.2.2")
 toolkit = bmt.Toolkit(f"https://raw.githubusercontent.com/biolink/biolink-model/{BIOLINK_VERSION}/biolink-model.yaml")
 
 # class NodeLoader:
@@ -299,7 +299,7 @@ async def load_compendium(compendium_filename: str, block_size: int, dry_run: bo
                     id2type_pipeline.set(identifier, instance["type"])
 
                     # if there is information content add it to the cache
-                    if "ic" in instance:
+                    if "ic" in instance and instance["ic"] is not None:
                         info_content_pipeline.set(identifier, instance["ic"])
 
                 if not dry_run and line_counter % block_size == 0:

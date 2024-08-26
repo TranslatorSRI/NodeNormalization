@@ -418,6 +418,10 @@ class NodeLoader:
                     await RedisConnection.execute_pipeline(conflation_pipeline)
                     logger.info(f"{line_counter} {conflation_file} total lines processed")
 
+                # Fail if the file was empty.
+                if line_counter == 0:
+                    raise RuntimeError(f"Conflation file {conflation_file} is empty.")
+
                 print(f"Done loading {conflation_file}...")
         except Exception as e:
             logger.error(f"Exception thrown in load_conflation({conflation_file}), line {line_counter}: {e}")
@@ -497,7 +501,7 @@ class NodeLoader:
                         id2type_pipeline.set(identifier, instance["type"])
 
                         # if there is information content add it to the cache
-                        if "ic" in instance:
+                        if "ic" in instance and instance["ic"] is not None:
                             info_content_pipeline.set(identifier, instance["ic"])
 
                     if self._test_mode != 1 and line_counter % block_size == 0:
@@ -521,6 +525,9 @@ class NodeLoader:
                     await RedisConnection.execute_pipeline(info_content_pipeline)
 
                     logger.info(f"{line_counter} {compendium_filename} total lines processed")
+
+                if line_counter == 0:
+                    raise RuntimeError(f"Compendium file {compendium_filename} is empty.")
 
                 print(f"Done loading {compendium_filename}...")
         except Exception as e:
