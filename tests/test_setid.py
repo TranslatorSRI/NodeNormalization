@@ -119,6 +119,18 @@ def test_setid_basic():
         assert result['normalized_string'] == expected_setid['normalized_string']
         assert result['setid'] == expected_setid['setid']
 
+    # Test all of them at once using the 'POST' interface.
+    setid_query = [{'curies': e['curie'], 'conflations': e['conflation']} for e in expected_setids]
+    response = client.post("/get_setid", json=setid_query)
+    results = response.json()
+    for index, result in enumerate(results):
+        expected_setid = expected_setids[index]
+
+        assert result['error'] is None
+        assert result['normalized_curies'] == expected_setid['normalized_curies']
+        assert result['normalized_string'] == expected_setid['normalized_string']
+        assert result['setid'] == expected_setid['setid']
+
 
 def test_setid_long():
     """
