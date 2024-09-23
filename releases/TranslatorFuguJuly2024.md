@@ -3,7 +3,8 @@
   ([Babel Translator July 2024 Release](https://github.com/TranslatorSRI/Babel/blob/master/releases/TranslatorFuguJuly2024.md))
 - NodeNorm: [v2.3.15](https://github.com/TranslatorSRI/NodeNormalization/releases/tag/v2.3.15)
 
-Next release: _None as yet_
+Previous release: [Translator May 2024](./TranslatorMay2024.md)
+Next release: [Translator "Guppy" August 2024](./TranslatorGuppyAugust2024.md)
 
 ## New features
 * Update Biolink model by replacing bmt-lite with bmt ([#282](https://github.com/TranslatorSRI/NodeNormalization/pull/282),
