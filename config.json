@@ -52,5 +52,6 @@
             "HMDB",
             "PUBCHEM.COMPOUND"
         ]
-    }
+    },
+    "demote_labels_longer_than": 15
 }

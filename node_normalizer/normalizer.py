@@ -712,21 +712,42 @@ async def create_node(canonical_id, equivalent_ids, types, info_contents, includ
     # Note that types[canonical_id] goes from most specific to least specific, so we
     # need to reverse it in order to apply preferred_name_boost_prefixes for the most
     # specific type.
+    possible_labels = []
     for typ in types[canonical_id][::-1]:
         if typ in config['preferred_name_boost_prefixes']:
-            # This is the most specific matching type, so we use this.
-            labels = map(lambda identifier: identifier.get('l', ''),
+            # This is the most specific matching type, so we use this and then break.
+            possible_labels = map(lambda identifier: identifier.get('l', ''),
                                   sort_identifiers_with_boosted_prefixes(
                                       eids,
                                       config['preferred_name_boost_prefixes'][typ]
                                   ))
+
+            # Add in all the other labels -- we'd still like to consider them, but at a lower priority.
+            for eid in eids:
+                label = eid.get('l', '')
+                if label not in possible_labels:
+                    possible_labels.append(label)
+
+            # Since this is the most specific matching type, we shouldn't do other (presumably higher-level)
+            # categories: so let's break here.
             break
 
-    # Filter out unsuitable labels.
-    labels = [l for l in labels if
-              l and                               # Ignore blank or empty names.
-              not l.startswith('CHEMBL')          # Some CHEMBL names are just the identifier again.
-              ]
+    # Step 1.2. If we didn't have a preferred_name_boost_prefixes, just use the identifiers in their
+    # Biolink prefix order.
+    if not possible_labels:
+        possible_labels = map(lambda eid: eid.get('l', ''), eids)
+
+    # Step 2. Filter out any suspicious labels.
+    filtered_possible_labels = [l for l in possible_labels if
+        l and                               # Ignore blank or empty names.
+        not l.startswith('CHEMBL')          # Some CHEMBL names are just the identifier again.
+        ]
+
+    # Step 3. Filter out labels longer than config['demote_labels_longer_than'], but only if there is at
+    # least one label shorter than this limit.
+    labels_shorter_than_limit = [l for l in filtered_possible_labels if l and len(l) <= config['demote_labels_longer_than']]
+    if labels_shorter_than_limit:
+        labels = labels_shorter_than_limit
 
     # Note that the id will be from the equivalent ids, not the canonical_id.  This is to handle conflation
     if len(labels) > 0:
