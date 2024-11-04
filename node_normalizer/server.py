@@ -394,7 +394,7 @@ app.openapi_schema = construct_open_api_schema(app)
 if os.environ.get('OTEL_ENABLED', 'false') == 'true':
     from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
     from opentelemetry import trace
-    from opentelemetry.exporter.jaeger.thrift import JaegerExporter
+    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
     from opentelemetry.sdk.resources import SERVICE_NAME, Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
@@ -407,19 +407,21 @@ if os.environ.get('OTEL_ENABLED', 'false') == 'true':
     # these supresses such warnings.
     logging.captureWarnings(capture=True)
     warnings.filterwarnings("ignore", category=ResourceWarning)
-    plater_service_name = os.environ.get('SERVER_NAME', 'infores:sri-node-normalizer')
-    assert plater_service_name and isinstance(plater_service_name, str)
 
-    jaeger_exporter = JaegerExporter(
-        agent_host_name=os.environ.get("JAEGER_HOST", "localhost"),
-        agent_port=int(os.environ.get("JAEGER_PORT", "6831")),
-    )
-    resource = Resource(attributes={
-        SERVICE_NAME: os.environ.get("JAEGER_SERVICE_NAME", plater_service_name),
+    otel_service_name = os.environ.get('SERVER_NAME', 'infores:sri-node-normalizer')
+    assert otel_service_name and isinstance(otel_service_name, str)
+
+    otlp_host = os.environ.get("JAEGER_HOST", "http://localhost/").rstrip('/')
+    otlp_port = os.environ.get("JAEGER_PORT", "4317")
+    otlp_endpoint = f'{otlp_host}:{otlp_port}'
+    otlp_exporter = OTLPSpanExporter(endpoint=f'{otlp_endpoint}')
+    processor = BatchSpanProcessor(otlp_exporter)
+    # processor = BatchSpanProcessor(ConsoleSpanExporter())
+
+    resource = Resource.create(attributes={
+        SERVICE_NAME: os.environ.get("JAEGER_SERVICE_NAME", otel_service_name),
     })
     provider = TracerProvider(resource=resource)
-    # processor = BatchSpanProcessor(ConsoleSpanExporter())
-    processor = BatchSpanProcessor(jaeger_exporter)
     provider.add_span_processor(processor)
     trace.set_tracer_provider(provider)
     FastAPIInstrumentor.instrument_app(app, tracer_provider=provider, excluded_urls="docs,openapi.json")
