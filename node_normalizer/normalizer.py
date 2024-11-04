@@ -716,11 +716,11 @@ async def create_node(canonical_id, equivalent_ids, types, info_contents, includ
     for typ in types[canonical_id][::-1]:
         if typ in config['preferred_name_boost_prefixes']:
             # This is the most specific matching type, so we use this and then break.
-            possible_labels = map(lambda identifier: identifier.get('l', ''),
+            possible_labels = list(map(lambda identifier: identifier.get('l', ''),
                                   sort_identifiers_with_boosted_prefixes(
                                       eids,
                                       config['preferred_name_boost_prefixes'][typ]
-                                  ))
+                                  )))
 
             # Add in all the other labels -- we'd still like to consider them, but at a lower priority.
             for eid in eids:
