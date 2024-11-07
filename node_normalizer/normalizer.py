@@ -722,16 +722,16 @@ async def create_node(app, canonical_id, equivalent_ids, types, info_contents, i
     any_conflation = any(conflations.values())
     if not any_conflation:
         # No conflation. We just use the identifiers we've been given.
-        identifiers_with_labels = equivalent_ids[canonical_id]
+        identifiers_with_labels = eids
     else:
         # We have a conflation going on! To replicate Babel's behavior, we need to run the algorithem
         # on the list of labels corresponding to the first
         # So we need to run the algorithm on the first set of identifiers that have any
         # label whatsoever.
         identifiers_with_labels = []
-        for identifier in equivalent_ids[canonical_id]:
+        for identifier in eids:
             curie = identifier.get('i', '')
-            identifiers_with_labels, types = await get_eqids_and_types(app, curie)
+            identifiers_with_labels, types = await get_eqids_and_types(app, [curie])
             labels = map(lambda ident: ident.get('l', ''), identifiers_with_labels[curie])
             if any(map(lambda l: l != '', labels)):
                 break
