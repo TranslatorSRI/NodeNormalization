@@ -707,8 +707,7 @@ async def create_node(canonical_id, equivalent_ids, types, info_contents, includ
     # As per https://github.com/TranslatorSRI/Babel/issues/158, we select the first label from any
     # identifier _except_ where one of the types is in preferred_name_boost_prefixes, in which case
     # we prefer the prefixes listed there.
-    labels = list(filter(lambda x: len(x) > 0, [eid['l'] for eid in eids if 'l' in eid]))
-
+    #
     # Note that types[canonical_id] goes from most specific to least specific, so we
     # need to reverse it in order to apply preferred_name_boost_prefixes for the most
     # specific type.
@@ -747,11 +746,11 @@ async def create_node(canonical_id, equivalent_ids, types, info_contents, includ
     # least one label shorter than this limit.
     labels_shorter_than_limit = [l for l in filtered_possible_labels if l and len(l) <= config['demote_labels_longer_than']]
     if labels_shorter_than_limit:
-        labels = labels_shorter_than_limit
+        filtered_possible_labels = labels_shorter_than_limit
 
     # Note that the id will be from the equivalent ids, not the canonical_id.  This is to handle conflation
-    if len(labels) > 0:
-        node = {"id": {"identifier": eids[0]['i'], "label": labels[0]}}
+    if len(filtered_possible_labels) > 0:
+        node = {"id": {"identifier": eids[0]['i'], "label": filtered_possible_labels[0]}}
     else:
         # Sometimes, nothing has a label :(
         node = {"id": {"identifier": eids[0]['i']}}
