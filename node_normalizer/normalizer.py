@@ -732,7 +732,7 @@ async def create_node(app, canonical_id, equivalent_ids, types, info_contents, i
         for identifier in eids:
             curie = identifier.get('i', '')
             identifiers_with_labels, types = await get_eqids_and_types(app, [curie])
-            labels = map(lambda ident: ident.get('l', ''), identifiers_with_labels[curie])
+            labels = map(lambda ident: ident.get('l', ''), identifiers_with_labels[0])
             if any(map(lambda l: l != '', labels)):
                 break
 
