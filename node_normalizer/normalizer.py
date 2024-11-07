@@ -708,6 +708,13 @@ async def create_node(canonical_id, equivalent_ids, types, info_contents, includ
     # identifier _except_ where one of the types is in preferred_name_boost_prefixes, in which case
     # we prefer the prefixes listed there.
     #
+    # This should perfectly replicate NameRes labels for non-conflated cliques, but it WON'T perfectly
+    # match conflated cliques. When Babel conflates synonyms, it actually picks the first preferred name
+    # it can among the cliques being conflated -- which means it applies the preferred label algorithm
+    # to just the first clique being conflated, then the next clique, and so on. But by this place in
+    # NodeNorm we've lost track of what the subcliques within the conflated cliques are, so all we can
+    # do is apply the preferred label algorithm across all possible labels and hope for the best.
+    #
     # Note that types[canonical_id] goes from most specific to least specific, so we
     # need to reverse it in order to apply preferred_name_boost_prefixes for the most
     # specific type.
