@@ -729,13 +729,21 @@ async def create_node(app, canonical_id, equivalent_ids, types, info_contents, i
         # So we need to run the algorithm on the first set of identifiers that have any
         # label whatsoever.
         identifiers_with_labels = []
+        curies_already_checked = set()
         for identifier in eids:
             curie = identifier.get('i', '')
+            if curie in curies_already_checked:
+                continue
             results, _ = await get_eqids_and_types(app, [curie])
+
             identifiers_with_labels = results[0]
             labels = map(lambda ident: ident.get('l', ''), identifiers_with_labels)
             if any(map(lambda l: l != '', labels)):
                 break
+
+            # Since we didn't get any matches here, add it to the list of CURIEs already checked so
+            # we don't make redundant queries to the database.
+            curies_already_checked.update(set(map(lambda x: x.get('i', ''), identifiers_with_labels)))
 
         # We might get here without any labels, which is fine. At least we tried.
 
