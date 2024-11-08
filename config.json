@@ -54,5 +54,5 @@
             "PUBCHEM.COMPOUND"
         ]
     },
-    "demote_labels_longer_than": 20
+    "demote_labels_longer_than": 15
 }
