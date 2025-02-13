@@ -3,7 +3,7 @@
   ([Babel Translator August 2024 Release](https://github.com/TranslatorSRI/Babel/blob/master/releases/TranslatorGuppyAugust2024.md))
 - NodeNorm: [v2.3.16](https://github.com/TranslatorSRI/NodeNormalization/releases/tag/v2.3.16)
 
-Next release: _None as yet_
+Next release: [Translator "Hammerhead" November 2024](./TranslatorHammerheadNovember2024.md)
 Previous release: [Translator "Fugu" July 2024](./TranslatorFuguJuly2024.md)
 
 ## New features
