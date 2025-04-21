@@ -3,6 +3,8 @@ import itertools
 from pathlib import Path
 
 import json as builtin_json
+import time
+
 import orjson as json
 import logging
 import os
@@ -545,6 +547,10 @@ async def get_normalized_nodes(
     """
     Get value(s) for key(s) using redis MGET
     """
+
+    # Time how long this query takes.
+    start_time = time.time_ns()
+
     # malkovich malkovich
     curies = [
         curie.__root__ if isinstance(curie, CURIE) else curie
@@ -557,105 +563,103 @@ async def get_normalized_nodes(
     # conflation_redis = 5
 
     upper_curies = [c.upper() for c in curies]
-    try:
-        canonical_ids = await app.state.eq_id_to_id_db.mget(*upper_curies, encoding='utf-8')
-        canonical_nonan = [canonical_id for canonical_id in canonical_ids if canonical_id is not None]
-        info_contents = {}
+    canonical_ids = await app.state.eq_id_to_id_db.mget(*upper_curies, encoding='utf-8')
+    canonical_nonan = [canonical_id for canonical_id in canonical_ids if canonical_id is not None]
+    info_contents = {}
 
-        # did we get some canonical ids
-        if canonical_nonan:
-            # get the information content values
-            info_contents = await get_info_content(app, canonical_nonan)
+    # did we get some canonical ids
+    if canonical_nonan:
+        # get the information content values
+        info_contents = await get_info_content(app, canonical_nonan)
 
-            # Get the equivalent_ids and types
-            eqids, types = await get_eqids_and_types(app, canonical_nonan)
+        # Get the equivalent_ids and types
+        eqids, types = await get_eqids_and_types(app, canonical_nonan)
 
-            # are we looking for conflated values
-            if conflate_gene_protein or conflate_chemical_drug:
-                other_ids = []
+        # are we looking for conflated values
+        if conflate_gene_protein or conflate_chemical_drug:
+            other_ids = []
 
-                if conflate_gene_protein:
-                    other_ids.extend(await app.state.gene_protein_db.mget(*canonical_nonan, encoding='utf8'))
+            if conflate_gene_protein:
+                other_ids.extend(await app.state.gene_protein_db.mget(*canonical_nonan, encoding='utf8'))
 
-                # logger.error(f"After conflate_gene_protein: {other_ids}")
+            # logger.error(f"After conflate_gene_protein: {other_ids}")
 
-                if conflate_chemical_drug:
-                    other_ids.extend(await app.state.chemical_drug_db.mget(*canonical_nonan, encoding='utf8'))
+            if conflate_chemical_drug:
+                other_ids.extend(await app.state.chemical_drug_db.mget(*canonical_nonan, encoding='utf8'))
 
-                # logger.error(f"After conflate_chemical_drug: {other_ids}")
+            # logger.error(f"After conflate_chemical_drug: {other_ids}")
 
-                # if there are other ids, then we want to rebuild eqids and types.  That's because even though we have them,
-                # they're not necessarily first.  For instance if what came in and got canonicalized was a protein id
-                # and we want gene first, then we're relying on the order of the other_ids to put it back in the right place.
-                other_ids = [json.loads(oids) if oids else [] for oids in other_ids]
+            # if there are other ids, then we want to rebuild eqids and types.  That's because even though we have them,
+            # they're not necessarily first.  For instance if what came in and got canonicalized was a protein id
+            # and we want gene first, then we're relying on the order of the other_ids to put it back in the right place.
+            other_ids = [json.loads(oids) if oids else [] for oids in other_ids]
 
-                # Until we added conflate_chemical_drug, canonical_nonan and other_ids would always have the same
-                # length, so we could figure out mappings from one to the other just by doing:
-                #   dereference_others = dict(zip(canonical_nonan, other_ids))
-                # Now that we have (potentially multiple) results to associate with each identifier, we need
-                # something a bit more sophisticated.
-                # - We use a defaultdict with set so that we can deduplicate identifiers here.
-                # - We use itertools.cycle() because len(canonical_nonan) will be <= len(other_ids), but we can be sure
-                #   that each conflation method will return a list of identifiers (e.g. if gene_conflation returns nothing
-                #   for two queries, other_ids = [[], [], ...]. By cycling through canonical_nonan, we can assign each
-                #   result to the correct query for each conflation method.
-                dereference_others = collections.defaultdict(list)
-                for canon, oids in zip(itertools.cycle(canonical_nonan), other_ids):
-                    dereference_others[canon].extend(oids)
+            # Until we added conflate_chemical_drug, canonical_nonan and other_ids would always have the same
+            # length, so we could figure out mappings from one to the other just by doing:
+            #   dereference_others = dict(zip(canonical_nonan, other_ids))
+            # Now that we have (potentially multiple) results to associate with each identifier, we need
+            # something a bit more sophisticated.
+            # - We use a defaultdict with set so that we can deduplicate identifiers here.
+            # - We use itertools.cycle() because len(canonical_nonan) will be <= len(other_ids), but we can be sure
+            #   that each conflation method will return a list of identifiers (e.g. if gene_conflation returns nothing
+            #   for two queries, other_ids = [[], [], ...]. By cycling through canonical_nonan, we can assign each
+            #   result to the correct query for each conflation method.
+            dereference_others = collections.defaultdict(list)
+            for canon, oids in zip(itertools.cycle(canonical_nonan), other_ids):
+                dereference_others[canon].extend(oids)
 
-                all_other_ids = sum(other_ids, [])
-                eqids2, types2 = await get_eqids_and_types(app, all_other_ids)
+            all_other_ids = sum(other_ids, [])
+            eqids2, types2 = await get_eqids_and_types(app, all_other_ids)
 
-                # logger.error(f"other_ids = {other_ids}")
-                # logger.error(f"dereference_others = {dereference_others}")
-                # logger.error(f"all_other_ids = {all_other_ids}")
+            # logger.error(f"other_ids = {other_ids}")
+            # logger.error(f"dereference_others = {dereference_others}")
+            # logger.error(f"all_other_ids = {all_other_ids}")
 
-                final_eqids = []
-                final_types = []
+            final_eqids = []
+            final_types = []
 
-                deref_others_eqs = dict(zip(all_other_ids, eqids2))
-                deref_others_typ = dict(zip(all_other_ids, types2))
+            deref_others_eqs = dict(zip(all_other_ids, eqids2))
+            deref_others_typ = dict(zip(all_other_ids, types2))
 
-                zipped = zip(canonical_nonan, eqids, types)
+            zipped = zip(canonical_nonan, eqids, types)
 
-                for canonical_id, e, t in zipped:
-                    # here's where we replace the eqids, types
-                    if len(dereference_others[canonical_id]) > 0:
-                        e = []
-                        t = []
+            for canonical_id, e, t in zipped:
+                # here's where we replace the eqids, types
+                if len(dereference_others[canonical_id]) > 0:
+                    e = []
+                    t = []
 
-                    for other in dereference_others[canonical_id]:
-                        # logging.debug(f"e = {e}, other = {other}, deref_others_eqs = {deref_others_eqs}")
-                        e += deref_others_eqs[other]
-                        t += deref_others_typ[other]
+                for other in dereference_others[canonical_id]:
+                    # logging.debug(f"e = {e}, other = {other}, deref_others_eqs = {deref_others_eqs}")
+                    e += deref_others_eqs[other]
+                    t += deref_others_typ[other]
 
-                    final_eqids.append(e)
-                    final_types.append(uniquify_list(t))
+                final_eqids.append(e)
+                final_types.append(uniquify_list(t))
 
-                dereference_ids = dict(zip(canonical_nonan, final_eqids))
-                dereference_types = dict(zip(canonical_nonan, final_types))
-            else:
-                dereference_ids = dict(zip(canonical_nonan, eqids))
-                dereference_types = dict(zip(canonical_nonan, types))
+            dereference_ids = dict(zip(canonical_nonan, final_eqids))
+            dereference_types = dict(zip(canonical_nonan, final_types))
         else:
-            dereference_ids = dict()
-            dereference_types = dict()
+            dereference_ids = dict(zip(canonical_nonan, eqids))
+            dereference_types = dict(zip(canonical_nonan, types))
+    else:
+        dereference_ids = dict()
+        dereference_types = dict()
 
-        # output the final result
-        normal_nodes = {
-            input_curie: await create_node(app, canonical_id, dereference_ids, dereference_types, info_contents,
-                                           include_descriptions=include_descriptions,
-                                           include_individual_types=include_individual_types,
-                                           conflations={
-                                               'GeneProtein': conflate_gene_protein,
-                                               'DrugChemical': conflate_chemical_drug,
-                                           })
-            for input_curie, canonical_id in zip(curies, canonical_ids)
-        }
+    # output the final result
+    normal_nodes = {
+        input_curie: await create_node(app, canonical_id, dereference_ids, dereference_types, info_contents,
+                                       include_descriptions=include_descriptions,
+                                       include_individual_types=include_individual_types,
+                                       conflations={
+                                           'GeneProtein': conflate_gene_protein,
+                                           'DrugChemical': conflate_chemical_drug,
+                                       })
+        for input_curie, canonical_id in zip(curies, canonical_ids)
+    }
 
-    except Exception as e:
-        exception_str = "".join(traceback.format_exc())
-        logger.error(f'Exception: {exception_str}')
+    end_time = time.time_ns()
+    logger.info(f"Normalized {len(curies)} nodes in {(end_time - start_time)/1_000_000:.2f} ms: {sorted(curies)}")
 
     return normal_nodes
 

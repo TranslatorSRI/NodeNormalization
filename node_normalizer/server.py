@@ -281,7 +281,7 @@ async def get_normalized_node_handler(
     summary="Get the equivalent identifiers and semantic types for the curie(s) entered.",
     description="Returns the equivalent identifiers and semantic types for the curie(s). Use the `conflate` flag to choose whether to apply conflation.",
 )
-async def get_normalized_node_handler(curies: CurieList):
+async def get_normalized_node_handler_post(curies: CurieList):
     """
     Get value(s) for key(s) using redis MGET
     """
