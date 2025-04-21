@@ -68,33 +68,29 @@ async def normalize_message(app: FastAPI, message: Message) -> Message:
     Given a TRAPI message, updates the message to include a
     normalized qgraph, kgraph, and results
     """
-    try:
-        ret = Message()
+    ret = Message()
 
-        logger.debug(f"message.query_graph is None: {message.query_graph is None}")
-        if message.query_graph is not None:
-            merged_qgraph = await normalize_qgraph(app, message.query_graph)
-            ret.query_graph = merged_qgraph
-        logger.debug(f"Merged Qgraph: {merged_qgraph}")
+    logger.debug(f"message.query_graph is None: {message.query_graph is None}")
+    if message.query_graph is not None:
+        merged_qgraph = await normalize_qgraph(app, message.query_graph)
+        ret.query_graph = merged_qgraph
+    logger.debug(f"Merged Qgraph: {merged_qgraph}")
 
-        logger.debug(f"message.knowledge_graph is None: {message.knowledge_graph is None}")
-        if message.knowledge_graph is not None:
-            merged_kgraph, node_id_map, edge_id_map = await normalize_kgraph(app, message.knowledge_graph)
-            ret.knowledge_graph = merged_kgraph
-        logger.debug(f"Merged Kgraph: {merged_kgraph}")
-        logger.debug(f"node_id_map: {node_id_map}")
-        logger.debug(f"edge_id_map: {edge_id_map}")
+    logger.debug(f"message.knowledge_graph is None: {message.knowledge_graph is None}")
+    if message.knowledge_graph is not None:
+        merged_kgraph, node_id_map, edge_id_map = await normalize_kgraph(app, message.knowledge_graph)
+        ret.knowledge_graph = merged_kgraph
+    logger.debug(f"Merged Kgraph: {merged_kgraph}")
+    logger.debug(f"node_id_map: {node_id_map}")
+    logger.debug(f"edge_id_map: {edge_id_map}")
 
-        logger.debug(f"message.results is None: {message.results is None}")
-        if message.results is not None:
-            merged_results = await normalize_results(app, message.results, node_id_map, edge_id_map)
-            ret.results = merged_results
-        logger.debug(f"Merged Results: {merged_results}")
+    logger.debug(f"message.results is None: {message.results is None}")
+    if message.results is not None:
+        merged_results = await normalize_results(app, message.results, node_id_map, edge_id_map)
+        ret.results = merged_results
+    logger.debug(f"Merged Results: {merged_results}")
 
-        return ret
-    except Exception as e:
-        exception_str = "".join(traceback.format_exc())
-        logger.error(f'Exception: {exception_str}')
+    return ret
 
 
 async def normalize_results(app,
@@ -117,87 +113,78 @@ async def normalize_results(app,
 
         node_binding_seen = set()
 
-        try:
-            for node_code, node_bindings in result.node_bindings.items():
-                merged_node_bindings = []
-                for n_bind in node_bindings:
-                    merged_binding = n_bind.dict()
-                    # merged_binding['id'] = node_id_map[n_bind.id.__root__]
-                    merged_binding['id'] = node_id_map[n_bind.id]
+        for node_code, node_bindings in result.node_bindings.items():
+            merged_node_bindings = []
+            for n_bind in node_bindings:
+                merged_binding = n_bind.dict()
+                # merged_binding['id'] = node_id_map[n_bind.id.__root__]
+                merged_binding['id'] = node_id_map[n_bind.id]
 
-                    # get the information content value
-                    ic_attrib = await get_info_content_attribute(app, merged_binding['id'])
+                # get the information content value
+                ic_attrib = await get_info_content_attribute(app, merged_binding['id'])
 
-                    # did we get a good attribute dict
-                    if ic_attrib:
-                        if 'attributes' in merged_binding and merged_binding['attributes'] is not None:
-                            merged_binding['attributes'].append(ic_attrib)
-                        else:
-                            merged_binding['attributes'] = [ic_attrib]
-
-                    node_binding_information = [
-                        "atts" if k == 'attributes'
-                        else (k, tuple(v)) if isinstance(v, list)
-                        else (k, v)
-                        for k, v in merged_binding.items()
-                    ]
-
-                    # if there are attributes in the node binding
-                    if 'attributes' in merged_binding:
-                        # storage for the pydantic Attributes
-                        attribs = []
-
-                        # the items in list of attributes must be of type Attribute
-                        # in order to reuse hash method
-                        if merged_binding['attributes'] is not None:
-                            for attrib in merged_binding['attributes']:
-                                new_attrib = Attribute.parse_obj(attrib)
-
-                                # add the new Attribute to the list
-                                attribs.append(new_attrib)
-
-                            # call to get the hash
-                            atty_hash = _hash_attributes(attribs)
-                            node_binding_information.append(atty_hash)
-                    node_binding_hash = frozenset(node_binding_information)
-
-                    if node_binding_hash in node_binding_seen:
-                        continue
+                # did we get a good attribute dict
+                if ic_attrib:
+                    if 'attributes' in merged_binding and merged_binding['attributes'] is not None:
+                        merged_binding['attributes'].append(ic_attrib)
                     else:
-                        node_binding_seen.add(node_binding_hash)
-                        merged_node_bindings.append(merged_binding)
+                        merged_binding['attributes'] = [ic_attrib]
 
-                merged_result['node_bindings'][node_code] = merged_node_bindings
+                node_binding_information = [
+                    "atts" if k == 'attributes'
+                    else (k, tuple(v)) if isinstance(v, list)
+                    else (k, v)
+                    for k, v in merged_binding.items()
+                ]
 
-        except Exception as e:
-            exception_str = "".join(traceback.format_exc())
-            logger.error(f'Exception: {exception_str}')
+                # if there are attributes in the node binding
+                if 'attributes' in merged_binding:
+                    # storage for the pydantic Attributes
+                    attribs = []
+
+                    # the items in list of attributes must be of type Attribute
+                    # in order to reuse hash method
+                    if merged_binding['attributes'] is not None:
+                        for attrib in merged_binding['attributes']:
+                            new_attrib = Attribute.parse_obj(attrib)
+
+                            # add the new Attribute to the list
+                            attribs.append(new_attrib)
+
+                        # call to get the hash
+                        atty_hash = _hash_attributes(attribs)
+                        node_binding_information.append(atty_hash)
+                node_binding_hash = frozenset(node_binding_information)
+
+                if node_binding_hash in node_binding_seen:
+                    continue
+                else:
+                    node_binding_seen.add(node_binding_hash)
+                    merged_node_bindings.append(merged_binding)
+
+            merged_result['node_bindings'][node_code] = merged_node_bindings
 
         edge_binding_seen = set()
+        for analysis in result.analyses:
+            for edge_code, edge_bindings in analysis.edge_bindings.items():
+                merged_edge_bindings = []
+                for e_bind in edge_bindings:
+                    merged_binding = e_bind.dict()
+                    merged_binding['id'] = edge_id_map[e_bind.id]
 
-        try:
-            for analysis in result.analyses:
-                for edge_code, edge_bindings in analysis.edge_bindings.items():
-                    merged_edge_bindings = []
-                    for e_bind in edge_bindings:
-                        merged_binding = e_bind.dict()
-                        merged_binding['id'] = edge_id_map[e_bind.id]
+                    edge_binding_hash = frozenset([
+                        (k, freeze(v))
+                        for k, v in merged_binding.items()
+                    ])
 
-                        edge_binding_hash = frozenset([
-                            (k, freeze(v))
-                            for k, v in merged_binding.items()
-                        ])
+                    if edge_binding_hash in edge_binding_seen:
+                        continue
+                    else:
+                        edge_binding_seen.add(edge_binding_hash)
+                        merged_edge_bindings.append(merged_binding)
 
-                        if edge_binding_hash in edge_binding_seen:
-                            continue
-                        else:
-                            edge_binding_seen.add(edge_binding_hash)
-                            merged_edge_bindings.append(merged_binding)
-
-                    analysis.edge_bindings[edge_code] = merged_edge_bindings
-                    merged_result['analyses'].append(analysis.dict())
-        except Exception as e:
-            logger.exception(e)
+                analysis.edge_bindings[edge_code] = merged_edge_bindings
+                merged_result['analyses'].append(analysis.dict())
 
         try:
             # This used to have some list comprehension based on types.  But in TRAPI 1.1 the list/dicts get pretty deep.
@@ -294,152 +281,148 @@ async def normalize_kgraph(
     node_id_map: Dict[str, str] = {}
     edge_id_map: Dict[str, str] = {}
 
-    try:
-        # Map for each node id (curie) and its primary id
-        node_id_map: Dict[str, str] = {}
+    # Map for each node id (curie) and its primary id
+    node_id_map: Dict[str, str] = {}
 
-        # Map for each edge id and its primary id
-        edge_id_map: Dict[str, str] = {}
+    # Map for each edge id and its primary id
+    edge_id_map: Dict[str, str] = {}
 
-        # Map for each edge to its s,p,r,o signature
-        primary_edges: Dict[Tuple[str, str, Optional[str], str, Union[UUID, int]], str] = {}
+    # Map for each edge to its s,p,r,o signature
+    primary_edges: Dict[Tuple[str, str, Optional[str], str, Union[UUID, int]], str] = {}
 
-        # cache for primary node ids
-        primary_nodes_seen = set()
+    # cache for primary node ids
+    primary_nodes_seen = set()
 
-        # Count of times a node has been merged for attribute merging
-        node_merge_count: Dict[str, int] = {}
+    # Count of times a node has been merged for attribute merging
+    node_merge_count: Dict[str, int] = {}
 
-        # cache for nodes
-        nodes_seen = set()
+    # cache for nodes
+    nodes_seen = set()
 
-        # cache for subject, predicate, relation, object, attribute hash tuples
-        edges_seen: Set[Tuple[str, str, str, str, Union[UUID, int]]] = set()
+    # cache for subject, predicate, relation, object, attribute hash tuples
+    edges_seen: Set[Tuple[str, str, str, str, Union[UUID, int]]] = set()
 
-        for node_id, node in kgraph.nodes.items():
-            if node_id in nodes_seen:
-                continue
+    for node_id, node in kgraph.nodes.items():
+        if node_id in nodes_seen:
+            continue
 
-            nodes_seen.add(node_id)
-            node_id_map[node_id] = node_id  # expected to overridden by primary id
+        nodes_seen.add(node_id)
+        node_id_map[node_id] = node_id  # expected to overridden by primary id
 
-            merged_node = node.dict()
+        merged_node = node.dict()
 
-            equivalent_curies = await get_equivalent_curies(app, node_id)
+        equivalent_curies = await get_equivalent_curies(app, node_id)
 
-            if equivalent_curies[node_id]:
-                primary_id = equivalent_curies[node_id]['id']['identifier']
-                node_id_map[node_id] = primary_id
+        if equivalent_curies[node_id]:
+            primary_id = equivalent_curies[node_id]['id']['identifier']
+            node_id_map[node_id] = primary_id
 
-                if primary_id in primary_nodes_seen:
-                    merged_node = _merge_node_attributes(
-                        node_a=merged_kgraph['nodes'][primary_id],
-                        node_b=node.dict(),
-                        merged_count=node_merge_count[primary_id]
-                    )
-                    merged_kgraph['nodes'][primary_id] = merged_node
-                    node_merge_count[primary_id] += 1
-                    continue
-                else:
-                    node_merge_count[primary_id] = 0
-
-                primary_nodes_seen.add(primary_id)
-
-                if 'label' in equivalent_curies[node_id]['id']:
-                    primary_label = equivalent_curies[node_id]['id']['label']
-                elif 'name' in merged_node:
-                    primary_label = merged_node['name']
-                else:
-                    primary_label = ''
-
-                merged_node['name'] = primary_label
-
-                # Even if there's already a same_as attribute we add another
-                # since it is coming from a new source
-                if 'equivalent_identifiers' in equivalent_curies[node_id]:
-                    same_as_attribute = {
-                        'attribute_type_id': 'biolink:same_as',
-                        'value': [
-                            node['identifier']
-                            for node in equivalent_curies[node_id]['equivalent_identifiers']
-                        ],
-                        'original_attribute_name': 'equivalent_identifiers',
-                        "value_type_id": "EDAM:data_0006",
-
-                        # TODO, should we add the app version as the source
-                        # or perhaps the babel/redis cache version
-                        # This will make unit testing a little more tricky
-                        # see https://stackoverflow.com/q/57624731
-
-                        # 'source': f'{app.title} {app.version}',
-                    }
-                    if 'attributes' in merged_node and merged_node['attributes']:
-                        merged_node['attributes'].append(same_as_attribute)
-                    else:
-                        merged_node['attributes'] = [same_as_attribute]
-
-                if 'type' in equivalent_curies[node_id]:
-                    if type(equivalent_curies[node_id]['type']) is list:
-                        merged_node['categories'] = equivalent_curies[node_id]['type']
-                    else:
-                        merged_node['categories'] = [equivalent_curies[node_id]['type']]
-
-                # get the information content value
-                ic_attrib = await get_info_content_attribute(app, node_id)
-
-                # did we get a good attribute dict
-                if ic_attrib:
-                    # add the attribute to the node
-                    merged_node['attributes'].append(ic_attrib)
-
+            if primary_id in primary_nodes_seen:
+                merged_node = _merge_node_attributes(
+                    node_a=merged_kgraph['nodes'][primary_id],
+                    node_b=node.dict(),
+                    merged_count=node_merge_count[primary_id]
+                )
                 merged_kgraph['nodes'][primary_id] = merged_node
-            else:
-                merged_kgraph['nodes'][node_id] = merged_node
-
-        for edge_id, edge in kgraph.edges.items():
-            # Accessing __root__ directly seems wrong,
-            # https://github.com/samuelcolvin/pydantic/issues/730
-            # could also do str(edge.subject)
-            if edge.subject in node_id_map:
-                primary_subject = node_id_map[edge.subject]
-            else:
-                # should we throw a validation error here?
-                primary_subject = edge.subject
-
-            if edge.object in node_id_map:
-                primary_object = node_id_map[edge.object]
-            else:
-                primary_object = edge.object
-
-            hashed_attributes = _hash_attributes(edge.attributes)
-
-            if hashed_attributes is False:
-                # we couldn't hash the attribute so assume unique
-                hashed_attributes = uuid.uuid4()
-
-            triple = (
-                primary_subject,
-                edge.predicate,
-                primary_object,
-                hashed_attributes
-            )
-
-            if triple in edges_seen:
-                edge_id_map[edge_id] = primary_edges[triple]
+                node_merge_count[primary_id] += 1
                 continue
             else:
-                primary_edges[triple] = edge_id
-                edge_id_map[edge_id] = edge_id
+                node_merge_count[primary_id] = 0
 
-            edges_seen.add(triple)
-            merged_edge = edge.dict()
+            primary_nodes_seen.add(primary_id)
 
-            merged_edge['subject'] = primary_subject
-            merged_edge['object'] = primary_object
-            merged_kgraph['edges'][edge_id] = merged_edge
-    except Exception as e:
-        exception_str = "".join(traceback.format_exc())
-        logger.error(f'Exception: {exception_str}')
+            if 'label' in equivalent_curies[node_id]['id']:
+                primary_label = equivalent_curies[node_id]['id']['label']
+            elif 'name' in merged_node:
+                primary_label = merged_node['name']
+            else:
+                primary_label = ''
+
+            merged_node['name'] = primary_label
+
+            # Even if there's already a same_as attribute we add another
+            # since it is coming from a new source
+            if 'equivalent_identifiers' in equivalent_curies[node_id]:
+                same_as_attribute = {
+                    'attribute_type_id': 'biolink:same_as',
+                    'value': [
+                        node['identifier']
+                        for node in equivalent_curies[node_id]['equivalent_identifiers']
+                    ],
+                    'original_attribute_name': 'equivalent_identifiers',
+                    "value_type_id": "EDAM:data_0006",
+
+                    # TODO, should we add the app version as the source
+                    # or perhaps the babel/redis cache version
+                    # This will make unit testing a little more tricky
+                    # see https://stackoverflow.com/q/57624731
+
+                    # 'source': f'{app.title} {app.version}',
+                }
+                if 'attributes' in merged_node and merged_node['attributes']:
+                    merged_node['attributes'].append(same_as_attribute)
+                else:
+                    merged_node['attributes'] = [same_as_attribute]
+
+            if 'type' in equivalent_curies[node_id]:
+                if type(equivalent_curies[node_id]['type']) is list:
+                    merged_node['categories'] = equivalent_curies[node_id]['type']
+                else:
+                    merged_node['categories'] = [equivalent_curies[node_id]['type']]
+
+            # get the information content value
+            ic_attrib = await get_info_content_attribute(app, node_id)
+
+            # did we get a good attribute dict
+            if ic_attrib:
+                # add the attribute to the node
+                merged_node['attributes'].append(ic_attrib)
+
+            merged_kgraph['nodes'][primary_id] = merged_node
+        else:
+            merged_kgraph['nodes'][node_id] = merged_node
+
+    for edge_id, edge in kgraph.edges.items():
+        # Accessing __root__ directly seems wrong,
+        # https://github.com/samuelcolvin/pydantic/issues/730
+        # could also do str(edge.subject)
+        if edge.subject in node_id_map:
+            primary_subject = node_id_map[edge.subject]
+        else:
+            # should we throw a validation error here?
+            primary_subject = edge.subject
+
+        if edge.object in node_id_map:
+            primary_object = node_id_map[edge.object]
+        else:
+            primary_object = edge.object
+
+        hashed_attributes = _hash_attributes(edge.attributes)
+
+        if hashed_attributes is False:
+            # we couldn't hash the attribute so assume unique
+            hashed_attributes = uuid.uuid4()
+
+        triple = (
+            primary_subject,
+            edge.predicate,
+            primary_object,
+            hashed_attributes
+        )
+
+        if triple in edges_seen:
+            edge_id_map[edge_id] = primary_edges[triple]
+            continue
+        else:
+            primary_edges[triple] = edge_id
+            edge_id_map[edge_id] = edge_id
+
+        edges_seen.add(triple)
+        merged_edge = edge.dict()
+
+        merged_edge['subject'] = primary_subject
+        merged_edge['object'] = primary_object
+        merged_kgraph['edges'][edge_id] = merged_edge
 
     return KnowledgeGraph.parse_obj(merged_kgraph), node_id_map, edge_id_map
 
@@ -854,39 +837,35 @@ async def get_curie_prefixes(
     """
     ret_val: dict = {}  # storage for the returned data
 
-    try:
-        # was an arg passed in
-        if semantic_types:
-            for item in semantic_types:
-                # get the curies for this type
-                curies = await app.state.curie_to_bl_type_db.get(item, encoding='utf-8')
+    # was an arg passed in
+    if semantic_types:
+        for item in semantic_types:
+            # get the curies for this type
+            curies = await app.state.curie_to_bl_type_db.get(item, encoding='utf-8')
 
-                # did we get any data
-                if not curies:
-                    curies = '{' + f'"{item}"' + ': "Not found"}'
+            # did we get any data
+            if not curies:
+                curies = '{' + f'"{item}"' + ': "Not found"}'
 
-                curies = json.loads(curies)
+            curies = json.loads(curies)
 
-                # set the return data
-                ret_val[item] = {'curie_prefix': curies}
-        else:
-            types = await app.state.curie_to_bl_type_db.lrange('semantic_types', 0, -1, encoding='utf-8')
+            # set the return data
+            ret_val[item] = {'curie_prefix': curies}
+    else:
+        types = await app.state.curie_to_bl_type_db.lrange('semantic_types', 0, -1, encoding='utf-8')
 
-            for item in types:
-                # get the curies for this type
-                curies = await app.state.curie_to_bl_type_db.get(item, encoding='utf-8')
+        for item in types:
+            # get the curies for this type
+            curies = await app.state.curie_to_bl_type_db.get(item, encoding='utf-8')
 
-                # did we get any data
-                if not curies:
-                    curies = '{' + f'"{item}"' + ': "Not found"}'
+            # did we get any data
+            if not curies:
+                curies = '{' + f'"{item}"' + ': "Not found"}'
 
-                curies = json.loads(curies)
+            curies = json.loads(curies)
 
-                # set the return data
-                ret_val[item] = {'curie_prefix': curies}
-    except Exception as e:
-        exception_str = "".join(traceback.format_exc())
-        logger.error(f'Exception: {exception_str}')
+            # set the return data
+            ret_val[item] = {'curie_prefix': curies}
 
     return ret_val
 
@@ -898,35 +877,31 @@ def _merge_node_attributes(node_a: Dict, node_b, merged_count: int) -> Dict:
     :param merged_count: the number of nodes merged into node_a **upon entering this fx**
     """
 
-    try:
-        if not ('attributes' in node_b and node_b['attributes']):
-            return node_a
+    if not ('attributes' in node_b and node_b['attributes']):
+        return node_a
 
-        if merged_count == 0:
-            if 'attributes' in node_a and node_a['attributes']:
-                new_attribute_list = []
-                for attribute in node_a['attributes']:
-                    new_dict = {}
-                    for k, v in attribute.items():
-                        new_dict[f"{k}.1"] = v
-                    new_attribute_list.append(new_dict)
-
-                node_a['attributes'] = new_attribute_list
-
-        # Need to DRY this off
-        b_attr_id = merged_count + 2
-        if 'attributes' in node_b and node_b['attributes']:
+    if merged_count == 0:
+        if 'attributes' in node_a and node_a['attributes']:
             new_attribute_list = []
-            for attribute in node_b['attributes']:
+            for attribute in node_a['attributes']:
                 new_dict = {}
                 for k, v in attribute.items():
-                    new_dict[f"{k}.{b_attr_id}"] = v
+                    new_dict[f"{k}.1"] = v
                 new_attribute_list.append(new_dict)
 
-            node_a['attributes'] = node_a['attributes'] + new_attribute_list
-    except Exception as e:
-        exception_str = "".join(traceback.format_exc())
-        logger.error(f'Exception: {exception_str}')
+            node_a['attributes'] = new_attribute_list
+
+    # Need to DRY this off
+    b_attr_id = merged_count + 2
+    if 'attributes' in node_b and node_b['attributes']:
+        new_attribute_list = []
+        for attribute in node_b['attributes']:
+            new_dict = {}
+            for k, v in attribute.items():
+                new_dict[f"{k}.{b_attr_id}"] = v
+            new_attribute_list.append(new_dict)
+
+        node_a['attributes'] = node_a['attributes'] + new_attribute_list
 
     return node_a
 

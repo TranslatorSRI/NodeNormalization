@@ -198,35 +198,32 @@ async def async_query(async_query: reasoner_pydantic.AsyncQuery):
 
 
 async def async_query_task(async_query: reasoner_pydantic.AsyncQuery):
-    try:
-        async_query.message = await normalize_message(app, async_query.message)
-        session = requests.Session()
-        retries = Retry(
-            total=3,
-            backoff_factor=3,
-            status_forcelist=[429, 500, 502, 503, 504],
-            method_whitelist=[
-                "HEAD",
-                "GET",
-                "PUT",
-                "DELETE",
-                "OPTIONS",
-                "TRACE",
-                "POST",
-            ],
-        )
-        session.mount("http://", HTTPAdapter(max_retries=retries))
-        session.mount("https://", HTTPAdapter(max_retries=retries))
-        logger.info(f"sending callback to: {async_query.callback}")
+    async_query.message = await normalize_message(app, async_query.message)
+    session = requests.Session()
+    retries = Retry(
+        total=3,
+        backoff_factor=3,
+        status_forcelist=[429, 500, 502, 503, 504],
+        method_whitelist=[
+            "HEAD",
+            "GET",
+            "PUT",
+            "DELETE",
+            "OPTIONS",
+            "TRACE",
+            "POST",
+        ],
+    )
+    session.mount("http://", HTTPAdapter(max_retries=retries))
+    session.mount("https://", HTTPAdapter(max_retries=retries))
+    logger.info(f"sending callback to: {async_query.callback}")
 
-        post_response = session.post(
-            url=async_query.callback,
-            headers={"Content-Type": "application/json", "Accept": "application/json"},
-            data=async_query.json(),
-        )
-        logger.info(f"async_query post status code: {post_response.status_code}")
-    except BaseException as e:
-        logger.exception(e)
+    post_response = session.post(
+        url=async_query.callback,
+        headers={"Content-Type": "application/json", "Accept": "application/json"},
+        data=async_query.json(),
+    )
+    logger.info(f"async_query post status code: {post_response.status_code}")
 
 
 @app.get(
