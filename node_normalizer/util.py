@@ -16,16 +16,20 @@ BIOLINK_NAMED_THING = "biolink:NamedThing"
 class LoggingUtil(object):
     """ Logging utility controlling format and setting initial logging level """
     @staticmethod
-    def init_logging(log_file_path=None, log_file_level="ERROR"):
+    def init_logging(log_file_path=None, log_file_level=None):
+        # If log_file_path is set, we use that. Otherwise, we use the LOG_LEVEL environmental variable.
+        if not log_file_level:
+            log_file_level = os.getenv("LOG_LEVEL", "INFO")
+
         dictConfig({
             "version": 1,
             "disable_existing_loggers": False,
             "formatters": {"default": {"format": "%(asctime)s | %(levelname)s | %(module)s:%(funcName)s | %(message)s"}},
             "handlers": {
-                "console": {"level": "ERROR", "class": "logging.StreamHandler", "formatter": "default"},
+                "console": {"level": log_file_level, "class": "logging.StreamHandler", "formatter": "default"},
             },
             "loggers": {
-                "node-norm": {"handlers": ["console"], "level": os.getenv("LOG_LEVEL", "ERROR")},
+                "node-norm": {"handlers": ["console"], "level": log_file_level},
             },
         })
         # add gunicorn handlers and configure fastapi loggers
