@@ -642,7 +642,9 @@ async def get_normalized_nodes(
     }
 
     end_time = time.time_ns()
-    logger.info(f"Normalized {len(curies)} nodes in {(end_time - start_time)/1_000_000:.2f} ms: {sorted(curies)}")
+    logger.info(f"Normalized {len(curies)} nodes in {(end_time - start_time)/1_000_000:.2f} ms with arguments " +
+                f"(curies={curies}, conflate_gene_protein={conflate_gene_protein}, conflate_chemical_drug={conflate_chemical_drug}, " +
+                f"include_descriptions={include_descriptions}, include_individual_types={include_individual_types})")
 
     return normal_nodes
 
