@@ -112,12 +112,14 @@ async def status() -> Dict:
         # Load rcfile as a YAML file using safe loading.
         redis_config = yaml.safe_load(rcfile)
 
-    # Do we know the Babel version? It will be stored in an environmental variable if we do.
+    # Do we know the Babel version and version URL? It will be stored in an environmental variable if we do.
     babel_version = os.environ.get("BABEL_VERSION", "unknown")
+    babel_version_url = os.environ.get("BABEL_VERSION_URL", "")
 
     return {
         "status": "running",
         "babel_version": babel_version,
+        "babel_version_url": babel_version_url,
         "databases": {
             "eq_id_to_id_db": {
                 "dbname": "id-id",
