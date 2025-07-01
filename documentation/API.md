@@ -98,18 +98,6 @@ Example output:
     [this is a requested feature](https://github.com/TranslatorSRI/NodeNormalization/issues/320)), but you can use the
     `individual_types` parameter to get a Biolink type for each identifier.
 
-## TRAPI Normalization
-
-### `/query`
-
-* Method: [POST](https://nodenormalization-sri.renci.org/docs#/default/query_query_post)
-* TODO
-
-### `/asyncquery`
-
-* Method: [POST](https://nodenormalization-sri.renci.org/docs#/default/async_query_asyncquery_post)
-* TODO
-
 ## Sets
 
 ### `/get_setid`
@@ -174,7 +162,7 @@ This endpoint can be used to find out about the NodeNorm service and the underly
 It can be useful to confirm whether the databases are fully loaded and how much memory is being used.
 
 * Methods: GET only
-* Parameters: None
+* No parameters.
 
 Example output:
 ```json
@@ -216,16 +204,115 @@ Output values:
 
 ### `/get_allowed_conflations`
 
+Returns a list of the supported conflations.
+
 * Method: [GET](https://nodenormalization-sri.renci.org/docs#/default/get_conflations_get_allowed_conflations_get)
+* No parameters.
+
+Example output:
+
+```json
+{
+  "conflations": [
+    "GeneProtein",
+    "DrugChemical"
+  ]
+}
+```
 
 ### `/get_semantic_types`
 
+Returns a list of all the Biolink types/classes that this instance of NodeNorm has at least one identifier for.
+
 * Method: [GET](https://nodenormalization-sri.renci.org/docs#/default/get_semantic_types_handler_get_semantic_types_get)
+
+Example output:
+
+```json
+{
+  "semantic_types": {
+    "types": [
+      "biolink:NucleicAcidEntity",
+      "biolink:ActivityAndBehavior",
+      "biolink:PhysicalEssence",
+      "biolink:StudyPopulation",
+      "biolink:PhysicalEssenceOrOccurrent",
+      "biolink:GenomicEntity",
+      "biolink:Protein",
+      "biolink:Event",
+      [...]
+    ]
+  }
+}
+```
 
 ### `/get_curie_prefixes`
 
+Returns a list of CURIE prefixes for zero or more Biolink types, as well as the number of identifiers for each prefix.
+
+These are generated when the Babel compendia are loaded into NodeNorm, and I haven't verified if they are
+accurate — I'm more confident about the Babel reports, but I haven't checked them against each other.
+
 * Method: [GET](https://nodenormalization-sri.renci.org/docs#/default/get_curie_prefixes_handler_get_curie_prefixes_get)
-  * TODO
+  * Parameters:
+    * `semantic_type` (optional, e.g. `semantic_type=biolink:ChemicalEntity&semantic_type=biolink:AnatomicalEntity`)
+    * Without a `semantic_type`, every semantic type is returned.
 * Method: [POST](https://nodenormalization-sri.renci.org/docs#/default/get_curie_prefixes_handler_get_curie_prefixes_post)
-  * TODO
-* TODO
+  * POST Body: `{"semantic_types": ["biolink:ChemicalEntity", "biolink:AnatomicalEntity"]}`
+
+Example output:
+```json
+{
+  "biolink:ChemicalEntity": {
+    "curie_prefix": {
+      "PUBCHEM.COMPOUND": "119397095",
+      "INCHIKEY": "115661650",
+      "CHEMBL.COMPOUND": "2496527",
+      "CAS": "4029002",
+      "CHEBI": "200507",
+      "HMDB": "217920",
+      "MESH": "258506",
+      "UMLS": "668019",
+      "KEGG.COMPOUND": "16035",
+      "UNII": "134411",
+      "DRUGBANK": "16108",
+      "GTOPDB": "12953",
+      "DrugCentral": "4995",
+      "RXCUI": "124852"
+    }
+  },
+  "biolink:AnatomicalEntity": {
+    "curie_prefix": {
+      "UMLS": "159496",
+      "FMA": "98632",
+      "MESH": "1992",
+      "UBERON": "14513",
+      "NCIT": "10223",
+      "EMAPA": "968",
+      "ZFA": "607",
+      "FBbt": "117",
+      "WBbt": "18",
+      "CL": "2865",
+      "SNOMEDCT": "1421",
+      "GO": "4022"
+    }
+  }
+}
+```
+
+## TRAPI Normalization (deprecated)
+
+These methods 
+
+### `/query`
+
+Normalizes all the identifiers in a [TRAPI](https://github.com/NCATSTranslator/ReasonerAPI) message.
+
+* Method: [POST](https://nodenormalization-sri.renci.org/docs#/default/query_query_post)
+
+### `/asyncquery`
+
+Identical to `/query`, but returns a URL that the requester can use to poll for the response
+rather than waiting for the request to complete.
+
+* Method: [POST](https://nodenormalization-sri.renci.org/docs#/default/async_query_asyncquery_post)
