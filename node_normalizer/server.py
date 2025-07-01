@@ -6,6 +6,8 @@ import logging, warnings
 
 from pathlib import Path
 from typing import List, Optional, Dict, Annotated
+from warnings import deprecated
+
 from fastapi.middleware.cors import CORSMiddleware
 import requests
 from requests.adapters import HTTPAdapter, Retry
@@ -173,7 +175,8 @@ async def status() -> Dict:
     description="Returns the response object with a merged knowledge graph and query graph bindings",
     response_model=reasoner_pydantic.Query,
     response_model_exclude_none=True,
-    response_model_exclude_unset=True
+    response_model_exclude_unset=True,
+    deprecated=True,
 )
 async def query(query: Annotated[reasoner_pydantic.Query, Body(openapi_examples={"Drugs that treat essential hypertension": {
     "summary": "A result from a query for drugs that treat essential hypertension.",
@@ -190,6 +193,7 @@ async def query(query: Annotated[reasoner_pydantic.Query, Body(openapi_examples=
     "/asyncquery",
     summary="Normalizes a TRAPI response object",
     description="Returns the response object with a merged knowledge graph and query graph bindings",
+    deprecated=True,
 )
 async def async_query(async_query: reasoner_pydantic.AsyncQuery):
     """
