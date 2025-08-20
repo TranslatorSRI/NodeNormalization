@@ -1,12 +1,10 @@
 """FastAPI server."""
 import asyncio
 import os
-import traceback
 import logging, warnings
 
 from pathlib import Path
 from typing import List, Optional, Dict, Annotated
-from warnings import deprecated
 
 from fastapi.middleware.cors import CORSMiddleware
 import requests
